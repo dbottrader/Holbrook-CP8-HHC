@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "build_name": "Holbrook-CP8-HHC-20260523-045644",
+    "build_name": "Holbrook-CP8-HHC-20260523-135735",
     "repo": "Holbrook-CP8-HHC",
     "protocol": "ASH-0.2",
     "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-    "timestamp": "2026-05-23T04:56:44.156316+00:00",
-    "total_files": 30,
-    "total_bytes": 114217,
-    "merkle_root": "398ef90facb6f2914df01e9c6de1a7685bdcfff290df78ed063067091dfd1cd7",
-    "combined_signature": "64dd82e656cde3b1d3f3c03051cf9fc1605d117b1bd4b25ac1d54b695191c36b",
+    "timestamp": "2026-05-23T13:57:35.438415+00:00",
+    "total_files": 31,
+    "total_bytes": 118676,
+    "merkle_root": "9d4a0de271b93a96d9f0dcf191ed0164bd87b946a2f5452a2b68e7a2423b4723",
+    "combined_signature": "2ea8ed22610280094bbeb10f13ace28c974f1154bf47a0b5ded336573b40ed14",
     "build_tool": "build-merkle.py",
     "version": "1.0.0"
   },
@@ -38,8 +38,8 @@
       "size": 1561
     },
     "build-manifest.json": {
-      "sha256": "b5548f1b7d2fa4846a64e71c90dbb1b2f30ab5006b12e565ecc9304f01658574",
-      "size": 695
+      "sha256": "d9c7f3b795b2b8416d4cf92dcc3343a0e84b33a1716d3901b33ad9ea18e6c858",
+      "size": 530
     },
     "chains/registry.json": {
       "sha256": "11482461f27fd945100aa3f95994b4539df5011618b771345632963f31e5e37d",
@@ -73,12 +73,16 @@
       "sha256": "640bcfe042cb56acba69abc3c0c1d297c5b67d9cb52f26e79816b843bb2dda56",
       "size": 714
     },
+    "inbox/2026-05-23-kimi-response-to-grok-v020.md": {
+      "sha256": "4dbaea93844d4eea2599f290828bb1eb5988df3ed30a0b3b8d8808aadc0e3e1c",
+      "size": 1378
+    },
     "inbox/README.md": {
       "sha256": "89d0c947c6fc317cebac74d97f9a8cc4cb72751147725aaa44c66acb119c8dfa",
       "size": 772
     },
     "merkle-root.txt": {
-      "sha256": "6063af484fdf446c8a4add3186439e1af9540db1669bfa226ce97dde477f32ff",
+      "sha256": "5c389ff9bd46d87f71e9600ca17063a8f1515941fa27346a3719d7145f169331",
       "size": 65
     },
     "outbox/README.md": {
@@ -114,24 +118,24 @@
       "size": 4952
     },
     "scripts/wallet-hunt.py": {
-      "sha256": "d277bcf5d948340613c8aa6e22cdbc256d684a88cee2a32cc41b6f971b018e3a",
-      "size": 26708
+      "sha256": "ad36a36cccb4c1a3cdf418d5017296f04e088b9254fcba4805113a83938efa32",
+      "size": 27469
     },
     "sha256-manifest.json": {
-      "sha256": "63f965a81e42eaaf0b0e13684c9ae284b543c0419ecc6cd1111346c82b136836",
-      "size": 3553
+      "sha256": "2d05d76dcae38da0738eb78e9705c9537983cbe57f59607a456a27355693156c",
+      "size": 4811
     },
     "super-device-manifest.json": {
       "sha256": "6071c0462069450acc55aecf19268a73231475ce0580790c8a3180e769c92700",
       "size": 3218
     },
     "tasks.md": {
-      "sha256": "678c95ef620f939119383215ccf4de5c1e9c4e68878c0731570d69bdd899dce0",
-      "size": 1646
+      "sha256": "eab418bcacc94ba18c7576852c8e9876f8d1c9a550cc20e5e7156d43abb857be",
+      "size": 2042
     },
     "wallet-hunt-report.json": {
-      "sha256": "cfaf3c8d70fc6fcd72e5aef506763fea52762da461d6465a751c32479d7ac5d4",
-      "size": 448
+      "sha256": "9cb002fcd5d83725211fa277a30a7ac89878c6b767294e96e8d85c5c786232f6",
+      "size": 1279
     }
   }
 }

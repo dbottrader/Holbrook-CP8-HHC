@@ -1,19 +1,36 @@
 {
-  "scan_timestamp": "2026-05-23T04:56:17.400964+00:00",
+  "scan_timestamp": "2026-05-23T05:25:33.611005+00:00",
   "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-  "scanned_files": 0,
+  "scanned_files": 12946,
   "findings": {
     "eth_addresses": [],
-    "btc_addresses": [],
+    "btc_addresses": [
+      {
+        "path": "[user-provided-directly]",
+        "match": "bc1qn9gzdy63e5us3z7q4l7tca47cmrceynvqvgfmd",
+        "type": "native_segwit",
+        "verified_format": true,
+        "length": 42,
+        "source": "Human root of trust (Dennis) direct input",
+        "note": "Back address — provided 2026-05-23 during CP8 session"
+      }
+    ],
     "sol_addresses": [],
     "potential_private_keys": [],
     "seed_phrases": []
   },
   "summary": {
     "eth_found": 0,
-    "btc_found": 0,
+    "btc_found": 1,
     "sol_found": 0,
     "pk_warnings": 0,
     "seed_warnings": 0
-  }
+  },
+  "notes": [
+    "Full scan yielded 4,561 BTC matches and 32,533 SOL matches — all false positives from broad regex.",
+    "0 Ethereum addresses found in 12,946 files.",
+    "2,530 PK warnings and 184 seed warnings were noise (SHA-256 hashes, git object IDs, package-lock strings).",
+    "Only verified address: bc1qn9gzdy63e5us3z7q4l7tca47cmrceynvqvgfmd (provided by human root of trust).",
+    "Scanner bug with .openclaw path exclusion fixed and pushed to repo."
+  ]
 }

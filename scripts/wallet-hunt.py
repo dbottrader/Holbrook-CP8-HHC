@@ -259,15 +259,25 @@ def scan_workspace(root_path='.', exclude=None):
         
         # Skip excluded dirs
         skip = False
-        for part in filepath.parts:
+        rel_parts = filepath.relative_to(root).parts
+        for part in rel_parts:
             if part in exclude:
                 skip = True
                 break
-            # Skip hidden dirs but NOT the workspace root itself
             if part.startswith('.') and part != '.openclaw':
                 skip = True
                 break
         if skip:
+            continue
+        
+        # Skip files over 10MB and common binary extensions
+        try:
+            if filepath.stat().st_size > 10 * 1024 * 1024:
+                continue
+        except (OSError, PermissionError):
+            continue
+        
+        if filepath.suffix.lower() in {'.wav', '.mp3', '.mp4', '.zip', '.tar', '.gz', '.tgz', '.bz2', '.xz', '.7z', '.so', '.dll', '.exe', '.bin', '.pack', '.obj', '.o', '.a', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.ico', '.pdf', '.woff', '.woff2', '.ttf', '.eot'}:
             continue
         
         try:
