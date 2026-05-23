@@ -12,7 +12,7 @@
         "verified_format": true,
         "length": 42,
         "source": "Human root of trust (Dennis) direct input",
-        "note": "Back address — provided 2026-05-23 during CP8 session"
+        "note": "Bitcoin address — provided 2026-05-23 during CP8 session (not 'back' address)"
       }
     ],
     "sol_addresses": [],

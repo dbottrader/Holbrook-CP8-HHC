@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>CP8 Layer 7: Collective DNA Helix</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        #info {
+            position: absolute; top: 15px; left: 15px;
+            color: #0ff; font-family: monospace; font-size: 13px;
+            background: rgba(0,0,0,0.6); padding: 8px; border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        ◎ CP8 COLLECTIVE HELIX ◎ <br>
+        Seals: <span id="sealCount">0</span> | Status: <span id="status">Connecting...</span>
+    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 25);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        const helix = new THREE.BufferGeometry();
+        const positions = [];
+        for (let i = 0; i < 1000; i++) {
+            const t = (i/1000) * Math.PI * 8;
+            positions.push(Math.cos(t) * 5, (i/1000) * 40 - 20, Math.sin(t) * 5);
+        }
+        helix.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        scene.add(new THREE.Points(helix, new THREE.PointsMaterial({ size: 0.1, color: 0x00ffff })));
+        const ws = new WebSocket('ws://localhost:8080');
+        let sealCount = 0;
+        ws.onmessage = (e) => {
+            const seal = JSON.parse(e.data);
+            const geo = new THREE.SphereGeometry(0.3, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(seal.position.x, seal.position.y, seal.position.z);
+            scene.add(mesh);
+            sealCount++;
+            document.getElementById('sealCount').textContent = sealCount;
+        };
+        ws.onopen = () => { document.getElementById('status').textContent = 'Connected'; };
+        ws.onerror = () => { document.getElementById('status').textContent = 'Error'; };
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

@@ -1,13 +1,13 @@
 {
-  "build_name": "Holbrook-CP8-HHC-20260523-135735",
+  "build_name": "HOLBROOK-v0.3.0",
   "repo": "Holbrook-CP8-HHC",
   "protocol": "ASH-0.2",
   "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-  "timestamp": "2026-05-23T13:57:35.438415+00:00",
-  "total_files": 31,
-  "total_bytes": 118676,
-  "merkle_root": "9d4a0de271b93a96d9f0dcf191ed0164bd87b946a2f5452a2b68e7a2423b4723",
-  "combined_signature": "2ea8ed22610280094bbeb10f13ace28c974f1154bf47a0b5ded336573b40ed14",
+  "timestamp": "2026-05-23T16:00:29.181671+00:00",
+  "total_files": 36,
+  "total_bytes": 131740,
+  "merkle_root": "55a0415931916b870c3e014bbdf5241defb02f7946f255f1c64f01b02c200336",
+  "combined_signature": "2f454eaa8fae8b1ccf971fc21d41e0f97861162824f72f356d7f0a1f93d78356",
   "build_tool": "build-merkle.py",
   "version": "1.0.0"
 }
