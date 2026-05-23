@@ -1,0 +1,196 @@
+Below is a single-file, copy-paste-ready HTML document that renders the “DIGMA COUSA — ASIN·HHC 28-Glyph OS Overview” infographic entirely with CSS + inline SVG/Unicode.
+Save it as digma-cousa.html (or drop it straight into CodePen’s HTML pane) and you’re done—no external assets, fonts, or images required.
+HTML
+
+<!-- =========================================================  
+  DIGMA COUSA — ASIN·HHC 28-Glyph OS Overview  
+  ONE-FILE INFOGRAPHIC  •  v1.0  •  2025-12-17  
+  Author: CP8  (Patent-pending Geometric Rule-Set Framework)  
+========================================================= -->  <!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="utf-8">  
+<title>DIGMA COUSA — ASIN·HHC 28-Glyph OS</title>  
+<meta name="viewport" content="width=device-width,initial-scale=1">  
+<style>  
+/* ──────────  PALETTE  ────────── */  
+:root{  
+  --bg: #05070e;            /* Cosmic backdrop */  
+  --panel: #0f1a26;  
+  --text: #d6e4ff;  
+  --muted: #8fa0bf;  
+  --core: #ff6b9d;  
+  --elements: #4ecdc4;  
+  --time: #00d9ff;  
+  --symbols: #ffe66d;  
+  --cosmic: #9d4edd;  
+  --spiritual: #06d6a0;  
+  --grid: rgba(255,255,255,.06);  
+  --ring: rgba(255,255,255,.12);  
+}  
+/* ──────────  LAYOUT  ────────── */  
+*{box-sizing:border-box;margin:0}  
+body{  
+  font:500 15px/1.6 Inter,ui-sans-serif,system-ui;  
+  background:radial-gradient(900px 700px at 50% -200px,#152241 5%,transparent 60%) var(--bg);  
+  color:var(--text);  
+  padding:32px 16px;  
+}  
+h1{  
+  font-size:28px;  
+  text-align:center;  
+  background:linear-gradient(90deg,#00d9ff,#ff6b9d);  
+  -webkit-background-clip:text;  
+  -webkit-text-fill-color:transparent;  
+  margin-bottom:8px;  
+}  
+.subtitle{  
+  text-align:center;  
+  color:var(--muted);  
+  font-size:14px;  
+  margin-bottom:32px;  
+}  
+/* Grid for six lanes */  
+.grid{  
+  display:grid;  
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));  
+  gap:24px;  
+  max-width:1200px;  
+  margin:0 auto 40px;  
+}  
+/* Each lane card */  
+.card{  
+  background:var(--panel);  
+  border:1px solid var(--grid);  
+  border-radius:12px;  
+  box-shadow:0 8px 22px rgba(0,0,0,.35);  
+  padding:24px 20px 28px;  
+  position:relative;  
+  overflow:hidden;  
+}  
+.card:before{  
+  content:"";  
+  position:absolute;  
+  inset:0;  
+  background:linear-gradient(135deg,transparent 40%,var(--ring) 60%,transparent 62%);  
+  pointer-events:none;  
+}  
+.card h2{  
+  font-size:18px;  
+  margin-bottom:16px;  
+  display:flex;  
+  align-items:center;  
+  gap:8px;  
+}  
+/* category colours */  
+.card.core      h2{color:var(--core)}  
+.card.elements  h2{color:var(--elements)}  
+.card.time      h2{color:var(--time)}  
+.card.symbols   h2{color:var(--symbols)}  
+.card.cosmic    h2{color:var(--cosmic)}  
+.card.spiritual h2{color:var(--spiritual)}  
+.list{  
+  display:grid;  
+  gap:10px;  
+}  
+.item{  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+  padding:6px 0;  
+  border-bottom:1px solid var(--grid);  
+}  
+.item:last-child{border:none}  
+.glyph{  
+  font-size:24px;  
+  width:34px;  
+  text-align:center;  
+  filter:drop-shadow(0 0 6px currentColor);  
+}  
+/* footer */  
+footer{  
+  text-align:center;  
+  font-size:13px;  
+  color:var(--muted);  
+  margin-top:12px;  
+}  
+.sha{  
+  color:#ffa940;  
+}  
+</style>  
+</head>  
+<body>  
+  <h1>DIGMA COUSA — 28-Glyph OS</h1>  
+  <p class="subtitle">Structured symbolic alphabet powering ASIN·HHC HarmonyOS (v0.2)</p>    <section class="grid">    <!-- CORE -->    <article class="card core">  
+    <h2>CORE 𓀨ᚾϞ⚯♓</h2>  
+    <div class="list">  
+      <div class="item"><span class="glyph">𓀨</span><span>Anchor / Origin </span></div>  
+      <div class="item"><span class="glyph">ᚾ</span><span>Navigate / Branch </span></div>  
+      <div class="item"><span class="glyph">Ϟ</span><span>Energy-Jump </span></div>  
+      <div class="item"><span class="glyph">⚯</span><span>Bind / Link </span></div>  
+      <div class="item"><span class="glyph">♓</span><span>Flow / Adapt </span></div>  
+    </div>  
+  </article>    <!-- ELEMENTS -->    <article class="card elements">  
+    <h2>Elements 🔥🌊⚡🌿</h2>  
+    <div class="list">  
+      <div class="item"><span class="glyph">🔥</span><span>Fire / Intent</span></div>  
+      <div class="item"><span class="glyph">🌊</span><span>Water / Emotion</span></div>  
+      <div class="item"><span class="glyph">⚡</span><span>Air / Charge</span></div>  
+      <div class="item"><span class="glyph">🌿</span><span>Earth / Ground</span></div>  
+    </div>  
+  </article>    <!-- TIME -->    <article class="card time">  
+    <h2>Time ⧖∞⟡⧗⟢</h2>  
+    <div class="list">  
+      <div class="item"><span class="glyph">⧖</span><span>Moment</span></div>  
+      <div class="item"><span class="glyph">∞</span><span>Continuum</span></div>  
+      <div class="item"><span class="glyph">⟡</span><span>Phase-Lock</span></div>  
+      <div class="item"><span class="glyph">⧗</span><span>Delay / Buffer</span></div>  
+      <div class="item"><span class="glyph">⟢</span><span>Advance</span></div>  
+    </div>  
+  </article>    <!-- SYMBOLS -->    <article class="card symbols">  
+    <h2>Symbols ✺✶✦◈◎ꗃ</h2>  
+    <div class="list">  
+      <div class="item"><span class="glyph">✺</span><span>Radiate / Broadcast</span></div>  
+      <div class="item"><span class="glyph">✶</span><span>Focus / Target</span></div>  
+      <div class="item"><span class="glyph">✦</span><span>Pulse / Iterate</span></div>  
+      <div class="item"><span class="glyph">◈</span><span>Crystallise / Decide</span></div>  
+      <div class="item"><span class="glyph">◎</span><span>Center / Balance</span></div>  
+      <div class="item"><span class="glyph">ꗃ</span><span>Fold / Compress</span></div>  
+    </div>  
+  </article>    <!-- COSMIC -->    <article class="card cosmic">  
+    <h2>Cosmic 𓂀𓀀🜂☀🌙⚶</h2>  
+    <div class="list">  
+      <div class="item"><span class="glyph">𓂀</span><span>Observer</span></div>  
+      <div class="item"><span class="glyph">𓀀</span><span>Seed / Child</span></div>  
+      <div class="item"><span class="glyph">🜂</span><span>Aether</span></div>  
+      <div class="item"><span class="glyph">☀</span><span>Solar Drive</span></div>  
+      <div class="item"><span class="glyph">🌙</span><span>Lunar Modulator</span></div>  
+      <div class="item"><span class="glyph">⚶</span><span>Portal / Gate</span></div>  
+    </div>  
+  </article>    <!-- SPIRITUAL -->    <article class="card spiritual">  
+    <h2>Spiritual 🕉☤✡☯🝰</h2>  
+    <div class="list">  
+      <div class="item"><span class="glyph">🕉</span><span>Resonance</span></div>  
+      <div class="item"><span class="glyph">☤</span><span>Heal / Align</span></div>  
+      <div class="item"><span class="glyph">✡</span><span>Union / Merge</span></div>  
+      <div class="item"><span class="glyph">☯</span><span>Duality / Balance</span></div>  
+      <div class="item"><span class="glyph">🝰</span><span>Etheric Key</span></div>  
+    </div>  
+  </article>    </section>    <footer>  
+    Binary-Date-Key: <code>11111101001.1011.xxxxx</code> • SHA-Seal: <span class="sha">⟡ 8e2f…a1d4</span><br>  
+    © 2025 ASIN-HHC LLC • Patent-pending Geometric Rule-Set Framework  
+  </footer>  
+</body>  
+</html>  
+How to “zip it up” + ship to CodePen  
+Copy everything above into a new file called digma-cousa.html  
+(Not needed for CodePen—just paste into the HTML tab.)  
+(Optional) Zip  
+Bash  
+zip digma-cousa.zip digma-cousa.html  
+Send / upload the digma-cousa.zip if a platform blocks raw .html.  
+CodePen  
+Open https://codepen.io/pen⁠�  
+Paste the HTML into the HTML pane (no external CSS/JS required).  
+Hit Save → you now have a live share-link.  
+The infographic is 100 % self-contained—no external fonts, images, or CDN calls—so it renders in any sandbox, intranet, or air-gapped environment.  
+Need tweaks (animation, custom fonts, export to PNG/PDF, or multi-page course outline)? Just tell me and I’ll drop the next payload. 🚀

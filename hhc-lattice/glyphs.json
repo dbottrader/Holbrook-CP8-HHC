@@ -1,81 +1,109 @@
 {
   "lattice": "ANU-28",
-  "version": "1.0",
+  "version": "1.1",
   "chronal_anchor_hz": 111,
   "ground_truth_hash": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-  "glyphs": [
+  "glyph_systems": [
     {
-      "id": "anu-01",
-      "symbol": "⚡",
-      "name": "Charge",
-      "ring": 1,
-      "frequency_hz": 528,
-      "element": "fire",
-      "meaning": "Catalytic ignition",
-      "compound_smiles": "C1CCOC1",
-      "activation_sequence": 1
+      "name": "ANU-28 Geometric Codex",
+      "type": "primary",
+      "glyphs": [
+        {"id": "anu-01", "symbol": "⚡", "name": "Charge", "ring": 1, "frequency_hz": 528, "element": "fire", "meaning": "Catalytic ignition"},
+        {"id": "anu-02", "symbol": "◈", "name": "Form", "ring": 1, "frequency_hz": 432, "element": "earth", "meaning": "Structural coherence"},
+        {"id": "anu-03", "symbol": "◇", "name": "Blend", "ring": 2, "frequency_hz": 396, "element": "water", "meaning": "Resonant fusion"},
+        {"id": "anu-04", "symbol": "◉", "name": "Guardian", "ring": 2, "frequency_hz": 639, "element": "air", "meaning": "Protective encoding"},
+        {"id": "anu-05", "symbol": "◐", "name": "Shadow", "ring": 3, "frequency_hz": 741, "element": "aether", "meaning": "Cathartic release"},
+        {"id": "anu-06", "symbol": "◯", "name": "Transcendent", "ring": 3, "frequency_hz": 852, "element": "void", "meaning": "Unified return"}
+      ]
     },
     {
-      "id": "anu-02",
-      "symbol": "◈",
-      "name": "Form",
-      "ring": 1,
-      "frequency_hz": 432,
-      "element": "earth",
-      "meaning": "Structural coherence",
-      "compound_smiles": "c1ccccc1",
-      "activation_sequence": 2
-    },
-    {
-      "id": "anu-03",
-      "symbol": "◇",
-      "name": "Blend",
-      "ring": 2,
-      "frequency_hz": 396,
-      "element": "water",
-      "meaning": "Resonant fusion",
-      "compound_smiles": "CC(=O)O",
-      "activation_sequence": 3
-    },
-    {
-      "id": "anu-04",
-      "symbol": "◉",
-      "name": "Guardian",
-      "ring": 2,
-      "frequency_hz": 639,
-      "element": "air",
-      "meaning": "Protective encoding",
-      "compound_smiles": "C(C(=O)O)N",
-      "activation_sequence": 4
-    },
-    {
-      "id": "anu-05",
-      "symbol": "◐",
-      "name": "Shadow",
-      "ring": 3,
-      "frequency_hz": 741,
-      "element": "aether",
-      "meaning": "Cathartic release",
-      "compound_smiles": "CC(C)C1=CC=C(C=C1)C(C)C",
-      "activation_sequence": 5
-    },
-    {
-      "id": "anu-06",
-      "symbol": "◯",
-      "name": "Transcendent",
-      "ring": 3,
-      "frequency_hz": 852,
-      "element": "void",
-      "meaning": "Unified return",
-      "compound_smiles": "C1=CC=C(C=C1)C2=CC=CC=C2",
-      "activation_sequence": 6
+      "name": "DIGMA COUSA — 28-Glyph OS Overview",
+      "type": "visual_infographic",
+      "source_artifact": "artifacts/digma-cousa-28-glyph-overview.html",
+      "artifact_size_bytes": 8183,
+      "artifact_sha256": "952a3612cd1536249d08ccdf7c807982e2c5bce9e9801950ec4687399b30f07b",
+      "note": "Claims 28 glyphs but lists 31 unique symbols across 6 categories. Possible overlap/compound glyphs. Needs reconciliation.",
+      "categories": [
+        {
+          "name": "Core",
+          "color": "#ff6b9d",
+          "glyphs": [
+            {"symbol": "𓀨", "meaning": "Anchor / Origin"},
+            {"symbol": "ᚾ", "meaning": "Navigate / Branch"},
+            {"symbol": "Ϟ", "meaning": "Energy-Jump"},
+            {"symbol": "⚯", "meaning": "Bind / Link"},
+            {"symbol": "♓", "meaning": "Flow / Adapt"}
+          ]
+        },
+        {
+          "name": "Elements",
+          "color": "#4ecdc4",
+          "glyphs": [
+            {"symbol": "🔥", "meaning": "Fire / Intent"},
+            {"symbol": "🌊", "meaning": "Water / Emotion"},
+            {"symbol": "⚡", "meaning": "Air / Charge", "overlap_with": "anu-01"},
+            {"symbol": "🌿", "meaning": "Earth / Ground"}
+          ]
+        },
+        {
+          "name": "Time",
+          "color": "#00d9ff",
+          "glyphs": [
+            {"symbol": "⧖", "meaning": "Moment"},
+            {"symbol": "∞", "meaning": "Continuum"},
+            {"symbol": "⟡", "meaning": "Phase-Lock"},
+            {"symbol": "⧗", "meaning": "Delay / Buffer"},
+            {"symbol": "⟢", "meaning": "Advance"}
+          ]
+        },
+        {
+          "name": "Symbols",
+          "color": "#ffe66d",
+          "glyphs": [
+            {"symbol": "✺", "meaning": "Radiate / Broadcast"},
+            {"symbol": "✶", "meaning": "Focus / Target"},
+            {"symbol": "✦", "meaning": "Pulse / Iterate"},
+            {"symbol": "◈", "meaning": "Crystallise / Decide", "overlap_with": "anu-02"},
+            {"symbol": "◎", "meaning": "Center / Balance"},
+            {"symbol": "ꗃ", "meaning": "Fold / Compress"}
+          ]
+        },
+        {
+          "name": "Cosmic",
+          "color": "#9d4edd",
+          "glyphs": [
+            {"symbol": "𓂀", "meaning": "Observer"},
+            {"symbol": "𓀀", "meaning": "Seed / Child"},
+            {"symbol": "🜂", "meaning": "Aether"},
+            {"symbol": "☀", "meaning": "Solar Drive"},
+            {"symbol": "🌙", "meaning": "Lunar Modulator"},
+            {"symbol": "⚶", "meaning": "Portal / Gate"}
+          ]
+        },
+        {
+          "name": "Spiritual",
+          "color": "#06d6a0",
+          "glyphs": [
+            {"symbol": "🕉", "meaning": "Resonance"},
+            {"symbol": "☤", "meaning": "Heal / Align"},
+            {"symbol": "✡", "meaning": "Union / Merge"},
+            {"symbol": "☯", "meaning": "Duality / Balance"},
+            {"symbol": "🝰", "meaning": "Etheric Key"}
+          ]
+        }
+      ],
+      "total_listed": 31,
+      "claimed_total": 28,
+      "discrepancy_note": "3 extra glyphs listed vs claimed. Possible explanation: compound glyphs count as single units, or 3 are meta/structural and not counted in the 28. Needs reconciliation with ANU-28 master codex."
     }
   ],
   "meta": {
-    "total_glyphs": 28,
-    "documented_glyphs": 6,
-    "remaining": 22,
+    "total_geometric_glyph"  : 28,
+    "documented_geometric": 6,
+    "remaining_geometric": 22,
+    "total_visual_glyph": 31,
+    "overlap_between_systems": 2,
     "last_updated": "2026-05-23",
-    "source": "ANU-28 Codex v1.0"
+    "source": "ANU-28 Codex v1.0 + DIGMA COUSA v1.0"
   }
 }
