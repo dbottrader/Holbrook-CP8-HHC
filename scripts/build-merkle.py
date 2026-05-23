@@ -41,7 +41,8 @@ def get_tracked_files(repo_root: Path, exclude_patterns=None) -> list:
     if exclude_patterns is None:
         exclude_patterns = {
             '.git', '__pycache__', '.pyc', 'node_modules',
-            '.DS_Store', 'Thumbs.db', '*.tmp', '*.log'
+            '.DS_Store', 'Thumbs.db', '*.tmp', '*.log',
+            'sha256-manifest.json', 'merkle-root.txt', 'build-manifest.json'
         }
     
     files = []

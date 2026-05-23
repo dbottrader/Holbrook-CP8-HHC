@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "build_name": "HOLBROOK-v0.3.0",
+    "build_name": "HOLBROOK-v0.4.0",
     "repo": "Holbrook-CP8-HHC",
     "protocol": "ASH-0.2",
     "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-    "timestamp": "2026-05-23T16:00:29.181671+00:00",
-    "total_files": 36,
-    "total_bytes": 131740,
-    "merkle_root": "55a0415931916b870c3e014bbdf5241defb02f7946f255f1c64f01b02c200336",
-    "combined_signature": "2f454eaa8fae8b1ccf971fc21d41e0f97861162824f72f356d7f0a1f93d78356",
+    "timestamp": "2026-05-23T17:23:27.492248+00:00",
+    "total_files": 41,
+    "total_bytes": 162503,
+    "merkle_root": "a2c7d8d353892c129e771a3de565a7d6d27e989b8cca57f8b45dbe4409d9007b",
+    "combined_signature": "1672f6d7a4f0af71929ec90b970c760c217f11c4a2ea1be3c4b02c83971439ec",
     "build_tool": "build-merkle.py",
     "version": "1.0.0"
   },
@@ -22,8 +22,8 @@
       "size": 6720
     },
     "README.md": {
-      "sha256": "0641763cd3c70c176868e1eb100fd7e5f572c6906be92227076c30a824df5278",
-      "size": 6056
+      "sha256": "554d0cdd96b6a7bb90379b5d191c4b4994388067e79f0dbc276318f91522b9ca",
+      "size": 7574
     },
     "agents/manifest.json": {
       "sha256": "cddd2393a2e54fd9d6518c7af2e7c34043fccf39dfba863fb50243428fca3d7b",
@@ -36,10 +36,6 @@
     "bridges/google-drive/README.md": {
       "sha256": "740b2407ab223c544333bd6b70d36f3887ad4a7ddad5d94173703e2c90cada8a",
       "size": 1561
-    },
-    "build-manifest.json": {
-      "sha256": "2d226eda512adb098d6783349206c8d76e3e753f8c74d1a78c63facba5f84568",
-      "size": 530
     },
     "chains/registry.json": {
       "sha256": "11482461f27fd945100aa3f95994b4539df5011618b771345632963f31e5e37d",
@@ -89,9 +85,9 @@
       "sha256": "89d0c947c6fc317cebac74d97f9a8cc4cb72751147725aaa44c66acb119c8dfa",
       "size": 772
     },
-    "merkle-root.txt": {
-      "sha256": "c791b5ef2459f7d3467fb8e725b61e4d4c503c8ffdfefed4af162c8513c87883",
-      "size": 65
+    "manifests/lattice-registry.json": {
+      "sha256": "2640a8d5f865dfaf524bc130cac95e25f6f838de323326921811408785982509",
+      "size": 5210
     },
     "outbox/README.md": {
       "sha256": "395f7a5def58dbdb46ecfc0bf32aebeb2a6eb320087a0c5f0546ace0e6949578",
@@ -110,8 +106,8 @@
       "size": 5105
     },
     "scripts/build-merkle.py": {
-      "sha256": "ddfda84f85e400034533ed2ba3abdb3793869eec915ba9f3e4bd8832afcd74b9",
-      "size": 6152
+      "sha256": "9b094bc804b7460047f3db5967728b471074a70299785cc3ec1f493380c9eeea",
+      "size": 6230
     },
     "scripts/drive-bridge.py": {
       "sha256": "37dcb23e5b2891504e47529283a1ef6e7d5c6d5f979e8dbd98b1ea50e1608eaf",
@@ -137,21 +133,45 @@
       "sha256": "e9af2913de609d1de45b2fbab270c5a77281543c4dab6d1dd182f221fd04f683",
       "size": 16
     },
-    "sha256-manifest.json": {
-      "sha256": "c81e19377d72a396fc469dce9d77fe58b74ff19ffbe612c34052214ac4d9e998",
-      "size": 4978
+    "specs/pqc-migration.md": {
+      "sha256": "0e4a6581a042c5b4df12504bf68bcf09397f39aed92c70d4bcd8f62d72ff518f",
+      "size": 7256
     },
     "super-device-manifest.json": {
       "sha256": "6071c0462069450acc55aecf19268a73231475ce0580790c8a3180e769c92700",
       "size": 3218
     },
     "tasks.md": {
-      "sha256": "eab418bcacc94ba18c7576852c8e9876f8d1c9a550cc20e5e7156d43abb857be",
-      "size": 2042
+      "sha256": "4866e49f12ab27632634611a03f8b170e357a539432103a07b63680a7aa18a6f",
+      "size": 4270
     },
     "ui/collective-helix.html": {
       "sha256": "62c68fab7ae5503d40022319992b9e0b054758664c862e1d25f199b2cd1a861c",
       "size": 2685
+    },
+    "verification/generate-inventory.js": {
+      "sha256": "b34f2e84ae19c01bb2e9d542d541d6ec18ecd2447942184d47fc6713f9edc865",
+      "size": 5172
+    },
+    "verification/merkle-proof-README.md.json": {
+      "sha256": "f30a0c12f2b2783d546182bbe1fdfa531910e7675cca1ff7cf5d22a8e19e5bf9",
+      "size": 1035
+    },
+    "verification/ml-dsa-signer.js": {
+      "sha256": "b6dde57b53ca3454535bbbb4c4bd8949594fef1f25deb92779607ab81a9ee6bd",
+      "size": 4042
+    },
+    "verification/package.json": {
+      "sha256": "9177ca834c52cb8d2f0a2de1c3fd69ebffa2eaa9544212154cc672eaf5c03d70",
+      "size": 512
+    },
+    "verification/verify-all.js": {
+      "sha256": "e9c57b683381a51c7199434dcded452802d19e4082b4c2a3759c3150f1b81678",
+      "size": 5034
+    },
+    "verification/verify-merkle.js": {
+      "sha256": "ad72ab67b09a542cc3a32c005f676a8812723caa1a8eeec9d7e62441f4e0826d",
+      "size": 4251
     },
     "wallet-hunt-report.json": {
       "sha256": "4023548e1b01e68093d89bdfd52c32ba488e24e6317b621f03287e7e8792f86b",

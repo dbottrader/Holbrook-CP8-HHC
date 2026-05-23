@@ -1,0 +1,34 @@
+{
+  "file": "README.md",
+  "leaf_hash": "554d0cdd96b6a7bb90379b5d191c4b4994388067e79f0dbc276318f91522b9ca",
+  "merkle_root": "38bb8abd6dce02c51eacba4090c267d8ed160525898ba50aadf8935d69d91d56",
+  "proof_steps": [
+    {
+      "hash": "cddd2393a2e54fd9d6518c7af2e7c34043fccf39dfba863fb50243428fca3d7b",
+      "direction": "right"
+    },
+    {
+      "hash": "62e26db3b979c42b5b5de160bb4e1e5c2900bc573cde857d6d3d4a525e783874",
+      "direction": "left"
+    },
+    {
+      "hash": "7e15692d919f43766d4785565e07a8eceaa2bb6630f373d2ae7c8e73a2a6c71b",
+      "direction": "right"
+    },
+    {
+      "hash": "69bf665d60a43e8cdc67d31856f8c31e758514ea940ac930a8842ee901d981f3",
+      "direction": "right"
+    },
+    {
+      "hash": "d9b7c31e79e7761d0a9ab87dca8d70d6cdab613a15a008b7e41491f75a9cab62",
+      "direction": "right"
+    },
+    {
+      "hash": "99587353d55533763838e1c99e01f65c99cbbbedb652e108d86e818676474a1b",
+      "direction": "right"
+    }
+  ],
+  "verified": true,
+  "protocol": "ASH-0.2",
+  "timestamp": "2026-05-23T17:19:50.984Z"
+}

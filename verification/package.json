@@ -1,0 +1,19 @@
+{
+  "name": "holbrook-cp8-verification",
+  "version": "0.4.0",
+  "description": "Quantum-resistant verification suite for Holbrook-CP8-HHC",
+  "type": "module",
+  "scripts": {
+    "verify": "node verification/verify-all.js",
+    "inventory": "node verification/generate-inventory.js",
+    "merkle": "node verification/verify-merkle.js",
+    "sign": "node verification/ml-dsa-signer.js"
+  },
+  "dependencies": {
+    "@noble/post-quantum": "^0.3.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

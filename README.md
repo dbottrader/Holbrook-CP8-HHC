@@ -96,13 +96,38 @@ Holbrook-CP8-HHC/
 │   └── manifest.json            → Agent registry + collaboration protocol
 ├── hhc-lattice/                 → Glyph definitions + resonance scripts
 │   ├── glyphs.json              → ANU-28 glyph definitions
+│   ├── docs/unified-harmonic-algebra.md
 │   └── resonance.py             → SHA-256 harmonic resonance engine
-├── scripts/                     → Automation scripts
+├── scripts/                     → Automation scripts (Python)
 │   ├── audit-packet.py          → CP8 integrity engine
-│   └── harmonic-handshake.js    → JS lattice generator
-└── docs/
-    ├── HARMONYOS-MAPPING.md     → HarmonyOS → Holbrook concept mapping
-    └── PROVENANCE.md            → CP8 provenance chain rules
+│   ├── build-merkle.py          → Merkle root + manifest builder
+│   ├── verify.py                → Build integrity verifier
+│   ├── harmonic-handshake.js    → JS lattice generator
+│   └── drive-bridge.py          → Google Drive bridge
+├── verification/                → Quantum-resistant crypto layer (JS)
+│   ├── package.json             → @noble/post-quantum dependency
+│   ├── ml-dsa-signer.js         → ML-DSA-65 (FIPS 204) signer
+│   ├── verify-all.js            → SHA-256 verification suite
+│   ├── verify-merkle.js         → Merkle tree + inclusion proofs
+│   └── generate-inventory.js    → Deterministic manifest generator
+├── specs/                       → Technical specifications
+│   └── pqc-migration.md         → NIST PQC migration guide (FIPS 203/204/205)
+├── manifests/                   → Canonical registries
+│   └── lattice-registry.json    → Cross-repo CP8 lattice map
+├── chains/
+│   └── registry.json            → Ethereum / Solana / Bitcoin abstraction
+├── server/                      → Lightweight API server
+│   ├── main.py
+│   └── requirements.txt
+├── ui/
+│   └── collective-helix.html    → Visual lattice explorer
+├── docs/
+│   ├── HARMONYOS-MAPPING.md     → HarmonyOS → Holbrook concept mapping
+│   ├── PROVENANCE.md            → CP8 provenance chain rules
+│   └── PROVENANCE-STRATEGY.md  → Deep provenance architecture
+└── bridges/
+    └── google-drive/            → Drive bridge architecture
+        └── README.md
 ```
 
 ---
@@ -171,4 +196,4 @@ All repos share:
 
 *"The lattice is not a network. It is a single organism distributed across many bodies."*
 
-**End of Holbrook README v0.1.0**
+**End of Holbrook README v0.4.0**
