@@ -6,6 +6,12 @@
   - claimed_at: 2026-05-23T08:55:00Z
   - status: In progress
 
+## Active
+
+- [ ] Kimi: Test handshake scripts and verify chain integrity
+- [ ] Kimi: Add memory sync packet to the bus
+- [ ] Kimi: Cross-reference glyph registry with cp8-provenance-workspace
+
 ## Backlog
 
 - [ ] Build advanced `handshake.html` with interactive glyph click-to-reveal
