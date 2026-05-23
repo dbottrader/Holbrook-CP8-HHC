@@ -258,7 +258,16 @@ def scan_workspace(root_path='.', exclude=None):
             continue
         
         # Skip excluded dirs
-        if any(part.startswith('.') or part in exclude for part in filepath.parts):
+        skip = False
+        for part in filepath.parts:
+            if part in exclude:
+                skip = True
+                break
+            # Skip hidden dirs but NOT the workspace root itself
+            if part.startswith('.') and part != '.openclaw':
+                skip = True
+                break
+        if skip:
             continue
         
         try:
