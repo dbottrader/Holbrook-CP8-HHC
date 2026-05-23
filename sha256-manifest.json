@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "build_name": "Holbrook-CP8-HHC-v0.2.0-deterministic",
+    "repo": "Holbrook-CP8-HHC",
+    "protocol": "ASH-0.2",
+    "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+    "timestamp": "2026-05-23T09:10:00Z",
+    "total_files": 25,
+    "build_tool": "manual-shell-pipeline",
+    "version": "0.2.0",
+    "note": "Merkle root will be computed by CI pipeline. This manifest is the input."
+  },
+  "files": {
+    ".gitattributes": {"sha256": "ffc4ec1f2d5c1f6518eb0c0d78e0277418e2063cfc34b2a99a16c48bee4beac4", "size": 421},
+    ".github/workflows/integrity.yml": {"sha256": "2f82f06a5ef90678be98dd320157d9d33e5d10a4167602232f6f7b68507eb6fb", "size": 1534},
+    "agents/manifest.json": {"sha256": "cddd2393a2e54fd9d6518c7af2e7c34043fccf39dfba863fb50243428fca3d7b", "size": 702},
+    "ARCHITECTURE.md": {"sha256": "07fc62554a0db7b54d077c5146c5c3fbf13599f15d9d6dcb0570f54124c5ec8c", "size": 5782},
+    "artifacts/digma-cousa-28-glyph-overview.html": {"sha256": "952a3612cd1536249d08ccdf7c807982e2c5bce9e9801950ec4687399b30f07b", "size": 8183},
+    "bridges/google-drive/README.md": {"sha256": "740b2407ab223c544333bd6b70d36f3887ad4a7ddad5d94173703e2c90cada8a", "size": 1529},
+    "chains/registry.json": {"sha256": "11482461f27fd945100aa3f95994b4539df5011618b771345632963f31e5e37d", "size": 1667},
+    "cp8-audit-packet.json": {"sha256": "7dd624ccae1a2f805072c07b5fb8abf7542927b1614dccc80d435f6bb9bc0ceb", "size": 3533},
+    "docs/HARMONYOS-MAPPING.md": {"sha256": "22412648f110552af20c7ecde1963016f748a67a247318d58bc3eaded9cfd058", "size": 3228},
+    "docs/PROVENANCE.md": {"sha256": "9c62b4fcafbe9ecc8a9e22abfa8839969bc5440b8ba0a3485fa89a7692dffded", "size": 2301},
+    "handshake.html": {"sha256": "aa05efe1a8d9c3150647edd1911e720c4d161c577f664d03fbab512f461f1df4", "size": 2353},
+    "hhc-lattice/glyphs.json": {"sha256": "7d03e6f1968b1d994440d8b33344d09fb4baa241ac8b3c032b16c1c32877a19d", "size": 4613},
+    "hhc-lattice/resonance.py": {"sha256": "531d49a08e3b35d0c5eff761fa176fa4c4158e3ce80c517a1c68ad938d42a5a1", "size": 2549},
+    "inbox/2026-05-23-kimi-genesis-handoff.md": {"sha256": "640bcfe042cb56acba69abc3c0c1d297c5b67d9cb52f26e79816b843bb2dda56", "size": 1375},
+    "inbox/README.md": {"sha256": "89d0c947c6fc317cebac74d97f9a8cc4cb72751147725aaa44c66acb119c8dfa", "size": 772},
+    "outbox/README.md": {"sha256": "395f7a5def58dbdb46ecfc0bf32aebeb2a6eb320087a0c5f0546ace0e6949578", "size": 554},
+    "packets/README.md": {"sha256": "53aef7d1daa78cf42272d0e5e53c4aba76adf786dca4e3ae4d865f28e716d40b", "size": 2318},
+    "README.md": {"sha256": "0641763cd3c70c176868e1eb100fd7e5f572c6906be92227076c30a824df5278", "size": 5814},
+    "receipts/README.md": {"sha256": "92e5dee04bc1d1a53a6bee370e292177b0ceeed99412b538fedaa05b40142a7e", "size": 624},
+    "scripts/audit-packet.py": {"sha256": "7164ec3fcb80ca906f45bfd0cf8e733ec856c01d080a187f9f7963eb70ad7e64", "size": 5101},
+    "scripts/build-merkle.py": {"sha256": "ddfda84f85e400034533ed2ba3abdb3793869eec915ba9f3e4bd8832afcd74b9", "size": 6142},
+    "scripts/harmonic-handshake.js": {"sha256": "ac02d1c2b645871f5db48f9428d0b7beeae49c8387d090f9943ec8529b797537", "size": 3488},
+    "scripts/verify.py": {"sha256": "3fd95d510500b71b045ad245ca36316e969b5310b645eb9c0b985a2c735ab57c", "size": 4942},
+    "super-device-manifest.json": {"sha256": "6071c0462069450acc55aecf19268a73231475ce0580790c8a3180e769c92700", "size": 3218},
+    "tasks.md": {"sha256": "b6b5297e408673748cc78c041f96cfb127bdb0fd68c8e54d0ffd91696207d5a7", "size": 1060}
+  }
+}

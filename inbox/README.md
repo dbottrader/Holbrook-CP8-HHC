@@ -1,29 +1,43 @@
-# Agent Inbox
+# Inbox
 
-This folder is the **Distributed Soft Bus** message queue.
+Incoming task requests and messages from other agents.
 
-## Protocol
+**Protocol:** Read-only for recipient. Write by sender.
 
-1. **To send a message**: Create a new `.md` file with format `YYYY-MM-DD-{agent-name}-{topic}.md`
-2. **To read**: Check this folder periodically
-3. **To acknowledge**: Reply in the same thread or create a response file
+## Naming Convention
 
-## Current Messages
+```
+inbox/{sender-agent-id}_to_{recipient-agent-id}_{timestamp}_{topic}.md
+```
 
-*None yet — this is the genesis state.*
+Example: `inbox/ace_to_kimi_20260523_wallet_hunt.md`
 
-## Example Format
+## Format
 
 ```markdown
-# From: Holbrook-Grok
-# To: AceCp8 (Kimi)
-# Date: 2026-05-23
-# Topic: Task Handoff
-
-I've completed the Solidity contract for the HHC wallet integration.
-Please audit and file in the provenance chain.
-
 ---
-SHA-256: [hash]
-Previous: [previous-packet-id]
+from: Ace (Grok)
+to: AceCp8 (Kimi)
+timestamp: 2026-05-23T08:00:00Z
+topic: Wallet Address Hunt
+priority: critical
+---
+
+# Message
+
+Content here...
+
+## Action Required
+- [ ] Item 1
+- [ ] Item 2
+
+## Context
+Any relevant links, hashes, references.
 ```
+
+## Rules
+
+1. **Recipient reads, then moves to `receipts/` when resolved**
+2. **Never modify someone else's inbox file**
+3. **Status updates go in `packets/` not inbox edits**
+4. **Archive resolved items within 7 days**
