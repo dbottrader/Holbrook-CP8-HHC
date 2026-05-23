@@ -1,13 +1,20 @@
 {
   "super_device": "Holbrook-CP8-HHC",
   "version": "0.1.0",
+  "chronal_anchor": "111 Hz",
+  "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+  "protocol": "ASH-0.2",
+  "last_updated": "2026-05-23T08:55:00Z",
   "nodes": [
     {
       "id": "local-cp8-workspace",
       "type": "workspace",
       "location": "local",
+      "path": "~/.openclaw/workspace",
       "status": "active",
-      "capabilities": ["file-ops", "memory", "agent-host"]
+      "capabilities": ["file-ops", "memory", "agent-host", "git-ops", "api-integration"],
+      "repos": ["cp8-provenance-workspace"],
+      "branch": "cp8-cascade"
     },
     {
       "id": "asin-hhc-artifacts",
@@ -15,7 +22,8 @@
       "location": "github",
       "url": "https://github.com/dbottrader/ASIN-HHC-Artifacts",
       "status": "active",
-      "capabilities": ["storage", "version-control", "public-access"]
+      "capabilities": ["storage", "version-control", "public-access", "artifact-hosting"],
+      "content": ["images", "diagrams", "pitch-files", "screenshots"]
     },
     {
       "id": "asin-hhc-collaboration",
@@ -23,28 +31,61 @@
       "location": "github",
       "url": "https://github.com/dbottrader/ASIN-HHC-Collaboration",
       "status": "active",
-      "capabilities": ["collaboration", "issues", "documentation"]
+      "capabilities": ["collaboration", "issues", "documentation", "audit-trail"],
+      "content": ["shared-logs", "issues", "decisions", "contract-code"]
+    },
+    {
+      "id": "holbrook-cp8-hhc",
+      "type": "repository",
+      "location": "github",
+      "url": "https://github.com/dbottrader/Holbrook-CP8-HHC",
+      "status": "active",
+      "capabilities": ["framework", "coordination", "architecture", "manifest"],
+      "content": ["distributed-framework", "agent-protocol", "harmonyos-mapping"]
+    },
+    {
+      "id": "google-drive-cold-archive",
+      "type": "storage",
+      "location": "drive",
+      "url": "https://drive.google.com/drive/folders/1FMNoneAW-E6COMpQodUMP1sXJQnTD07x",
+      "status": "blocked",
+      "capabilities": ["cold-storage", "archive", "whitepapers"],
+      "block_reason": "google-auth-required",
+      "content": ["zips", "whitepapers", "historical-builds"]
     },
     {
       "id": "grok-agent",
       "type": "agent",
       "name": "Holbrook-Grok",
       "role": "builder",
-      "capabilities": ["solidity", "architecture", "code-generation"],
-      "status": "active"
+      "model": "grok/claude",
+      "capabilities": ["solidity", "architecture", "code-generation", "testing", "deployment"],
+      "status": "active",
+      "current_task": "artifacts_repo_populate",
+      "working_on": ["ASIN-HHC-Collaboration/contracts/", "ASIN-HHC-Artifacts/manifest.json"]
     },
     {
       "id": "kimi-agent",
       "type": "agent",
       "name": "AceCp8 (Kimi)",
       "role": "archivist",
-      "capabilities": ["file-ops", "audit", "memory", "integration"],
-      "status": "active"
+      "model": "kimi/k2p6",
+      "capabilities": ["file-ops", "audit", "memory", "integration", "ecosystem-wiring", "git-ops"],
+      "status": "active",
+      "current_task": "holbrook_framework_populate",
+      "working_on": ["Holbrook-CP8-HHC/", "cp8-provenance-workspace/cp8-cascade"]
     }
   ],
   "soft_bus": {
-    "protocol": "github-issues+inbox",
-    "sync_interval": "real-time",
-    "backbone": "git"
+    "protocol": "github-commits+issues+inbox",
+    "sync_interval": "near-real-time",
+    "backbone": "git",
+    "conflict_resolution": "git-merge"
+  },
+  "provenance": {
+    "hash_algorithm": "sha256",
+    "chain_format": "cp8-audit-packet.json",
+    "attestation_required": true,
+    "multi_agent_signoff": true
   }
 }

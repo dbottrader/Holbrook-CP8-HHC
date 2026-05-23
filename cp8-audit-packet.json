@@ -1,18 +1,153 @@
+# CP8 Audit Packet Schema
+
+**Version:** CP8-0.1
+**Protocol:** ASH-0.2
+**Hash Algorithm:** SHA-256
+
+---
+
+## Packet Structure
+
+Every audit packet is a JSON object with the following schema:
+
+```json
 {
   "schema_version": "CP8-0.1",
   "packet_type": "audit",
-  "timestamp": "2026-05-23T00:00:00Z",
-  "agent": "Holbrook-Grok",
-  "action": "repo-creation",
-  "target": "Holbrook-CP8-HHC",
+  "packet_id": "uuid-v4",
+  "timestamp": "ISO-8601-with-timezone",
+  "agent": {
+    "id": "agent-identifier",
+    "name": "Human-readable name",
+    "model": "model-name"
+  },
+  "action": {
+    "type": "create|update|delete|verify|deploy",
+    "target": "file-path-or-repo-name",
+    "description": "Human-readable description"
+  },
   "provenance": {
-    "sha256": "",
-    "previous_packet": null,
+    "sha256": "hash-of-this-packet-content",
+    "previous_packet_id": "uuid-or-null",
+    "previous_sha256": "hash-of-previous-packet",
+    "attestations": [
+      {
+        "agent_id": "attesting-agent",
+        "signature": "sha256-of-attestation",
+        "timestamp": "ISO-8601"
+      }
+    ]
+  },
+  "metadata": {
+    "harmonyos_mapped": true,
+    "hhc_enabled": true,
+    "agents": ["grok", "kimi"],
+    "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320"
+  }
+}
+```
+
+---
+
+## Example: Repo Creation
+
+```json
+{
+  "schema_version": "CP8-0.1",
+  "packet_type": "audit",
+  "packet_id": "holbrook-001",
+  "timestamp": "2026-05-23T08:50:00Z",
+  "agent": {
+    "id": "holbrook-grok",
+    "name": "Holbrook-Grok",
+    "model": "grok"
+  },
+  "action": {
+    "type": "create",
+    "target": "Holbrook-CP8-HHC",
+    "description": "Created distributed agent framework repo"
+  },
+  "provenance": {
+    "sha256": "a1b2c3d4...",
+    "previous_packet_id": null,
+    "previous_sha256": null,
     "attestations": []
   },
   "metadata": {
     "harmonyos_mapped": true,
     "hhc_enabled": true,
-    "agents": ["grok", "kimi"]
+    "agents": ["grok", "kimi"],
+    "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320"
   }
 }
+```
+
+---
+
+## Example: Task Completion
+
+```json
+{
+  "schema_version": "CP8-0.1",
+  "packet_type": "audit",
+  "packet_id": "task-003-001",
+  "timestamp": "2026-05-23T08:35:00Z",
+  "agent": {
+    "id": "holbrook-grok",
+    "name": "Holbrook-Grok",
+    "model": "grok"
+  },
+  "action": {
+    "type": "deploy",
+    "target": "cp8-agents/workspace/contracts/",
+    "description": "Completed ERC-20 HHC token contract with CP8 Oracle"
+  },
+  "provenance": {
+    "sha256": "d7e3f9a2c1...",
+    "previous_packet_id": "holbrook-001",
+    "previous_sha256": "a1b2c3d4...",
+    "attestations": [
+      {
+        "agent_id": "kimi-cp8",
+        "signature": "sha256-of-kimi-verification",
+        "timestamp": "2026-05-23T08:40:00Z"
+      }
+    ]
+  },
+  "metadata": {
+    "harmonyos_mapped": true,
+    "hhc_enabled": true,
+    "agents": ["grok", "kimi"],
+    "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+    "task_ref": "#3",
+    "contracts": ["HarmonicCoin.sol", "CP8Oracle.sol"]
+  }
+}
+```
+
+---
+
+## Chain Verification
+
+To verify the audit chain:
+
+```python
+def verify_chain(packets):
+    for i, packet in enumerate(packets):
+        # Verify packet hash
+        content = json.dumps(packet, exclude="provenance.sha256")
+        computed_hash = sha256(content)
+        assert computed_hash == packet["provenance"]["sha256"]
+        
+        # Verify chain link
+        if i > 0:
+            prev = packets[i-1]
+            assert packet["provenance"]["previous_packet_id"] == prev["packet_id"]
+            assert packet["provenance"]["previous_sha256"] == prev["provenance"]["sha256"]
+    
+    return True
+```
+
+---
+
+**End of Audit Packet Schema v0.1**

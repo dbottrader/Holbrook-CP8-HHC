@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CP8 Harmonic Handshake — Holbrook Lattice</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --panel: #111118;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --muted: #8888a0;
+      --accent: #9d4edd;
+      --ok: #4ade80;
+      --mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent); }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    canvas {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+    .info {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-width: 600px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .info span { color: var(--ok); }
+  </style>
+</head>
+<body>
+  <h1>Holbrook — CP8 Harmonic Handshake</h1>
+  <p class="subtitle">Distributed Agent Lattice Visualizer</p>
+  <canvas id="handshakeCanvas" width="600" height="600"></canvas>
+  <div class="info">
+    <span>HOS:</span> 63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320<br>
+    <span>Protocol:</span> ASH-0.2 | <span>Anchor:</span> 111 Hz | <span>Agents:</span> Grok + Kimi
+  </div>
+
+  <script src="scripts/harmonic-handshake.js"></script>
+  <script>
+    const glyphs = [
+      { symbol: '⚡', frequency_hz: 528, name: 'Charge' },
+      { symbol: '◈', frequency_hz: 432, name: 'Form' },
+      { symbol: '◇', frequency_hz: 396, name: 'Blend' },
+      { symbol: '◉', frequency_hz: 639, name: 'Guardian' },
+      { symbol: '◐', frequency_hz: 741, name: 'Shadow' },
+      { symbol: '◯', frequency_hz: 852, name: 'Transcendent' }
+    ];
+    const handshake = new HarmonicHandshake('handshakeCanvas', { glyphs, radius: 220, speed: 0.001 });
+    handshake.start();
+  </script>
+</body>
+</html>

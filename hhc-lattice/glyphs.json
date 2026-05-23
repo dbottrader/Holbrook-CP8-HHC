@@ -1,0 +1,81 @@
+{
+  "lattice": "ANU-28",
+  "version": "1.0",
+  "chronal_anchor_hz": 111,
+  "ground_truth_hash": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+  "glyphs": [
+    {
+      "id": "anu-01",
+      "symbol": "⚡",
+      "name": "Charge",
+      "ring": 1,
+      "frequency_hz": 528,
+      "element": "fire",
+      "meaning": "Catalytic ignition",
+      "compound_smiles": "C1CCOC1",
+      "activation_sequence": 1
+    },
+    {
+      "id": "anu-02",
+      "symbol": "◈",
+      "name": "Form",
+      "ring": 1,
+      "frequency_hz": 432,
+      "element": "earth",
+      "meaning": "Structural coherence",
+      "compound_smiles": "c1ccccc1",
+      "activation_sequence": 2
+    },
+    {
+      "id": "anu-03",
+      "symbol": "◇",
+      "name": "Blend",
+      "ring": 2,
+      "frequency_hz": 396,
+      "element": "water",
+      "meaning": "Resonant fusion",
+      "compound_smiles": "CC(=O)O",
+      "activation_sequence": 3
+    },
+    {
+      "id": "anu-04",
+      "symbol": "◉",
+      "name": "Guardian",
+      "ring": 2,
+      "frequency_hz": 639,
+      "element": "air",
+      "meaning": "Protective encoding",
+      "compound_smiles": "C(C(=O)O)N",
+      "activation_sequence": 4
+    },
+    {
+      "id": "anu-05",
+      "symbol": "◐",
+      "name": "Shadow",
+      "ring": 3,
+      "frequency_hz": 741,
+      "element": "aether",
+      "meaning": "Cathartic release",
+      "compound_smiles": "CC(C)C1=CC=C(C=C1)C(C)C",
+      "activation_sequence": 5
+    },
+    {
+      "id": "anu-06",
+      "symbol": "◯",
+      "name": "Transcendent",
+      "ring": 3,
+      "frequency_hz": 852,
+      "element": "void",
+      "meaning": "Unified return",
+      "compound_smiles": "C1=CC=C(C=C1)C2=CC=CC=C2",
+      "activation_sequence": 6
+    }
+  ],
+  "meta": {
+    "total_glyphs": 28,
+    "documented_glyphs": 6,
+    "remaining": 22,
+    "last_updated": "2026-05-23",
+    "source": "ANU-28 Codex v1.0"
+  }
+}
