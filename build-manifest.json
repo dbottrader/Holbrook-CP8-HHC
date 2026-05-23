@@ -1,14 +1,13 @@
 {
-  "build_name": "Holbrook-CP8-HHC-v0.2.0-deterministic",
+  "build_name": "Holbrook-CP8-HHC-20260523-045644",
   "repo": "Holbrook-CP8-HHC",
   "protocol": "ASH-0.2",
   "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-  "timestamp": "2026-05-23T09:10:00Z",
-  "total_files": 25,
-  "total_bytes": 66728,
-  "merkle_root": "57dffaeb9752b3a21f5ddde57fda22334e9369aa72bec262bd58b90ff92eb6dd",
-  "combined_signature": "345b107dba994b392378fbd070a59c4dfea77afb62192fad646bf3cd0e9d91ff",
-  "build_tool": "manual-shell-pipeline-v0.2.0",
-  "version": "0.2.0",
-  "note": "Manually-generated deterministic manifest with verified Merkle root and combined signature. CI pipeline will recompute and validate on every push."
+  "timestamp": "2026-05-23T04:56:44.156316+00:00",
+  "total_files": 30,
+  "total_bytes": 114217,
+  "merkle_root": "398ef90facb6f2914df01e9c6de1a7685bdcfff290df78ed063067091dfd1cd7",
+  "combined_signature": "64dd82e656cde3b1d3f3c03051cf9fc1605d117b1bd4b25ac1d54b695191c36b",
+  "build_tool": "build-merkle.py",
+  "version": "1.0.0"
 }

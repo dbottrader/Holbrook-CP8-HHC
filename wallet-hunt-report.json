@@ -1,0 +1,19 @@
+{
+  "scan_timestamp": "2026-05-23T04:56:17.400964+00:00",
+  "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+  "scanned_files": 0,
+  "findings": {
+    "eth_addresses": [],
+    "btc_addresses": [],
+    "sol_addresses": [],
+    "potential_private_keys": [],
+    "seed_phrases": []
+  },
+  "summary": {
+    "eth_found": 0,
+    "btc_found": 0,
+    "sol_found": 0,
+    "pk_warnings": 0,
+    "seed_warnings": 0
+  }
+}
