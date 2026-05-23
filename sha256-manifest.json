@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "build_name": "HOLBROOK-v0.4.0",
+    "build_name": "Holbrook-CP8-HHC-20260523-173348",
     "repo": "Holbrook-CP8-HHC",
     "protocol": "ASH-0.2",
     "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-    "timestamp": "2026-05-23T17:23:27.492248+00:00",
-    "total_files": 41,
-    "total_bytes": 162503,
-    "merkle_root": "a2c7d8d353892c129e771a3de565a7d6d27e989b8cca57f8b45dbe4409d9007b",
-    "combined_signature": "1672f6d7a4f0af71929ec90b970c760c217f11c4a2ea1be3c4b02c83971439ec",
+    "timestamp": "2026-05-23T17:33:48.082632+00:00",
+    "total_files": 45,
+    "total_bytes": 179690,
+    "merkle_root": "cf9cbfe42ccb8df8f9b0256e5b9403291f1e2257842cab8240742914c2c15033",
+    "combined_signature": "2e7165ad6d0e4878cc8e47bb8a6d4e83a3cae62b1fb239e581284811969007be",
     "build_tool": "build-merkle.py",
     "version": "1.0.0"
   },
@@ -45,6 +45,10 @@
       "sha256": "7dd624ccae1a2f805072c07b5fb8abf7542927b1614dccc80d435f6bb9bc0ceb",
       "size": 3533
     },
+    "docs/HARMONIC_ALGEBRA_SPEC.md": {
+      "sha256": "1ae1f729e59522fcdf37ec61cc4664a98233776c49553fd2e8daf6b35cb5c5cc",
+      "size": 7590
+    },
     "docs/HARMONYOS-MAPPING.md": {
       "sha256": "22412648f110552af20c7ecde1963016f748a67a247318d58bc3eaded9cfd058",
       "size": 3282
@@ -70,8 +74,8 @@
       "size": 4731
     },
     "hhc-lattice/resonance.py": {
-      "sha256": "531d49a08e3b35d0c5eff761fa176fa4c4158e3ce80c517a1c68ad938d42a5a1",
-      "size": 2553
+      "sha256": "bf18dfbf75cb98e862993885a5a473749715c6ae0135caae9d8cd14640181734",
+      "size": 7116
     },
     "inbox/2026-05-23-kimi-genesis-handoff.md": {
       "sha256": "640bcfe042cb56acba69abc3c0c1d297c5b67d9cb52f26e79816b843bb2dda56",
@@ -132,6 +136,18 @@
     "server/requirements.txt": {
       "sha256": "e9af2913de609d1de45b2fbab270c5a77281543c4dab6d1dd182f221fd04f683",
       "size": 16
+    },
+    "skills/agent-handoff-protocol.md": {
+      "sha256": "b3b40943cd5de4a1295bc5afc85f8d03d7ba5a3189a1295a2793859b2e48f34c",
+      "size": 1450
+    },
+    "skills/cp8-harmonic-algebra-skill.md": {
+      "sha256": "2290d39c59bc3c7db790acf16a209e1b4899e9cba8d58abddfed9d2edf01990f",
+      "size": 2147
+    },
+    "skills/cp8-merkle-skill.md": {
+      "sha256": "e7827ea717c38998e11a5aa00c3c5da8c9f95400db39d47cfdb976e9ec6d9c76",
+      "size": 1437
     },
     "specs/pqc-migration.md": {
       "sha256": "0e4a6581a042c5b4df12504bf68bcf09397f39aed92c70d4bcd8f62d72ff518f",
