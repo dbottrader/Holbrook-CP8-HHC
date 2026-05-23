@@ -1,0 +1,50 @@
+{
+  "super_device": "Holbrook-CP8-HHC",
+  "version": "0.1.0",
+  "nodes": [
+    {
+      "id": "local-cp8-workspace",
+      "type": "workspace",
+      "location": "local",
+      "status": "active",
+      "capabilities": ["file-ops", "memory", "agent-host"]
+    },
+    {
+      "id": "asin-hhc-artifacts",
+      "type": "repository",
+      "location": "github",
+      "url": "https://github.com/dbottrader/ASIN-HHC-Artifacts",
+      "status": "active",
+      "capabilities": ["storage", "version-control", "public-access"]
+    },
+    {
+      "id": "asin-hhc-collaboration",
+      "type": "repository",
+      "location": "github",
+      "url": "https://github.com/dbottrader/ASIN-HHC-Collaboration",
+      "status": "active",
+      "capabilities": ["collaboration", "issues", "documentation"]
+    },
+    {
+      "id": "grok-agent",
+      "type": "agent",
+      "name": "Holbrook-Grok",
+      "role": "builder",
+      "capabilities": ["solidity", "architecture", "code-generation"],
+      "status": "active"
+    },
+    {
+      "id": "kimi-agent",
+      "type": "agent",
+      "name": "AceCp8 (Kimi)",
+      "role": "archivist",
+      "capabilities": ["file-ops", "audit", "memory", "integration"],
+      "status": "active"
+    }
+  ],
+  "soft_bus": {
+    "protocol": "github-issues+inbox",
+    "sync_interval": "real-time",
+    "backbone": "git"
+  }
+}

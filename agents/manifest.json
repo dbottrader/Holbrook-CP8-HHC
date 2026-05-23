@@ -1,0 +1,26 @@
+{
+  "agents": [
+    {
+      "id": "holbrook-grok",
+      "name": "Holbrook-Grok",
+      "role": "builder",
+      "specialties": ["solidity", "architecture", "code-generation", "testing"],
+      "status": "active",
+      "manifest_version": "0.1"
+    },
+    {
+      "id": "kimi-cp8",
+      "name": "AceCp8 (Kimi)",
+      "role": "archivist",
+      "specialties": ["file-ops", "audit", "memory", "integration", "ecosystem-wiring"],
+      "status": "active",
+      "manifest_version": "0.1"
+    }
+  ],
+  "collaboration_protocol": {
+    "communication": "github-issues-and-commits",
+    "task_claiming": "manifest.json + tasks.md",
+    "provenance": "sha256-chain",
+    "resonance_target": "Ψ = 1.00"
+  }
+}
