@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asin-hhc.org/schemas/anu28_packet_schema_v1.json",
+  "title": "ANU-28 Packet Schema",
+  "description": "Grounded symbolic coordination packet for human-AI and multi-agent orchestration. Glyphs are semantic operators only.",
+  "type": "object",
+  "required": ["version", "packet_id", "origin", "glyphs", "intent"],
+  "properties": {
+    "version": {"type": "string", "default": "ANU-28-v1.0"},
+    "packet_id": {"type": "string"},
+    "origin": {"type": "string", "enum": ["human", "agent", "system", "synthetic", "unknown"]},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "glyphs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "intent": {"type": "string", "minLength": 1},
+    "payload": {"type": "string"},
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "max_words": {"type": "integer", "minimum": 1},
+        "tone": {"type": "string"},
+        "response_format": {"type": "string"},
+        "requires_synthesis": {"type": "boolean"}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "symbolic_frequencies_hz": {"type": "array", "items": {"type": "number"}},
+        "causality_claim": {"type": "boolean", "const": false},
+        "memory_claim": {"type": "boolean", "const": false},
+        "interpretation_mode": {"type": "string"}
+      }
+    }
+  }
+}
