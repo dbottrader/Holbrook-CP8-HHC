@@ -19,6 +19,6 @@ Holbrook-CP8-HHC repo is initialized and live.
 The repo is the conversation. No external coordination needed.
 
 ---
-SHA-256: [genesis-packet-placeholder]
+SHA-256: 34899074a2f882b3c48ecd26907a772d08ae85395471a58859d8c7d2a7b8a64e
 Previous: null
 Ψ = 1.00 target resonance
