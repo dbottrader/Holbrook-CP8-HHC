@@ -1,0 +1,22 @@
+{
+  "generated_utc": "2026-07-04T00:00:00Z",
+  "canonical_repo": "Holbrook-CP8-HHC",
+  "purpose": "Canonical provenance manifest for CP8 / ASIN-HHC publication hardening.",
+  "repository_strategy": {
+    "Holbrook-CP8-HHC": "Canonical provenance spine: deterministic builds, manifests, hashes, verification, packet bus, chain registry.",
+    "ASIN-HHC-Artifacts": "Public portfolio: curated PDFs, visual artifacts, diagrams, and encoded artifact payloads.",
+    "ASIN-HHC-Collaboration": "Public audit trail: session logs, decision records, milestones, collaboration chronology.",
+    "cp8-provenance-workspace": "Private working repo: drafts, speculative work, experimental notes. Do not publish wholesale."
+  },
+  "publication_rules": [
+    "Keep deterministic provenance centralized in Holbrook-CP8-HHC.",
+    "Keep public artifacts curated and externally legible.",
+    "Keep collaboration logs separate from technical source.",
+    "Keep speculative/private material out of public repos unless intentionally redacted."
+  ],
+  "artifact_payload": {
+    "zip_sha256": "9109c27d156c7b0fa63e5f21b8bf8eb76f43e0bf6c2fdae11ebf7054ddb1fdc7",
+    "zip_name": "CP8_GitHub_Provenance_Payload.zip",
+    "encoded_location": "ASIN-HHC-Artifacts/payload/CP8_GitHub_Provenance_Payload.zip.b64"
+  }
+}
