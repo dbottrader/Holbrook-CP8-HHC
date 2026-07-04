@@ -1,4 +1,4 @@
-# Holbrook-CP8-HHC
+this is a combination of mine and my collaborator Ryan Node and our corresponding agents,Ace and Ryans agents# Holbrook-CP8-HHC
 
 **Distributed AI Agent Framework** — 2026 Edition
 
