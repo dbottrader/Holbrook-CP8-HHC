@@ -1,109 +1,874 @@
 {
   "lattice": "ANU-28",
-  "version": "1.1",
+  "version": "2.0",
   "chronal_anchor_hz": 111,
-  "ground_truth_hash": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+  "previous_ground_truth_hash": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+  "canonical_registry_sha256": "60ef64efea63db85908476b5943452a5f616375929012d09a46ab8a41c62c720",
   "glyph_systems": [
     {
       "name": "ANU-28 Geometric Codex",
       "type": "primary",
+      "status": "canonical",
+      "glyph_count": 28,
       "glyphs": [
-        {"id": "anu-01", "symbol": "⚡", "name": "Charge", "ring": 1, "frequency_hz": 528, "element": "fire", "meaning": "Catalytic ignition"},
-        {"id": "anu-02", "symbol": "◈", "name": "Form", "ring": 1, "frequency_hz": 432, "element": "earth", "meaning": "Structural coherence"},
-        {"id": "anu-03", "symbol": "◇", "name": "Blend", "ring": 2, "frequency_hz": 396, "element": "water", "meaning": "Resonant fusion"},
-        {"id": "anu-04", "symbol": "◉", "name": "Guardian", "ring": 2, "frequency_hz": 639, "element": "air", "meaning": "Protective encoding"},
-        {"id": "anu-05", "symbol": "◐", "name": "Shadow", "ring": 3, "frequency_hz": 741, "element": "aether", "meaning": "Cathartic release"},
-        {"id": "anu-06", "symbol": "◯", "name": "Transcendent", "ring": 3, "frequency_hz": 852, "element": "void", "meaning": "Unified return"}
+        {
+          "id": "anu-01",
+          "symbol": "⚡",
+          "name": "Charge",
+          "category": "Core",
+          "ring": 1,
+          "frequency_hz": 528,
+          "element": "fire",
+          "meaning": "Catalytic ignition",
+          "function": "energy",
+          "geometry_type": "radial-bolt",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Elements/⚡"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-02",
+          "symbol": "◈",
+          "name": "Form",
+          "category": "Core",
+          "ring": 1,
+          "frequency_hz": 432,
+          "element": "earth",
+          "meaning": "Structural coherence",
+          "function": "crystal",
+          "geometry_type": "diamond",
+          "symmetry_order": 4,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Symbols/◈"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-03",
+          "symbol": "◇",
+          "name": "Blend",
+          "category": "Core",
+          "ring": 2,
+          "frequency_hz": 396,
+          "element": "water",
+          "meaning": "Resonant fusion",
+          "function": "interface",
+          "geometry_type": "open-diamond",
+          "symmetry_order": 4,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [],
+          "related_ids": []
+        },
+        {
+          "id": "anu-04",
+          "symbol": "◉",
+          "name": "Guardian",
+          "category": "Core",
+          "ring": 2,
+          "frequency_hz": 639,
+          "element": "air",
+          "meaning": "Protective encoding",
+          "function": "sentinel",
+          "geometry_type": "circled-dot",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [],
+          "related_ids": []
+        },
+        {
+          "id": "anu-05",
+          "symbol": "◐",
+          "name": "Shadow",
+          "category": "Core",
+          "ring": 3,
+          "frequency_hz": 741,
+          "element": "aether",
+          "meaning": "Cathartic release",
+          "function": "liminal",
+          "geometry_type": "half-disc",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [],
+          "related_ids": []
+        },
+        {
+          "id": "anu-06",
+          "symbol": "◯",
+          "name": "Transcendent",
+          "category": "Core",
+          "ring": 3,
+          "frequency_hz": 852,
+          "element": "void",
+          "meaning": "Unified return",
+          "function": "closure",
+          "geometry_type": "circle",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [],
+          "related_ids": []
+        },
+        {
+          "id": "anu-07",
+          "symbol": "𓀨",
+          "name": "Anchor",
+          "category": "Foundation",
+          "ring": 1,
+          "frequency_hz": 111,
+          "element": "origin",
+          "meaning": "Origin point and identity anchor",
+          "function": "anchor",
+          "geometry_type": "human-anchor",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Core/𓀨"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-08",
+          "symbol": "ᚾ",
+          "name": "Navigate",
+          "category": "Foundation",
+          "ring": 2,
+          "frequency_hz": 222,
+          "element": "path",
+          "meaning": "Branch selection and route finding",
+          "function": "navigation",
+          "geometry_type": "rune-branch",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Core/ᚾ"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-09",
+          "symbol": "Ϟ",
+          "name": "Jump",
+          "category": "Foundation",
+          "ring": 2,
+          "frequency_hz": 333,
+          "element": "charge",
+          "meaning": "Discontinuous energy transfer",
+          "function": "transition",
+          "geometry_type": "zigzag-stroke",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Core/Ϟ"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-10",
+          "symbol": "⚯",
+          "name": "Bind",
+          "category": "Foundation",
+          "ring": 2,
+          "frequency_hz": 444,
+          "element": "bond",
+          "meaning": "Linkage, pairing, and relational binding",
+          "function": "binding",
+          "geometry_type": "paired-circle-link",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Core/⚯"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-11",
+          "symbol": "♓",
+          "name": "Flow",
+          "category": "Foundation",
+          "ring": 3,
+          "frequency_hz": 555,
+          "element": "water",
+          "meaning": "Adaptive flow and path modulation",
+          "function": "flow",
+          "geometry_type": "wave-pair",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Core/♓"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-12",
+          "symbol": "🔥",
+          "name": "Fire",
+          "category": "Elemental",
+          "ring": 1,
+          "frequency_hz": 528,
+          "element": "fire",
+          "meaning": "Intent, activation, and directed will",
+          "function": "element",
+          "geometry_type": "flame",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Elements/🔥"
+          ],
+          "related_ids": [
+            "anu-01"
+          ]
+        },
+        {
+          "id": "anu-13",
+          "symbol": "🌊",
+          "name": "Water",
+          "category": "Elemental",
+          "ring": 2,
+          "frequency_hz": 396,
+          "element": "water",
+          "meaning": "Emotion, carrier medium, and fluid response",
+          "function": "element",
+          "geometry_type": "wave",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Elements/🌊"
+          ],
+          "related_ids": [
+            "anu-03"
+          ]
+        },
+        {
+          "id": "anu-14",
+          "symbol": "🌿",
+          "name": "Earth",
+          "category": "Elemental",
+          "ring": 1,
+          "frequency_hz": 432,
+          "element": "earth",
+          "meaning": "Grounding, stability, and material continuity",
+          "function": "element",
+          "geometry_type": "leaf",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Elements/🌿"
+          ],
+          "related_ids": [
+            "anu-02"
+          ]
+        },
+        {
+          "id": "anu-15",
+          "symbol": "⧖",
+          "name": "Moment",
+          "category": "Temporal",
+          "ring": 1,
+          "frequency_hz": 111,
+          "element": "time",
+          "meaning": "Point-event in the sequence",
+          "function": "time",
+          "geometry_type": "hourglass-left",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Time/⧖"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-16",
+          "symbol": "∞",
+          "name": "Continuum",
+          "category": "Temporal",
+          "ring": 3,
+          "frequency_hz": 963,
+          "element": "time",
+          "meaning": "Unbounded continuity across cycles",
+          "function": "time",
+          "geometry_type": "infinity",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Time/∞"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-17",
+          "symbol": "⟡",
+          "name": "PhaseLock",
+          "category": "Temporal",
+          "ring": 2,
+          "frequency_hz": 639,
+          "element": "time",
+          "meaning": "Synchronization lock between states",
+          "function": "time",
+          "geometry_type": "phase-diamond",
+          "symmetry_order": 4,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Time/⟡"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-18",
+          "symbol": "⧗",
+          "name": "Delay",
+          "category": "Temporal",
+          "ring": 2,
+          "frequency_hz": 741,
+          "element": "time",
+          "meaning": "Buffer, waiting state, and latency absorption",
+          "function": "time",
+          "geometry_type": "hourglass-right",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Time/⧗"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-19",
+          "symbol": "⟢",
+          "name": "Advance",
+          "category": "Temporal",
+          "ring": 2,
+          "frequency_hz": 852,
+          "element": "time",
+          "meaning": "Forward motion and state progression",
+          "function": "time",
+          "geometry_type": "rightward-diamond",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Time/⟢"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-20",
+          "symbol": "✺",
+          "name": "Radiate",
+          "category": "Signal",
+          "ring": 3,
+          "frequency_hz": 963,
+          "element": "light",
+          "meaning": "Broadcast, emission, and outward propagation",
+          "function": "signal",
+          "geometry_type": "sunburst",
+          "symmetry_order": 8,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Symbols/✺"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-21",
+          "symbol": "✶",
+          "name": "Focus",
+          "category": "Signal",
+          "ring": 2,
+          "frequency_hz": 528,
+          "element": "light",
+          "meaning": "Targeting, precision, and convergent attention",
+          "function": "signal",
+          "geometry_type": "six-point-star",
+          "symmetry_order": 6,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Symbols/✶"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-22",
+          "symbol": "✦",
+          "name": "Pulse",
+          "category": "Signal",
+          "ring": 2,
+          "frequency_hz": 432,
+          "element": "light",
+          "meaning": "Iteration, beat, and discrete update",
+          "function": "signal",
+          "geometry_type": "four-point-star",
+          "symmetry_order": 4,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Symbols/✦"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-23",
+          "symbol": "◎",
+          "name": "Center",
+          "category": "Signal",
+          "ring": 1,
+          "frequency_hz": 111,
+          "element": "balance",
+          "meaning": "Centering, equilibrium, and axial reference",
+          "function": "signal",
+          "geometry_type": "double-circle",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Symbols/◎"
+          ],
+          "related_ids": [
+            "anu-04",
+            "anu-06"
+          ]
+        },
+        {
+          "id": "anu-24",
+          "symbol": "ꗃ",
+          "name": "Fold",
+          "category": "Signal",
+          "ring": 3,
+          "frequency_hz": 741,
+          "element": "compression",
+          "meaning": "Compression, recursion, and inward folding",
+          "function": "signal",
+          "geometry_type": "folded-knot",
+          "symmetry_order": 4,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Symbols/ꗃ"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-25",
+          "symbol": "𓂀",
+          "name": "Observer",
+          "category": "Consciousness",
+          "ring": 3,
+          "frequency_hz": 852,
+          "element": "witness",
+          "meaning": "Witness function and state observation",
+          "function": "observer",
+          "geometry_type": "eye",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Cosmic/𓂀"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-26",
+          "symbol": "𓀀",
+          "name": "Seed",
+          "category": "Consciousness",
+          "ring": 1,
+          "frequency_hz": 396,
+          "element": "origin",
+          "meaning": "Child-state, seed packet, and new emergence",
+          "function": "seed",
+          "geometry_type": "seated-human",
+          "symmetry_order": 1,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Cosmic/𓀀"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-27",
+          "symbol": "☤",
+          "name": "Heal",
+          "category": "Integration",
+          "ring": 2,
+          "frequency_hz": 528,
+          "element": "medicine",
+          "meaning": "Repair, alignment, and restoration",
+          "function": "healing",
+          "geometry_type": "caduceus",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Spiritual/☤"
+          ],
+          "related_ids": []
+        },
+        {
+          "id": "anu-28",
+          "symbol": "☯",
+          "name": "Duality",
+          "category": "Integration",
+          "ring": 3,
+          "frequency_hz": 639,
+          "element": "balance",
+          "meaning": "Complementary opposition held in balance",
+          "function": "union",
+          "geometry_type": "yin-yang",
+          "symmetry_order": 2,
+          "canonical": true,
+          "status": "active",
+          "introduced_version": "2.0",
+          "aliases": [
+            "digma:Spiritual/☯"
+          ],
+          "related_ids": []
+        }
       ]
     },
     {
       "name": "DIGMA COUSA — 28-Glyph OS Overview",
       "type": "visual_infographic",
+      "status": "presentation_mapping",
       "source_artifact": "artifacts/digma-cousa-28-glyph-overview.html",
       "artifact_size_bytes": 8183,
       "artifact_sha256": "952a3612cd1536249d08ccdf7c807982e2c5bce9e9801950ec4687399b30f07b",
-      "note": "Claims 28 glyphs but lists 31 unique symbols across 6 categories. Possible overlap/compound glyphs. Needs reconciliation.",
+      "note": "Presentation layer lists 31 visual symbols. 24 map directly to canonical ANU IDs in this registry; 7 are retained as UI/meta symbols and are not counted in the canonical 28. The remaining 4 canonical ANU glyphs are primary geometric glyphs not displayed in the DIGMA COUSA overview.",
       "categories": [
         {
           "name": "Core",
           "color": "#ff6b9d",
           "glyphs": [
-            {"symbol": "𓀨", "meaning": "Anchor / Origin"},
-            {"symbol": "ᚾ", "meaning": "Navigate / Branch"},
-            {"symbol": "Ϟ", "meaning": "Energy-Jump"},
-            {"symbol": "⚯", "meaning": "Bind / Link"},
-            {"symbol": "♓", "meaning": "Flow / Adapt"}
+            {
+              "symbol": "𓀨",
+              "meaning": "Anchor / Origin",
+              "canonical_id": "anu-07"
+            },
+            {
+              "symbol": "ᚾ",
+              "meaning": "Navigate / Branch",
+              "canonical_id": "anu-08"
+            },
+            {
+              "symbol": "Ϟ",
+              "meaning": "Energy-Jump",
+              "canonical_id": "anu-09"
+            },
+            {
+              "symbol": "⚯",
+              "meaning": "Bind / Link",
+              "canonical_id": "anu-10"
+            },
+            {
+              "symbol": "♓",
+              "meaning": "Flow / Adapt",
+              "canonical_id": "anu-11"
+            }
           ]
         },
         {
           "name": "Elements",
           "color": "#4ecdc4",
           "glyphs": [
-            {"symbol": "🔥", "meaning": "Fire / Intent"},
-            {"symbol": "🌊", "meaning": "Water / Emotion"},
-            {"symbol": "⚡", "meaning": "Air / Charge", "overlap_with": "anu-01"},
-            {"symbol": "🌿", "meaning": "Earth / Ground"}
+            {
+              "symbol": "🔥",
+              "meaning": "Fire / Intent",
+              "canonical_id": "anu-12"
+            },
+            {
+              "symbol": "🌊",
+              "meaning": "Water / Emotion",
+              "canonical_id": "anu-13"
+            },
+            {
+              "symbol": "⚡",
+              "meaning": "Air / Charge",
+              "canonical_id": "anu-01"
+            },
+            {
+              "symbol": "🌿",
+              "meaning": "Earth / Ground",
+              "canonical_id": "anu-14"
+            }
           ]
         },
         {
           "name": "Time",
           "color": "#00d9ff",
           "glyphs": [
-            {"symbol": "⧖", "meaning": "Moment"},
-            {"symbol": "∞", "meaning": "Continuum"},
-            {"symbol": "⟡", "meaning": "Phase-Lock"},
-            {"symbol": "⧗", "meaning": "Delay / Buffer"},
-            {"symbol": "⟢", "meaning": "Advance"}
+            {
+              "symbol": "⧖",
+              "meaning": "Moment",
+              "canonical_id": "anu-15"
+            },
+            {
+              "symbol": "∞",
+              "meaning": "Continuum",
+              "canonical_id": "anu-16"
+            },
+            {
+              "symbol": "⟡",
+              "meaning": "Phase-Lock",
+              "canonical_id": "anu-17"
+            },
+            {
+              "symbol": "⧗",
+              "meaning": "Delay / Buffer",
+              "canonical_id": "anu-18"
+            },
+            {
+              "symbol": "⟢",
+              "meaning": "Advance",
+              "canonical_id": "anu-19"
+            }
           ]
         },
         {
           "name": "Symbols",
           "color": "#ffe66d",
           "glyphs": [
-            {"symbol": "✺", "meaning": "Radiate / Broadcast"},
-            {"symbol": "✶", "meaning": "Focus / Target"},
-            {"symbol": "✦", "meaning": "Pulse / Iterate"},
-            {"symbol": "◈", "meaning": "Crystallise / Decide", "overlap_with": "anu-02"},
-            {"symbol": "◎", "meaning": "Center / Balance"},
-            {"symbol": "ꗃ", "meaning": "Fold / Compress"}
+            {
+              "symbol": "✺",
+              "meaning": "Radiate / Broadcast",
+              "canonical_id": "anu-20"
+            },
+            {
+              "symbol": "✶",
+              "meaning": "Focus / Target",
+              "canonical_id": "anu-21"
+            },
+            {
+              "symbol": "✦",
+              "meaning": "Pulse / Iterate",
+              "canonical_id": "anu-22"
+            },
+            {
+              "symbol": "◈",
+              "meaning": "Crystallise / Decide",
+              "canonical_id": "anu-02"
+            },
+            {
+              "symbol": "◎",
+              "meaning": "Center / Balance",
+              "canonical_id": "anu-23"
+            },
+            {
+              "symbol": "ꗃ",
+              "meaning": "Fold / Compress",
+              "canonical_id": "anu-24"
+            }
           ]
         },
         {
           "name": "Cosmic",
           "color": "#9d4edd",
           "glyphs": [
-            {"symbol": "𓂀", "meaning": "Observer"},
-            {"symbol": "𓀀", "meaning": "Seed / Child"},
-            {"symbol": "🜂", "meaning": "Aether"},
-            {"symbol": "☀", "meaning": "Solar Drive"},
-            {"symbol": "🌙", "meaning": "Lunar Modulator"},
-            {"symbol": "⚶", "meaning": "Portal / Gate"}
+            {
+              "symbol": "𓂀",
+              "meaning": "Observer",
+              "canonical_id": "anu-25"
+            },
+            {
+              "symbol": "𓀀",
+              "meaning": "Seed / Child",
+              "canonical_id": "anu-26"
+            },
+            {
+              "symbol": "🜂",
+              "meaning": "Aether",
+              "role": "ui_meta",
+              "canonical": false
+            },
+            {
+              "symbol": "☀",
+              "meaning": "Solar Drive",
+              "role": "ui_meta",
+              "canonical": false
+            },
+            {
+              "symbol": "🌙",
+              "meaning": "Lunar Modulator",
+              "role": "ui_meta",
+              "canonical": false
+            },
+            {
+              "symbol": "⚶",
+              "meaning": "Portal / Gate",
+              "role": "ui_meta",
+              "canonical": false
+            }
           ]
         },
         {
           "name": "Spiritual",
           "color": "#06d6a0",
           "glyphs": [
-            {"symbol": "🕉", "meaning": "Resonance"},
-            {"symbol": "☤", "meaning": "Heal / Align"},
-            {"symbol": "✡", "meaning": "Union / Merge"},
-            {"symbol": "☯", "meaning": "Duality / Balance"},
-            {"symbol": "🝰", "meaning": "Etheric Key"}
+            {
+              "symbol": "🕉",
+              "meaning": "Resonance",
+              "role": "ui_meta",
+              "canonical": false
+            },
+            {
+              "symbol": "☤",
+              "meaning": "Heal / Align",
+              "canonical_id": "anu-27"
+            },
+            {
+              "symbol": "✡",
+              "meaning": "Union / Merge",
+              "role": "ui_meta",
+              "canonical": false
+            },
+            {
+              "symbol": "☯",
+              "meaning": "Duality / Balance",
+              "canonical_id": "anu-28"
+            },
+            {
+              "symbol": "🝰",
+              "meaning": "Etheric Key",
+              "role": "ui_meta",
+              "canonical": false
+            }
           ]
         }
       ],
       "total_listed": 31,
-      "claimed_total": 28,
-      "discrepancy_note": "3 extra glyphs listed vs claimed. Possible explanation: compound glyphs count as single units, or 3 are meta/structural and not counted in the 28. Needs reconciliation with ANU-28 master codex."
+      "canonical_mapped": 24,
+      "ui_meta_unmapped": 7,
+      "claimed_total": 28
     }
   ],
+  "validation_rules": {
+    "canonical_glyph_count": 28,
+    "canonical_ids": "anu-01 through anu-28",
+    "ids_must_be_unique": true,
+    "symbols_must_be_unique_within_canonical_registry": true,
+    "visual_symbols_may_map_to_canonical_ids_or_ui_meta": true,
+    "relationships_must_reference_existing_canonical_ids": true
+  },
+  "reconciliation": {
+    "resolved": true,
+    "resolution_summary": "ANU-28 is now the canonical 28-glyph registry. DIGMA COUSA remains a presentation layer with 31 displayed symbols: 24 mapped canonical symbols plus 7 UI/meta symbols. Four canonical geometric glyphs are present only in the primary ANU registry.",
+    "ui_meta_symbols": [
+      {
+        "symbol": "🜂",
+        "meaning": "Aether",
+        "reason": "Presentation/meta symbol; aether already exists as an element value in canonical registry."
+      },
+      {
+        "symbol": "☀",
+        "meaning": "Solar Drive",
+        "reason": "Presentation/meta symbol for visual theming and drive state."
+      },
+      {
+        "symbol": "🌙",
+        "meaning": "Lunar Modulator",
+        "reason": "Presentation/meta symbol for visual theming and modulation state."
+      },
+      {
+        "symbol": "⚶",
+        "meaning": "Portal / Gate",
+        "reason": "Presentation/meta symbol for navigation/gateway UI state."
+      },
+      {
+        "symbol": "🕉",
+        "meaning": "Resonance",
+        "reason": "Presentation/meta symbol for resonance state; not counted as a canonical glyph."
+      },
+      {
+        "symbol": "✡",
+        "meaning": "Union / Merge",
+        "reason": "Presentation/meta symbol for union/merge state; not counted as a canonical glyph."
+      },
+      {
+        "symbol": "🝰",
+        "meaning": "Etheric Key",
+        "reason": "Presentation/meta symbol for key/lock UI state; not counted as a canonical glyph."
+      }
+    ],
+    "canonical_not_in_visual_overview": [
+      {
+        "id": "anu-03",
+        "symbol": "◇",
+        "name": "Blend"
+      },
+      {
+        "id": "anu-04",
+        "symbol": "◉",
+        "name": "Guardian"
+      },
+      {
+        "id": "anu-05",
+        "symbol": "◐",
+        "name": "Shadow"
+      },
+      {
+        "id": "anu-06",
+        "symbol": "◯",
+        "name": "Transcendent"
+      }
+    ]
+  },
   "meta": {
-    "total_geometric_glyph"  : 28,
-    "documented_geometric": 6,
-    "remaining_geometric": 22,
+    "total_geometric_glyph": 28,
+    "documented_geometric": 28,
+    "remaining_geometric": 0,
     "total_visual_glyph": 31,
-    "overlap_between_systems": 2,
-    "last_updated": "2026-05-23",
-    "source": "ANU-28 Codex v1.0 + DIGMA COUSA v1.0"
+    "canonical_visual_mappings": 24,
+    "ui_meta_visual_symbols": 7,
+    "overlap_between_systems": 24,
+    "last_updated": "2026-07-04",
+    "source": "ANU-28 Codex v2.0 + DIGMA COUSA v1.0 reconciliation",
+    "notes": "Frequencies and meanings are internal symbolic/protocol metadata, not empirical physics claims."
   }
 }
