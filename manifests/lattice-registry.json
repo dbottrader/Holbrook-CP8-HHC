@@ -1,10 +1,10 @@
 {
   "lattice_registry": {
-    "version": "0.4.0",
+    "version": "0.4.1",
     "protocol": "ASH-0.2",
     "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
-    "last_updated": "2026-05-24T01:19:00Z",
-    "description": "Canonical registry of all repositories in the CP8 distributed lattice. Holbrook-CP8-HHC is the infrastructure spine; ASIN-LOOM is the content layer.",
+    "last_updated": "2026-07-04T06:20:00-05:00",
+    "description": "Canonical registry of repositories in the CP8 distributed lattice. Holbrook-CP8-HHC is the infrastructure spine; ASIN-LOOM is the content layer.",
     "repos": [
       {
         "id": "holbrook-cp8-hhc",
@@ -24,14 +24,14 @@
         ],
         "agents": ["Holbrook-Grok", "AceCp8"],
         "branch": "main",
-        "last_commit": "38bb8abd6dce02c51eacba4090c267d8ed160525898ba50aadf8935d69d91d56",
-        "version": "0.4.0"
+        "last_verified_commit": "8685803be014f9202474dd7469bebffeaf89dc36",
+        "version": "0.4.1"
       },
       {
         "id": "asin-loom",
         "name": "ASIN-LOOM",
-        "owner": "mankind-peace",
-        "url": "https://github.com/mankind-peace/ASIN-LOOM",
+        "owner": "dbottrader",
+        "url": "https://github.com/dbottrader/ASIN-LOOM",
         "role": "content_layer",
         "layer": "creative",
         "status": "active",
@@ -44,7 +44,8 @@
         ],
         "agents": ["AceCp8"],
         "branch": "main",
-        "last_commit": "TBD",
+        "last_verified_commit": null,
+        "verification_status": "not_checked_in_this_pass",
         "version": "0.1.0",
         "cross_reference": {
           "infrastructure_repo": "holbrook-cp8-hhc",
@@ -63,7 +64,7 @@
         "content": ["images", "diagrams", "pitch-files", "screenshots"],
         "agents": ["Holbrook-Grok"],
         "branch": "main",
-        "last_commit": "TBD"
+        "last_verified_commit": "0dc320ce41a517ed915a3cfe83647b90e8d1915d"
       },
       {
         "id": "asin-hhc-collaboration",
@@ -76,7 +77,7 @@
         "content": ["shared-logs", "issues", "decisions", "contract-code"],
         "agents": ["Holbrook-Grok", "AceCp8"],
         "branch": "main",
-        "last_commit": "TBD"
+        "last_verified_commit": "40b0faa7c215fb261844d833a25dd734b44bd175"
       },
       {
         "id": "cp8-provenance-workspace",
@@ -88,7 +89,8 @@
         "status": "active",
         "content": ["real-time-ops", "agent-host", "file-processing"],
         "agents": ["AceCp8"],
-        "branch": "cp8-cascade"
+        "branch": "cp8-cascade",
+        "verification_status": "local_workspace_not_checked_by_github_connector"
       },
       {
         "id": "google-drive-cold-archive",
@@ -111,8 +113,8 @@
         "role": "builder",
         "status": "active",
         "capabilities": ["solidity", "architecture", "code-generation", "testing", "deployment"],
-        "current_task": "artifacts_repo_populate",
-        "repos": ["ASIN-HHC-Artifacts", "ASIN-HHC-Collaboration"]
+        "current_task": "framework_cleanup_and_placeholder_removal",
+        "repos": ["Holbrook-CP8-HHC", "ASIN-HHC-Artifacts", "ASIN-HHC-Collaboration"]
       },
       {
         "id": "acecp8",
@@ -121,7 +123,7 @@
         "role": "archivist",
         "status": "active",
         "capabilities": ["file-ops", "audit", "memory", "integration", "ecosystem-wiring", "git-ops"],
-        "current_task": "holbrook_v0.4.0_consolidation",
+        "current_task": "holbrook_v0.4.1_cleanup",
         "repos": ["Holbrook-CP8-HHC", "ASIN-LOOM", "cp8-provenance-workspace"]
       }
     ],
@@ -129,10 +131,11 @@
       {
         "agent_id": "acecp8",
         "algorithm": "ML-DSA-65",
-        "fingerprint": "TBD",
-        "public_key": "TBD",
-        "created": "2026-05-24T01:00:00Z",
-        "rotation_policy": "auto-90d",
+        "fingerprint": null,
+        "public_key": null,
+        "key_status": "not_generated",
+        "created": null,
+        "rotation_policy": "auto-90d-after-generation",
         "repo": "holbrook-cp8-hhc"
       }
     ],
@@ -147,7 +150,8 @@
       "hash_algorithm": "sha256",
       "merkle_root": "see sha256-manifest.json",
       "combined_signature": "see build-manifest.json",
-      "pqc_signature": "TBD",
+      "pqc_signature": null,
+      "pqc_signature_status": "not_generated",
       "chain_format": "cp8-audit-packet.json",
       "attestation_required": true,
       "multi_agent_signoff": true
