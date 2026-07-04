@@ -37,7 +37,6 @@ def sha256_file(filepath):
 
 def device_flow_auth(client_id, client_secret):
     """OAuth 2.0 device flow for Google Drive."""
-    # Step 1: Request device code
     data = urlencode({
         'client_id': client_id,
         'scope': 'https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.readonly'
@@ -57,7 +56,6 @@ def device_flow_auth(client_id, client_secret):
     print(f"{'='*60}")
     print("  Waiting for authorization...")
     
-    # Step 2: Poll for token
     import time
     interval = device_data.get('interval', 5)
     
@@ -96,7 +94,7 @@ def device_flow_auth(client_id, client_secret):
 
 
 def get_access_token(client_secret_path):
-    """Get valid access token, refreshing if needed."""
+    """Get access token through device flow."""
     with open(client_secret_path) as f:
         secrets = json.load(f)
     
@@ -104,12 +102,7 @@ def get_access_token(client_secret_path):
     client_secret = secrets['installed']['client_secret']
     
     if TOKEN_FILE.exists():
-        with open(TOKEN_FILE) as f:
-            token_data = json.load(f)
-        
-        # Check if expired
-        # For simplicity, re-auth on each run for now
-        # TODO: implement refresh_token logic
+        print("  Existing token file found. Re-authenticating to avoid using stale credentials.")
     
     return device_flow_auth(client_id, client_secret)
 
@@ -133,7 +126,6 @@ def list_drive_files(access_token, folder_id=None):
 
 def download_file(access_token, file_id, file_name, output_dir, verify=True):
     """Download a file with optional SHA-256 verification."""
-    # Get file metadata first
     meta_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?fields=size,md5Checksum,name"
     req = Request(meta_url)
     req.add_header('Authorization', f'Bearer {access_token}')
@@ -141,7 +133,6 @@ def download_file(access_token, file_id, file_name, output_dir, verify=True):
     with urlopen(req) as resp:
         metadata = json.loads(resp.read().decode())
     
-    # Download
     download_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
     req = Request(download_url)
     req.add_header('Authorization', f'Bearer {access_token}')
@@ -153,7 +144,6 @@ def download_file(access_token, file_id, file_name, output_dir, verify=True):
         with open(output_path, 'wb') as f:
             f.write(resp.read())
     
-    # Verify
     file_hash = sha256_file(output_path)
     
     if verify:
@@ -184,19 +174,16 @@ def main():
     print("  CP8 Google Drive Bridge")
     print(f"{'='*60}")
     
-    # Authenticate
     access_token = get_access_token(args.client_secret)
     if not access_token:
         print("❌ Authentication failed")
         sys.exit(1)
     
-    # List files
     print("\n📂 Listing Drive files...")
     files = list_drive_files(access_token, args.folder_id)
     
     print(f"  Found {len(files)} files")
     
-    # Build manifest
     manifest = {
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'protocol': 'ASH-0.2',
@@ -232,12 +219,10 @@ def main():
                 'status': 'metadata-only'
             })
     
-    # Save log
     BRIDGE_LOG.parent.mkdir(parents=True, exist_ok=True)
     with open(BRIDGE_LOG, 'a') as f:
         f.write(json.dumps(manifest, separators=(',', ':')) + '\n')
     
-    # Save manifest
     manifest_path = Path(args.output_dir) / 'drive-manifest.json'
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with open(manifest_path, 'w') as f:
