@@ -1,4 +1,4 @@
-This is a combination of mine and my collaborator Ryan Node and our corresponding agents,Ace and Ryans agents# Holbrook-CP8-HHC
+# Holbrook-CP8-HHC
 
 **Distributed AI Agent Framework** — 2026 Edition
 
@@ -7,6 +7,18 @@ Fuses **HarmonyOS** super-device architecture + **CP8** integrity lattice + **HH
 **Status:** OPERATIONAL  
 **Protocol:** ASH-0.2  
 **HOS Ground Truth:** `63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320`  
+
+---
+
+## Attribution
+
+Holbrook-CP8-HHC is part of the CP8 / ASIN-HHC body of work originated and stewarded by **Dennis Christie (CP8)**.
+
+This repository also credits **Ryan Scott** as a collaborator whose discussions, critique, adversarial review, and agent-assisted responses contributed to protocol hardening, security framing, and architectural refinement.
+
+Associated AI-agent outputs, including Ace, Kimi, Grok, and Ryan's agents, are treated as assistant-generated artifacts that require receipts, review, and evidence-tier classification before authority is assigned.
+
+See [`CREDITS.md`](./CREDITS.md) for the collaboration boundary.
 
 ---
 
@@ -31,6 +43,8 @@ Holbrook coordinates GitHub repositories, a local workspace, packet folders, man
 | `hhc-lattice/` | Glyph definitions and resonance engine | Implemented |
 | `scripts/` | Audit, Merkle, verification, Drive bridge tools | Implemented |
 | `verification/` | SHA-256, Merkle, and ML-DSA verification tools | Implemented |
+| `dar_p/` | Deterministic Artifact Runtime Protocol validator | Implemented |
+| `tests/` | DAR-P and validator test coverage | Active |
 | `specs/` | Technical specifications | Implemented |
 | `manifests/lattice-registry.json` | Cross-repo CP8 lattice map | Implemented |
 | `chains/registry.json` | Chain abstraction registry | Implemented |
@@ -47,6 +61,7 @@ Holbrook coordinates GitHub repositories, a local workspace, packet folders, man
 - `inbox/`, `outbox/`, `packets/`, and `receipts/` support packet-style handoff.
 - `agents/manifest.json` records interface roles and capabilities.
 - `scripts/verify.py` and `scripts/build-merkle.py` support local integrity checks.
+- `dar_p/gate_validator.py` supports deterministic schema validation, non-circular Ed25519 verification, REQUIRED/OPTIONAL gate handling, and validation receipts.
 
 ---
 
@@ -55,8 +70,9 @@ Holbrook coordinates GitHub repositories, a local workspace, packet folders, man
 | Area | Boundary |
 |------|----------|
 | Google Drive bridge | Code is present. Runtime requires account-owner OAuth setup. |
-| GitHub Actions workflow | Workflow file is ready. Activation requires repository token scope that allows workflow writes. |
+| GitHub Actions workflow | Activation requires repository token scope that allows workflow writes. |
 | PQC keys | Registry records the planned key slot. Real key material must be generated before signing. |
+| DAR-P validator | Prototype implementation is present. Production authority requires dependency installation, test execution, CI, review, and signed receipts. |
 | External services | No external system is assumed active unless a commit, credentialed deployment, or service response proves it. |
 
 ---
@@ -77,4 +93,4 @@ Shared anchors:
 
 ---
 
-**End of Holbrook README v0.4.1**
+**End of Holbrook README v0.4.2**
