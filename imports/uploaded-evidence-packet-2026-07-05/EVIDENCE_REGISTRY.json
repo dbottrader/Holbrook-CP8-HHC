@@ -1,0 +1,111 @@
+{
+  "packet_id": "uploaded-evidence-packet-2026-07-05",
+  "canonical_repo": "dbottrader/Holbrook-CP8-HHC",
+  "target_root": "imports/uploaded-evidence-packet-2026-07-05",
+  "policy": {
+    "binary_handling": "Large binary originals are registered by SHA-256 here. Upload originals later via release assets, Git LFS, or local git.",
+    "source_handling": "Text/source extracted from ZIPs may be committed after dedupe. Generated caches and pyc files are excluded.",
+    "evidence_boundary": "No artifact gains authority from inclusion alone. Claims require review, receipts, deterministic verification, and evidence-tier classification."
+  },
+  "artifacts": [
+    {
+      "id": "deepspec_github_repository_zip",
+      "original_file_label": "Kimi_Agent_DeepSpec GitHub Repository(1).zip",
+      "size_bytes": 30421,
+      "sha256": "8dbab9d353eef252dce0460dee8edcdd2b200b48d7aba4da397a9ea22ad3d117",
+      "artifact_type": "zip",
+      "evidence_tier": "E1_SOURCE_REVIEW_PACKET",
+      "claim_level": "review markdown packet; not full DeepSpec source tree",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "deepspec_engineering_review_pdf",
+      "original_file_label": "DeepSpec_Engineering_Review_with_Commentary.pdf",
+      "size_bytes": 2957,
+      "sha256": "f77f61514cc02c48329081a6bf9d4ab83594d1fa0661778c86f2811ed7fe3967",
+      "artifact_type": "pdf",
+      "evidence_tier": "E1_REVIEW_ARTIFACT",
+      "claim_level": "independent engineering review; binary upload pending",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "cp8_asin_hhc_documentation_review_pdf",
+      "original_file_label": "CP8_ASIN_HHC_Documentation_Review.pdf",
+      "size_bytes": 75929,
+      "sha256": "371fdcc3f6f189a921eef4049cf34f5ec9f7698a59796449794defd7f56bc613",
+      "artifact_type": "pdf",
+      "evidence_tier": "E1_REVIEW_ARTIFACT",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "kimi_user_profile_summary_zip",
+      "original_file_label": "Kimi_Agent_User Profile Summary.zip",
+      "size_bytes": 84815,
+      "sha256": "e2e2e13e262f5dd06201d4de2606f85e657eaf56eeb3f4799b13f6f9153a8399",
+      "artifact_type": "zip",
+      "evidence_tier": "E1_SOURCE_PACKET",
+      "claim_level": "source and tests packet; generated pycache excluded",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "kimi_deepspec_critique_summary_zip",
+      "original_file_label": "Kimi_Agent_DeepSpec Critique Summary(7).zip",
+      "size_bytes": 827382,
+      "sha256": "791351ac6b0c6221396b72563bdb362f044067c725a712ae3662e99acac2989e",
+      "artifact_type": "zip",
+      "evidence_tier": "E1_E2_CANDIDATE_CODE_PACKET",
+      "claim_level": "code-bearing critique/conformance/cathedral package; tests still need receipts",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "kimi_bot_launch_successful_zip",
+      "original_file_label": "Kimi_Agent_Bot Launch Successful.zip",
+      "size_bytes": 8663851,
+      "sha256": "66e220336af0ea163eea681367d2856c04c6c146f2f306fe801f694532c35d3a",
+      "artifact_type": "zip",
+      "evidence_tier": "E1_CODE_AND_ARTIFACT_PACKET_DUPLICATE_OVERLAP",
+      "claim_level": "larger CP8/CP9 geometry/bot package; overlaps with transformer milestone",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "kimi_transformer_geometry_milestone_zip",
+      "original_file_label": "Kimi_Agent_Transformer Geometry Milestone.zip",
+      "size_bytes": 7302862,
+      "sha256": "32062e1e4e1c46c63d9bb09285a42770731b2b1aa8976f98670b7ae248ddb1d8",
+      "artifact_type": "zip",
+      "evidence_tier": "E1_E2_CANDIDATE_RESEARCH_CODE_PACKET",
+      "claim_level": "research/code/report package; claims need reproduction logs before E3",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "cp8_cp9_geometric_intelligence_report_docx",
+      "original_file_label": "CP8_CP9_Geometric_Intelligence_Report.docx",
+      "size_bytes": 3098563,
+      "sha256": "bc79fd0759174d3fb32b1e3d2785040392c6110ea9f0f79f6492251367ecedeb",
+      "artifact_type": "docx",
+      "evidence_tier": "E1_RESEARCH_REPORT",
+      "claim_level": "ambitious research report; needs code/log/checkpoint receipts for strongest claims",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "link_state_confirmed_status_log",
+      "original_file_label": "LINK STATE CONFIRMED status log",
+      "size_bytes": 90475,
+      "sha256": "b0b967bef1905b682bd7cb0416710f3dbe75f30b9597e62989552519520043e4",
+      "artifact_type": "text_status",
+      "evidence_tier": "LOOM_OPERATIONAL_NOTE",
+      "claim_level": "symbolic/session status log; not deployment proof",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    },
+    {
+      "id": "ace_mirror_node_status_log",
+      "original_file_label": "Ace Mirror Node status log",
+      "size_bytes": 73564,
+      "sha256": "3fe62b59284e3657738fc0819daef26867ef166d265f792802a880e4cbab1bd6",
+      "artifact_type": "text_status",
+      "evidence_tier": "LOOM_OPERATIONAL_NOTE",
+      "claim_level": "symbolic/session status log; not deployment proof",
+      "binary_original_status": "HASH_REGISTERED_BINARY_UPLOAD_PENDING"
+    }
+  ]
+}
