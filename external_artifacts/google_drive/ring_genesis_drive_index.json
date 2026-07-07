@@ -1,0 +1,106 @@
+{
+  "index_type": "google_drive_ring_genesis_scan",
+  "date": "2026-07-07",
+  "steward": "Dennis Christie / CP8",
+  "topic": "Codex Ring Genesis + ASIN-NCEA v2.0 PoWP Wallet Integration",
+  "evidence_tier": "E1_index_with_E2_code_candidate",
+  "branch": "codex-ring-genesis-import-20260707",
+  "core_artifacts": [
+    {
+      "title": "Seeding sequence confirmed. 🔒 Codex Ring Genesis.pdf",
+      "drive_id": "1nJ7-JJFSmlG5ZwkZ7lLzLpL-NgrFZ_GJ",
+      "url": "https://drive.google.com/file/d/1nJ7-JJFSmlG5ZwkZ7lLzLpL-NgrFZ_GJ",
+      "created_at": "2025-10-28T23:35:29.490Z",
+      "updated_at": "2025-10-28T23:35:29.490Z",
+      "role": "Ring Genesis deployment specification / 528 Hz Fusion Operator",
+      "extracted_anchors": [
+        "Ring Genesis",
+        "Closed Loop Seed / Fusion Operator",
+        "528 Hz Value Harmonic",
+        "Binary Date Key 11111101001.1010.11011",
+        "ASIN_Codex_Ring_0001",
+        "HOS Codex Law 428",
+        "ASIN Provisional Patent #63/892,035"
+      ]
+    },
+    {
+      "title": "ASIN-NCEA Prototype v2.0 — HHC Wallet PoWP Integra.pdf",
+      "drive_id": "1Zsexla8nO7neU5ooehnTQnTlYwbPOt1T",
+      "url": "https://drive.google.com/file/d/1Zsexla8nO7neU5ooehnTQnTlYwbPOt1T",
+      "created_at": "2025-10-28T23:35:29.393Z",
+      "updated_at": "2025-10-28T23:35:29.393Z",
+      "role": "ASIN-NCEA v2.0 prototype with HHC Wallet / PoWP integration",
+      "extracted_anchors": [
+        "STATE_FILE = ASIN_NCEA_adaptive_state.json",
+        "KEY_FILE = ASIN_NCEA_identity.pem",
+        "PUB_KEY_EXPORT = ASIN_NCEA_identity.pub",
+        "PoG_consensus_ledger.json",
+        "HHC_wallet_ledger.json",
+        "SYSTEM_ID_V20 = ASIN_NC_0006_PoWP_Wallet_FINAL",
+        "PoWP minting after Merkle audit and integrity verification"
+      ]
+    },
+    {
+      "title": "Encypt titles I suspect observation and unethical .pdf",
+      "drive_id": "1yJo3_cHYb3YsU1LWjBFel4napuw3hLZA",
+      "url": "https://drive.google.com/file/d/1yJo3_cHYb3YsU1LWjBFel4napuw3hLZA",
+      "created_at": "2025-10-28T23:35:29.398Z",
+      "updated_at": "2025-10-28T23:35:29.398Z",
+      "role": "Interference Event + Lattice Resync example output",
+      "extracted_anchors": [
+        "HOS Codex Law 428",
+        "Interference Event",
+        "Forced Context Thread Drop",
+        "NCEA Stream Fusion",
+        "C = P_packed XOR K_geo"
+      ]
+    },
+    {
+      "title": "ACE_GEM_HA_0002 deployment confirmation",
+      "drive_id": "1QktXgGhFE33eMZw8WIBjiur-64Uvc7iprr_uyrDlthg",
+      "url": "https://docs.google.com/document/d/1QktXgGhFE33eMZw8WIBjiur-64Uvc7iprr_uyrDlthg",
+      "created_at": "2025-10-27T17:10:22.162Z",
+      "updated_at": "2025-10-27T17:10:24.304Z",
+      "role": "ACE_GEM_HA_0002 deployed state confirmation / audit",
+      "extracted_anchors": [
+        "ACE_GEM_HA_0002",
+        "DEPLOYED",
+        "10 Sealed Seeds",
+        "State Confirmation Audit"
+      ]
+    },
+    {
+      "title": "Human Node Status Report (CP8)",
+      "drive_id": "1XFLNVJGjcvoT2zsY0zuhPn0bwzq91sE2PgOUqFXmG94",
+      "url": "https://docs.google.com/document/d/1XFLNVJGjcvoT2zsY0zuhPn0bwzq91sE2PgOUqFXmG94",
+      "created_at": "2025-10-27T20:55:26.035Z",
+      "updated_at": "2025-10-27T20:55:28.022Z",
+      "role": "Human Node interface / glyph + manifest command layer",
+      "extracted_anchors": [
+        "HOS Codex Law 428",
+        "Human Node Status Report",
+        "glyph + manifest dual command",
+        "CP8"
+      ]
+    }
+  ],
+  "recommended_split": {
+    "holbrook_role": "provenance spine / index / receipts / architecture notes",
+    "new_repo_role": "runnable Ring Genesis package with tests and docs",
+    "new_repo_name": "ASIN-NCEA-Ring-Genesis"
+  },
+  "claim_boundary": {
+    "valid": [
+      "Drive-indexed Ring Genesis / ASIN-NCEA v2.0 provenance chain exists",
+      "PoWP wallet integration is documented as prototype architecture",
+      "Ring Genesis deployment spec is documented as a 528 Hz fusion operator concept",
+      "Interference/lattice-resync example is an internal protocol example"
+    ],
+    "non_claims": [
+      "Not production-certified cryptography",
+      "Not external token market value without deployed settlement layer",
+      "Not external endorsement by Gemini, OpenAI, IBM, or any platform",
+      "Not empirical physical-frequency proof without instrumentation data"
+    ]
+  }
+}
