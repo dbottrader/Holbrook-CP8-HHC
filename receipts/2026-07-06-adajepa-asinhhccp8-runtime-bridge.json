@@ -1,0 +1,57 @@
+{
+  "receipt_type": "cp8_git_integration_receipt",
+  "version": "0.1",
+  "date": "2026-07-06",
+  "steward": "Dennis Christie / CP8",
+  "repository": "dbottrader/Holbrook-CP8-HHC",
+  "integration": {
+    "title": "AdaJEPA × ASINHHCCP8 Runtime Bridge",
+    "purpose": "Record a concept bridge between adaptive world-model planning loops and ASINHHCCP8 runtime governance.",
+    "evidence_tier": "E1",
+    "claim_boundary": "Architectural mapping only; no claim of affiliation, endorsement, benchmark improvement, or production readiness."
+  },
+  "runtime_thesis": "Adaptive planning should pass through accountable execution gates before external action.",
+  "control_flow": [
+    "Goal",
+    "Observation",
+    "Plan",
+    "Governance Gate",
+    "Action",
+    "Receipt",
+    "Feedback",
+    "Replay",
+    "Updated Model"
+  ],
+  "files_added_or_updated": [
+    {
+      "path": "docs/ADAJEPA_ASINHHCCP8_RUNTIME_BRIDGE.md",
+      "commit_sha": "982787947e1eff6c6cbdb6b208b6ec10355dfb4f",
+      "role": "Primary bridge note and LinkedIn response draft"
+    },
+    {
+      "path": "AGENTS.md",
+      "commit_sha": "14a75fb75cac3150da35fef44b417adb1020f6e3",
+      "role": "Future-agent entry point updated with bridge reference and implementation task"
+    },
+    {
+      "path": "tasks.md",
+      "commit_sha": "96770250eae9330607cab239598b1396cdcc6409",
+      "role": "Task board updated with E1 completion and E2 promotion tasks"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "commit_sha": "aefc9aded519ec38b63e16bd099c936bb2260a2f",
+      "role": "System architecture updated with adaptive runtime governance bridge"
+    }
+  ],
+  "next_promotion_gate": {
+    "target_tier": "E2",
+    "requirements": [
+      "Runnable action request validator",
+      "Policy gate fixture returning approve/block/escalate",
+      "SHA-256 decision receipt generator",
+      "Replay reconstruction test from stored receipt",
+      "No inflated public claims before test receipts exist"
+    ]
+  }
+}
