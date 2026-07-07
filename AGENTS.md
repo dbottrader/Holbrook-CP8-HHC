@@ -17,6 +17,8 @@ docs/FUTURE_AGENT_REFERENCE.md
 Then read, in this order:
 
 ```text
+docs/FUTURE_AGENT_REFERENCE.md
+docs/ADAJEPA_ASINHHCCP8_RUNTIME_BRIDGE.md
 docs/PUBLIC_PRESENTATION_BRIEF.md
 docs/PUBLIC_IMPORTANT_PARTS_RELEASE.md
 docs/CP8_PROJECT_GENOME.md
@@ -33,6 +35,18 @@ hhc-lattice/glyphs.json
 ## One-line project description
 
 CP8 / ASIN-HHC is a human-AI provenance framework that turns conversations, code, symbols, and AI outputs into traceable artifacts with context, evidence tiers, and rollback.
+
+---
+
+## Runtime governance bridge
+
+The AdaJEPA × ASINHHCCP8 bridge is a current systems note for adaptive agent loops:
+
+```text
+Goal → Observation → Plan → Governance Gate → Action → Receipt → Feedback → Replay → Updated Model
+```
+
+Treat this as an E1 architectural mapping until runnable local tests, independent reproduction, and review promote it.
 
 ---
 
@@ -63,6 +77,8 @@ If unsure, classify lower and state what would be needed to promote.
 
 The symbolic layer is part of the interface and memory system. It must not be presented as scientific proof unless supported by data, code, independent reproduction, and review.
 
+The adaptive-world-model bridge does not claim affiliation, endorsement, benchmark improvement, or production readiness. It is a control-layer mapping for accountable agent action.
+
 ---
 
 ## Next best engineering task
@@ -77,6 +93,18 @@ Minimum behavior:
 
 ```text
 input file → SHA-256 → file size → timestamp → ASIN fields → evidence tier → JSON manifest
+```
+
+Then implement the runtime governance bridge from:
+
+```text
+docs/ADAJEPA_ASINHHCCP8_RUNTIME_BRIDGE.md
+```
+
+Minimum behavior:
+
+```text
+action request → policy gate → approve/block/escalate → receipt → replay record
 ```
 
 ---
