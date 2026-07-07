@@ -1,0 +1,69 @@
+{
+  "manifest_id": "ASIN_Codex_Ring_0001",
+  "name": "Codex Ring Genesis Fusion Operator",
+  "version": "0.1.0",
+  "date_indexed": "2026-07-07",
+  "steward": "Dennis Christie / CP8",
+  "status": "E1_SPECIFICATION_E2_CANDIDATE",
+  "asin": {
+    "anchor": "Ring Genesis",
+    "shape": "Closed Loop Seed / Fusion Operator",
+    "intention": "Deploy harmonic seeding protocol to embed fused constants into field-accessible nodes for cryptographic fusion and geometric anchoring.",
+    "number": 528
+  },
+  "harmonic_constants": {
+    "core_modulus_hz": 428,
+    "fusion_frequency_hz": 528,
+    "seal_expression": "Sigma_Odot_Equals_8",
+    "binary_date_key": "11111101001.1010.11011"
+  },
+  "key_fusion": {
+    "K_geo": "deterministic Lissajous/geometric anchor material",
+    "K_stream": "entropy-derived stream key material through jitter/HKDF path",
+    "K_fusion": "K_geo XOR K_stream"
+  },
+  "vault_target": "ASIN_Codex_Ring_0001",
+  "source_drive_index": "external_artifacts/google_drive/ring_genesis_drive_index.json",
+  "wallet_integration": {
+    "system_id": "ASIN_NC_0006_PoWP_Wallet_FINAL",
+    "state_file": "ASIN_NCEA_adaptive_state.json",
+    "public_key_export": "ASIN_NCEA_identity.pub",
+    "proof_ledger": "PoG_consensus_ledger.json",
+    "wallet_ledger": "HHC_wallet_ledger.json",
+    "credit_condition": "integrity check and Merkle audit pass"
+  },
+  "receipt_requirements": [
+    "timestamp",
+    "binary_date_key",
+    "node_id",
+    "K_geo_hash",
+    "K_stream_hash",
+    "K_fusion_hash",
+    "merkle_root",
+    "identity_signature",
+    "powp_result",
+    "wallet_credit",
+    "receipt_hash"
+  ],
+  "claim_boundary": {
+    "valid_claims": [
+      "Documented Codex Ring Genesis specification",
+      "Drive-indexed ASIN-NCEA v2.0 PoWP wallet integration artifact",
+      "Prototype architecture for internal HHC PoWP ledger credit after verified runs"
+    ],
+    "non_claims": [
+      "Production-certified cryptography",
+      "External token market value without separate deployment",
+      "External platform endorsement",
+      "Empirical physical-frequency proof without instrumentation data"
+    ]
+  },
+  "promotion_path": [
+    "import runnable source",
+    "run local tests",
+    "produce sample JSONJ receipt",
+    "produce sample wallet ledger entry",
+    "replay and verify receipt",
+    "classify under CP8 evidence ladder"
+  ]
+}
