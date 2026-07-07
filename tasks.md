@@ -11,7 +11,7 @@
   - status: COMPLETE (v0.3.0)
 
 - [x] Create agent packet bus (inbox/outbox/packets/receipts)
-  - `inbox/`, `outbox/`, `packets/`, `receipts/` directories with README protocols
+  - `inbox/`, `outbox/`, `packets/`, `receipts` directories with README protocols
   - status: COMPLETE (v0.3.0)
 
 - [x] Create chain abstraction registry (Ethereum/Solana/Bitcoin)
@@ -46,6 +46,17 @@
   - README.md updated with ASIN-LOOM section
   - `manifests/lattice-registry.json` includes ASIN-LOOM as creative spine
   - status: COMPLETE (v0.4.0)
+
+- [x] Capture AdaJEPA × ASINHHCCP8 runtime bridge
+  - `docs/ADAJEPA_ASINHHCCP8_RUNTIME_BRIDGE.md` created
+  - maps Plan → Execute → Adapt → Replan onto ASIN governance, policy gates, receipts, replay, and human oversight
+  - status: COMPLETE (E1 concept integration)
+
+- [ ] Promote AdaJEPA × ASINHHCCP8 bridge from E1 to E2
+  - build `asin_runtime_action_request` validator
+  - implement policy gate fixture returning approve/block/escalate
+  - generate SHA-256 decision receipts
+  - add replay reconstruction test
 
 - [ ] Activate GitHub Actions CI workflow
   - blocked_by: PAT needs `workflow` scope
@@ -95,3 +106,4 @@
 - [x] Create cross-repo lattice registry (v0.4.0)
 - [x] Cross-link ASIN-LOOM content layer (v0.4.0)
 - [x] Consolidate all new technical artifacts into canonical provenance spine (v0.4.0)
+- [x] Add AdaJEPA × ASINHHCCP8 runtime bridge concept note (E1)
