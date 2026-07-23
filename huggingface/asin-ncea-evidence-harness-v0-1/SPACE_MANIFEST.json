@@ -1,0 +1,27 @@
+{
+  "artifact": "ASIN-NCEA_HUGGINGFACE_SPACE_v0.1",
+  "source_artifact": "ASIN-NCEA_INTEGRATED_HARNESS_v0.1",
+  "space_sdk": "gradio",
+  "app_file": "app.py",
+  "evidence_level": "E3_LOCAL_INTEGRATION",
+  "promotion_verdict": "HOLD",
+  "witness_class": "MACHINE_EXECUTION_UNATTESTED",
+  "runtime_scope": "PUBLIC_DEMO_SMOKE_TEST_ONLY",
+  "wallet_class": "SIMULATED_ONLY_NO_MONETARY_AUTHORITY",
+  "integrated_harness_sha256": "14e3eaaf71461e35d31f185ed3c84083c516539a057e66c1bb3f5485da7c9807",
+  "deterministic_core_hash": "ee93c43c62eccb6dd9eaf14787bdfe6af2965f66763216221f504af282447274",
+  "local_ledger_merkle_root": "ffc27df9d1d33a454e858284b19694c5c7513a9833e25113550f0acd8ec68405",
+  "claims": {
+    "locally_runnable_integrated_harness": true,
+    "public_space_package_prepared": true,
+    "production_ready_cryptography": false,
+    "independent_reproduction_complete": false,
+    "live_token_authority": false,
+    "kernel_promotion": false
+  },
+  "related_pull_requests": [
+    "https://github.com/dbottrader/Holbrook-CP8-HHC/pull/9",
+    "https://github.com/dbottrader/ASIN-HHC-Artifacts/pull/2",
+    "https://github.com/dbottrader/ASIN-HHC-Collaboration/pull/1"
+  ]
+}
