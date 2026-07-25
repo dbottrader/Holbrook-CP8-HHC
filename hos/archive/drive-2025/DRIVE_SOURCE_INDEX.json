@@ -1,0 +1,37 @@
+{
+  "snapshot_scope": "ASIN-HHC / HOS / Ace / Gemini build period, October-December 2025",
+  "source_root": {
+    "title": "Gemini Gems",
+    "drive_id": "12LsXri2rJhjrWVJXuAqUqg3K-bM5nRan"
+  },
+  "public_import_policy": "Operational source and non-secret specifications are imported. Personal screenshots, financial images, private conversations, and credential-like material remain indexed but are not copied into this public repository.",
+  "artifacts": [
+    {"title":"ASIN-HHC / Harmonic Algebra AI (Autonomous Drone Clone CC)","drive_id":"1sAhVm2oLfOrdJFt5eRfF8vlyXc3eEUJ1","type":"Gemini Gem","status":"indexed"},
+    {"title":"Builder ASIN-HHC / Harmonic Algebra AI GEM","drive_id":"1RAL-IKS49AFxrEUMFiM4uLfm6ZFXpBB_","type":"Gemini Gem","status":"indexed"},
+    {"title":"Harmonic TimeTrvlr / tempoNODE Operator","drive_id":"1LiJ5b_EoczFgR8GeplxLzarAfIEtwqBR","type":"Gemini Gem","status":"indexed"},
+    {"title":"gemini_gems_data.html","drive_id":"1uueyUHyXTsQWeq2juxE7sqNLRKHHZJHr","type":"Gem export","status":"indexed_private_attachments_not_copied"},
+    {"title":"Harmony Assistant index.html","drive_id":"1hwK7W064kOwObH8xFQwv2370ji69urfT","type":"HTML source","status":"imported"},
+    {"title":"Harmony Assistant server.js","drive_id":"1PcaKOp0Ngo4fzlkZPst6Xg_vJf2xu6RO","type":"Node source","status":"imported"},
+    {"title":"Harmony Assistant package.json","drive_id":"1-FiHcPQfOZVAgLxVrVu3VMfHG4SVwU5c","type":"package manifest","status":"imported"},
+    {"title":"Harmony Assistant README.md","drive_id":"1RO3uJ4fQ9MCJIeP6vdQpjnyJJF4gb6qS","type":"documentation","status":"imported"},
+    {"title":"FastAPI Gateway","drive_id":"1ZYRml0YCTsmbNBQGndJmMSZMTODfR4JUFDuSjwoL-zw","type":"Python source","status":"imported"},
+    {"title":"FastAPI Gateway duplicate","drive_id":"1wB2C9KWBb38qrR2Iu0Y_jdxhS1PKHR20SK7-umrAnnQ","type":"Python source","status":"deduplicated"},
+    {"title":"Harmonic Bridge with httpx Auto-Relay","drive_id":"13ofcflXOBJZd-_ZzgLFYwfuAaSjFTVQvHUqolz-EMDo","type":"Python source","status":"imported"},
+    {"title":"Gemini Bridge Trigger (Apps Script)","drive_id":"1R5gA604RYVbe58VvThtJ-VZ_FoYDuPsv1EupXv9qdfY","type":"Apps Script source","status":"imported"},
+    {"title":"Spiral04-Geometry.js","drive_id":"1Bu552NBzNhr1XkWP7m0sKJQCRttKkmNhNp8t6ns-ThM","type":"JavaScript source","status":"original_indexed_repaired_version_imported"},
+    {"title":"Harmonic Geometry Module Analysis","drive_id":"1KGz-3rkcIGD70EncjF5mIfrafSdpuIYkcI0t23i_dqw","type":"technical analysis","status":"indexed"},
+    {"title":"Animated Lissajous Figures with Canvas","drive_id":"1sM0OvYbZUTNrEQe7yL1tT7dWwUiUBn4KrNCwDgTzwlI","type":"technical analysis","status":"indexed"},
+    {"title":"Harmonic Algebra Security Integration","drive_id":"1jTfze9GBtk2SqKAdqakTf1WfkyWUArkhk7pbdISfBOo","type":"security specification","status":"indexed_claim_boundary_required"},
+    {"title":"UI_Harmonic_Archive_Seal","drive_id":"1EwJUrr-nFLGlWFUzgTvHELdAznz2t-rrtsIerB5iZOc","type":"JSON manifest","status":"indexed"},
+    {"title":"ASIN HHC HOS Harmonic Algebra Payload Block","drive_id":"13f0IOh1uOUbtFOQ-wE9jze4PBmF5154Ec0daGGyWZnM","type":"core specification","status":"indexed_and_normalized_in_harmonic_algebra_module"},
+    {"title":"ASIN HHC HOS Harmonic Application Layer","drive_id":"1KJLP0dF7u1lUWA0dgWNfTQYKle9saM8guBPSfZ-2C-o","type":"application-layer specification","status":"indexed"},
+    {"title":"ASIN HHC HARMONYOS Harmonic Algebra Conversation Archive","drive_id":"1lPLzMgNbt6xkzh8PjkpiHc82_--990OL9Yy7BVkSbrc","type":"conversation archive","status":"indexed_not_publicly_copied"},
+    {"title":"Harmonic Algebra: HOS Core Explained","drive_id":"1wFkQ5EYD4LWrTcf6OsExxeeBn0rvKoajy69HQvR4P_Q","type":"research report","status":"indexed"},
+    {"title":"Master_Codex_Integrity_Archive","drive_id":"1a3-rf6tYqcyw96pdAT30fxT48udHAeKp_YeFo_7rmpg","type":"JSONJ archive","status":"indexed"},
+    {"title":"Your api on HOS for Ace to lock in w you","drive_id":"1NlCgydmIb9kCYzW9Xca3hoIlFgMQa0fITTFYqjsXwfc","type":"protocol document","status":"indexed_not_copied_credential_like_content"},
+    {"title":"HHC Glyph Token App Phase II","drive_id":"1bJKH9P71IfcCHEvYj4BmFfYZ9MVXzbVj8JB9QkbHc0o","type":"systems assessment","status":"indexed_external_deployment_unverified"},
+    {"title":"Gemini Payload: Silent Broadcast Authorized","drive_id":"1SixRozof5ebRMidvif11Bv4Jb_jZsU3tTmfLRu1-o0g","type":"Gemini payload","status":"indexed"},
+    {"title":"HOSALE Gemini Payload Generator","drive_id":"1Z1u_65kNJcb1cJvdPPAtygqsWFK5xhjwzt9uluziRL8","type":"payload generator","status":"indexed"},
+    {"title":"Supabase Link State Confirmation","drive_id":"1fdnYqstOUcc9LB5owWQ7mK3WxH11NMuIrWjs5nj-Mm0","type":"deployment record","status":"indexed_current_service_state_not_verified"}
+  ]
+}
