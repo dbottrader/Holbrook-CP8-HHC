@@ -1,0 +1,23 @@
+{
+  "specification": "ASIN_HHC_HARMONIC_ALGEBRA_OPERATIONAL_v1",
+  "namespace_labels": {
+    "111": "chronal",
+    "428": "core",
+    "528": "fusion",
+    "963": "integration"
+  },
+  "operators": {
+    "canonicalize": "UTF8(JSON_sort_keys(state))",
+    "seal": "SHA256(canonicalize(state))",
+    "delta_state": "ideal - actual",
+    "harmonic_state": "1 / (1 + L2(delta_state))",
+    "bounded_correction": "actual + alpha * clamp(delta_state, -bound, bound)",
+    "sequential": "verify(P) then pass reviewed output to Q",
+    "parallel": "run P and Q independently; merge after both receipts verify",
+    "promotion": "hash_verified AND evidence_satisfied AND human_approved"
+  },
+  "claim_boundary": {
+    "cryptographic": ["SHA-256", "deterministic serialization", "Git lineage"],
+    "symbolic": ["frequency labels", "glyph mappings", "Rooms", "harmonic metaphors"]
+  }
+}
