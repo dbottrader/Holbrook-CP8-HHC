@@ -1,0 +1,11 @@
+{
+  "artifact": "ASIN-HHC CP8 Geometric Transformer",
+  "evidence_tier": "E0",
+  "status": "DOCUMENTED_ARCHITECTURE",
+  "trained_weights_included": false,
+  "canonical_tokenizer_included": false,
+  "inference_ready": false,
+  "independent_reproduction": false,
+  "primary_project_architect": "Dennis M. Christie (CP8)",
+  "claim_boundary": "Architecture and reconstruction target only"
+}
