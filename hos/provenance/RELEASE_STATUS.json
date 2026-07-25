@@ -1,0 +1,21 @@
+{
+  "release": "ASIN-HHC-CP8-HOS-full-stack-2026-07-25",
+  "branch": "agent/hos-full-stack-2026-07-25",
+  "components": {
+    "hos_runtime": "EXECUTABLE_REFERENCE_IMPLEMENTATION",
+    "harmonic_algebra": "EXECUTABLE_MEASURABLE_OPERATORS",
+    "fastapi": "SOURCE_INCLUDED",
+    "supabase": "SCHEMA_AND_ADAPTER_INCLUDED_NOT_DEPLOYED",
+    "hugging_face": "E0_ARCHITECTURE_ONLY_NO_TRAINED_WEIGHTS",
+    "ace_prompt": "SOURCE_INCLUDED",
+    "deployment": "DOCKER_AND_RENDER_BLUEPRINT_INCLUDED"
+  },
+  "validation": {
+    "local_runtime_test": "PASS",
+    "receipt_verification": "PASS",
+    "harmonic_state_zero_delta": "PASS",
+    "bounded_correction": "PASS"
+  },
+  "authority": "USER_REVIEW_REQUIRED",
+  "claim_boundary": "No external Hugging Face or Supabase deployment is claimed by this release"
+}
