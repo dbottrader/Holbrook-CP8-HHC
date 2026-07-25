@@ -1,0 +1,14 @@
+{
+  "title": "ASIN-HHC CP8 Geometric Transformer Architecture E0",
+  "architect": "Dennis M. Christie (CP8)",
+  "ecosystem": "ASIN-HHC / HOS",
+  "release_date": "2026-07-25",
+  "format": "Hugging Face Transformers GPT2LMHeadModel configuration",
+  "governance": [
+    "Capability does not equal authority",
+    "No receipt, no promotion",
+    "Replay supersedes narration",
+    "Specification does not equal implementation",
+    "Reality retains veto"
+  ]
+}
