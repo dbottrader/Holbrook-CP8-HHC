@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use or discuss this work, cite the repository and its public provenance record."
+title: "Holbrook-CP8-HHC: Receipt-Driven Distributed AI Governance Framework"
+type: software
+authors:
+  - family-names: Christie
+    given-names: Dennis M.
+    alias: CP8
+repository-code: "https://github.com/dbottrader/Holbrook-CP8-HHC"
+url: "https://github.com/dbottrader/Holbrook-CP8-HHC"
+date-released: 2026-05-23
+license: MIT
+keywords:
+  - AI governance
+  - provenance
+  - deterministic replay
+  - receipt-driven AI
+  - authority separation
+  - cryptographic audit trail
+abstract: >-
+  Holbrook-CP8-HHC is a distributed AI coordination and governance framework
+  that separates capability from authority and uses provenance, receipts,
+  verification, replay, and evidence-tier classification to constrain the
+  promotion of AI-generated claims and actions.
