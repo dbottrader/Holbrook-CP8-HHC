@@ -6,19 +6,32 @@ Fuses **HarmonyOS** super-device architecture + **CP8** integrity lattice + **HH
 
 **Status:** OPERATIONAL  
 **Protocol:** ASH-0.2  
+**License:** MIT  
 **HOS Ground Truth:** `63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320`  
 
 ---
 
 ## Attribution
 
-Holbrook-CP8-HHC is part of the CP8 / ASIN-HHC body of work originated and stewarded by **Dennis Christie (CP8)**.
+Holbrook-CP8-HHC is part of the CP8 / ASIN-HHC body of work originated and stewarded by **Dennis M. Christie (CP8)**.
 
 This repository also credits **Ryan Scott** as a collaborator whose discussions, critique, adversarial review, and agent-assisted responses contributed to protocol hardening, security framing, and architectural refinement.
 
 Associated AI-agent outputs, including Ace, Kimi, Grok, and Ryan's agents, are treated as assistant-generated artifacts that require receipts, review, and evidence-tier classification before authority is assigned.
 
 See [`CREDITS.md`](./CREDITS.md) for the collaboration boundary.
+
+## Public provenance and citation
+
+The repository is open source, but open source does not erase authorship, chronology, or attribution.
+
+- [`docs/PUBLIC_PROVENANCE_RECORD.md`](./docs/PUBLIC_PROVENANCE_RECORD.md) — human-readable chronology, evidence classes, authorship boundary, and convergence position.
+- [`provenance/public-record.json`](./provenance/public-record.json) — machine-readable public record using full commit identifiers.
+- [`CITATION.cff`](./CITATION.cff) — citation metadata for GitHub and research tooling.
+- [`LICENSE`](./LICENSE) — MIT license.
+- [`sha256-manifest.json`](./sha256-manifest.json) — repository integrity inventory.
+
+The public record establishes what the repository documents and when. Similarity to another project is treated as conceptual convergence unless direct derivation is independently demonstrated.
 
 ---
 
@@ -30,11 +43,28 @@ Holbrook coordinates GitHub repositories, a local workspace, packet folders, man
 
 ---
 
+## Constitutional rules
+
+- No mechanism may silently convert uncertainty into authority.
+- Capability does not imply authority.
+- No receipt means no promotion.
+- Replay supersedes narration.
+- Specification is not implementation.
+- Reality retains veto.
+
+These rules separate probabilistic assistance from authoritative execution. Models may propose or interpret; claims and state transitions require bounded permissions, evidence, verification, and replayable receipts.
+
+---
+
 ## Core Files
 
 | Path | Purpose | Status |
 |------|---------|--------|
 | `ARCHITECTURE.md` | Distributed node architecture | Implemented |
+| `docs/PUBLIC_PROVENANCE_RECORD.md` | Public chronology and evidence boundary | Maintained |
+| `provenance/public-record.json` | Machine-readable provenance summary | Maintained |
+| `CITATION.cff` | Citation metadata | Maintained |
+| `LICENSE` | MIT open-source license | Active |
 | `super-device-manifest.json` | Machine-readable node registry | Implemented |
 | `tasks.md` | Task board | Active |
 | `cp8-audit-packet.json` | Audit schema and genesis packet | Drafted |
@@ -74,6 +104,8 @@ Holbrook coordinates GitHub repositories, a local workspace, packet folders, man
 | PQC keys | Registry records the planned key slot. Real key material must be generated before signing. |
 | DAR-P validator | Prototype implementation is present. Production authority requires dependency installation, test execution, CI, review, and signed receipts. |
 | External services | No external system is assumed active unless a commit, credentialed deployment, or service response proves it. |
+| Archived history | Internal dates and retrospective narratives are lineage evidence, not independent public timestamp proof. |
+| Patent references | Any provisional-application reference is a project-source anchor until verified against official records. |
 
 ---
 
@@ -85,6 +117,7 @@ Holbrook is the orchestration layer for the broader CP8 ecosystem:
 - `ASIN-HHC-Artifacts`: public artifact portfolio.
 - `ASIN-HHC-Collaboration`: public audit trail.
 - `Holbrook-CP8-HHC`: distributed coordination framework.
+- `CP8-Weights-`: public model, source-corpus, and checkpoint lineage.
 
 Shared anchors:
 - HOS Ground Truth hash.
@@ -93,4 +126,12 @@ Shared anchors:
 
 ---
 
-**End of Holbrook README v0.4.2**
+## License
+
+Released under the [`MIT License`](./LICENSE). The copyright and permission notice must remain in copies or substantial portions of the software.
+
+For chronology-sensitive references, cite the exact artifact path and full commit SHA. Repository inclusion alone is not independent reproduction or technical validation.
+
+---
+
+**Public record refreshed: 2026-07-30**
