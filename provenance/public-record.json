@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0.0",
+  "record_date": "2026-07-30",
+  "canonical_repository": "dbottrader/Holbrook-CP8-HHC",
+  "originator_and_steward": {
+    "name": "Dennis M. Christie",
+    "alias": "CP8",
+    "github": "dbottrader"
+  },
+  "license": "MIT",
+  "position": {
+    "purpose": "Machine-readable chronology and evidence-boundary record for CP8 / ASIN-HHC / Holbrook.",
+    "non_accusation_boundary": "Similarity to another project is treated as conceptual convergence unless direct derivation is independently demonstrated."
+  },
+  "constitutional_rules": [
+    "Capability does not imply authority.",
+    "No receipt means no promotion.",
+    "Replay supersedes narration.",
+    "Specification is not implementation.",
+    "No mechanism may silently convert uncertainty into authority.",
+    "Reality retains veto."
+  ],
+  "verified_git_milestones": [
+    {
+      "date": "2026-05-23",
+      "commit": "67d7a824284dfc6ba19df7c6960538aacbc31782",
+      "event": "Holbrook genesis: CP8-HHC distributed agent framework with provenance and coordination architecture.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-05-23",
+      "commit": "09df9b39630bcba529c82fabb9be475e3eb6570c",
+      "event": "Holbrook v0.1.0 framework with CP8 provenance and HHC handshake.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-05-24",
+      "commit": "6f8a1de7db291c86ad88de2bd108fb8cd995a503",
+      "event": "Harmonic Algebra specification, deterministic Merkle-build skills, and symbolic-versus-cryptographic boundary.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-04",
+      "commit": "0e395bac412ee75054df39d1c1d82abbe5557381",
+      "event": "CP8 historical archive index added.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-04",
+      "commit": "2763a2d99827e7ac35dcc416e23e5853c39cce61",
+      "event": "CP8 project-genome narrative added.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-04",
+      "commit": "95d53010b43545d1d9f5995d75a22516a518e1ed",
+      "event": "CP8 historical archive manifest added.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-06",
+      "commit": "31f6d47ee122c1b73fb1228436017e61900258b3",
+      "event": "CP8 Glyph Engine / ANU-28 agent output added with agent-output classification.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-06",
+      "commit": "97a697b4e0a2852e244c5323a9562efedae07276",
+      "event": "ASIN-NCEA CP8 jitter-lineage provenance index added.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-09",
+      "commit": "5305fe7a5e510a84f15dbfcc9507ef032ad28f11",
+      "event": "Robotics and humanoid audit layer consolidated.",
+      "evidence_class": "GIT_VERIFIED"
+    },
+    {
+      "date": "2026-07-25",
+      "commit": "338530bb8c991462f881a9d455032817e512ecd3",
+      "event": "Executable HOS runtime, Harmonic Algebra, schemas, architecture material, provenance index, and deployment scaffolding consolidated.",
+      "evidence_class": "GIT_VERIFIED"
+    }
+  ],
+  "cryptographic_anchors": {
+    "hos_ground_truth_sha256": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+    "boundary": "A matching digest establishes byte integrity relative to the referenced artifact; it does not independently establish authorship, correctness, safety, reproduction, or patent scope."
+  },
+  "self_reported_anchors": [
+    {
+      "type": "US_PROVISIONAL_PATENT_APPLICATION",
+      "identifier": "63/892,035",
+      "reported_filing_time": "2025-10-02T02:54:00",
+      "evidence_class": "SELF_REPORTED_ANCHOR",
+      "boundary": "Status, ownership, priority, claims, and scope require verification from official records and qualified legal counsel."
+    }
+  ],
+  "evidence_classes": {
+    "GIT_VERIFIED": "A public commit establishes that specified repository content existed by the commit timestamp.",
+    "HASH_VERIFIED": "A digest recomputed from the referenced artifact matches the recorded value.",
+    "LOCALLY_EXECUTED": "The project preserves a local execution result or receipt; this is not independent reproduction.",
+    "SOURCE_ARCHIVE": "Earlier project material is preserved, but internal dates and retrospective statements require separate corroboration.",
+    "SELF_REPORTED_ANCHOR": "A claim supplied by the project steward but not independently verified by this record.",
+    "INDEPENDENTLY_REPRODUCED": "An unaffiliated party has reproduced the result and published sufficient methods and receipts."
+  },
+  "collaboration_boundary": {
+    "originator": "Dennis M. Christie (CP8)",
+    "credited_collaborator": "Ryan Scott",
+    "ai_agents": "Assistant-generated artifact producers; no default independent authority."
+  },
+  "human_readable_record": "docs/PUBLIC_PROVENANCE_RECORD.md",
+  "citation_file": "CITATION.cff"
+}
