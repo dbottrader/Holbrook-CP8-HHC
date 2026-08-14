@@ -1,0 +1,19 @@
+{
+  "model_id": "holbrook-local-model",
+  "version": "1.0",
+  "execution_template": {
+    "type": "RuntimeAdapter",
+    "backend": "xybrid"
+  },
+  "preprocessing": [],
+  "postprocessing": [],
+  "files": [],
+  "metadata": {
+    "task": "text-generation",
+    "holbrook_protocol": "ASH-0.2",
+    "hos_ground_truth": "63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320",
+    "requires_cp8_envelope": true,
+    "requires_receipt": true,
+    "integrity_primitive": "sha256"
+  }
+}
