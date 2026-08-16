@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asin-hhc.local/schemas/cp8-run-record.schema.json",
+  "title": "CP8 Run Record",
+  "type": "object",
+  "required": [
+    "runId",
+    "createdAt",
+    "creator",
+    "mission",
+    "pipeline",
+    "workers",
+    "promotion",
+    "realityVeto"
+  ],
+  "properties": {
+    "runId": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "creator": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "enum": ["human", "agent", "system"] },
+        "id": { "type": "string" },
+        "displayName": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "mission": {
+      "type": "object",
+      "required": ["request"],
+      "properties": {
+        "request": { "type": "string" },
+        "originatingInterpretation": { "type": ["string", "null"] },
+        "constraints": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "pipeline": {
+      "type": "object",
+      "required": ["currentStage", "history"],
+      "properties": {
+        "currentStage": {
+          "enum": [
+            "ARTIFACT",
+            "MEASUREMENT",
+            "REPRESENTATION",
+            "DECODING",
+            "REPLICATION",
+            "INTERPRETATION",
+            "ORIGIN_HYPOTHESIS",
+            "CHALLENGE",
+            "REVISION",
+            "COMPLETE"
+          ]
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["stage", "enteredAt"],
+            "properties": {
+              "stage": { "type": "string" },
+              "enteredAt": { "type": "string", "format": "date-time" },
+              "receiptRef": { "type": ["string", "null"] }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["workerId", "role", "isolationMode", "status"],
+        "properties": {
+          "workerId": { "type": "string" },
+          "role": {
+            "enum": [
+              "evidence",
+              "research",
+              "chronology",
+              "pattern",
+              "skeptic",
+              "replication",
+              "prior_art",
+              "builder",
+              "synthesis"
+            ]
+          },
+          "isolationMode": { "enum": ["independent", "adversarial", "informed"] },
+          "originatingInterpretationExposed": { "type": "boolean" },
+          "status": { "enum": ["queued", "running", "blocked", "complete", "failed"] },
+          "resultRef": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidenceRefs": { "type": "array", "items": { "type": "string" } },
+    "claimRefs": { "type": "array", "items": { "type": "string" } },
+    "receiptRefs": { "type": "array", "items": { "type": "string" } },
+    "promotion": {
+      "type": "object",
+      "required": ["state", "evidenceTier"],
+      "properties": {
+        "state": { "enum": ["UNREQUESTED", "PASS", "HOLD", "FAIL"] },
+        "evidenceTier": { "enum": ["E0", "E1", "E2", "E3", "E4", "E5"] },
+        "decisionRef": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "realityVeto": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": { "enum": ["NONE", "VETOED", "RELEASED"] },
+        "decisionRef": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "replayRef": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}
