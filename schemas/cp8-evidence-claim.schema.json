@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asin-hhc.local/schemas/cp8-evidence-claim.schema.json",
+  "title": "CP8 Evidence Claim",
+  "type": "object",
+  "required": [
+    "claimId",
+    "runId",
+    "classification",
+    "content",
+    "createdAt",
+    "createdBy",
+    "contentHash",
+    "status"
+  ],
+  "properties": {
+    "claimId": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "classification": {
+      "enum": ["OBSERVED", "CONTEXT", "INFERENCE", "TEST", "CONCLUSION"]
+    },
+    "content": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "createdBy": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "enum": ["human", "agent", "system", "instrument"] },
+        "id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "sourceRefs": { "type": "array", "items": { "type": "string" } },
+    "supports": { "type": "array", "items": { "type": "string" } },
+    "contradicts": { "type": "array", "items": { "type": "string" } },
+    "supersedes": { "type": "array", "items": { "type": "string" } },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "workerContext": {
+      "type": "object",
+      "properties": {
+        "workerId": { "type": ["string", "null"] },
+        "role": { "type": ["string", "null"] },
+        "originatingInterpretationExposed": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "status": {
+      "enum": ["ACTIVE", "CHALLENGED", "REPLICATED", "FAILED_REPLICATION", "SUPERSEDED", "RETRACTED"]
+    },
+    "evidenceTier": { "enum": ["E0", "E1", "E2", "E3", "E4", "E5"] },
+    "receiptRef": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}
