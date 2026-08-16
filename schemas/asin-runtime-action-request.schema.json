@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asin-hhc.local/schemas/asin-runtime-action-request.schema.json",
+  "title": "ASIN Runtime Action Request",
+  "type": "object",
+  "required": ["packetType", "version", "anchor", "shape", "intention", "number", "governance"],
+  "properties": {
+    "packetType": { "const": "asin_runtime_action_request" },
+    "version": { "const": "0.2" },
+    "anchor": {
+      "type": "object",
+      "required": ["actor", "source", "environment"],
+      "properties": {
+        "actor": { "type": "string" },
+        "source": { "type": "string" },
+        "environment": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "shape": {
+      "type": "object",
+      "required": ["actionType", "target"],
+      "properties": {
+        "actionType": {
+          "enum": ["tool_call", "file_write", "publish", "message", "transaction", "deploy", "research", "analysis", "build"]
+        },
+        "target": { "type": "string" },
+        "reversible": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "intention": {
+      "type": "object",
+      "required": ["goal", "why", "expectedEffect"],
+      "properties": {
+        "goal": { "type": "string" },
+        "why": { "type": "string" },
+        "expectedEffect": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "number": {
+      "type": "object",
+      "required": ["requestId", "contentHash", "evidenceTier"],
+      "properties": {
+        "requestId": { "type": "string" },
+        "contentHash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "evidenceTier": { "enum": ["E0", "E1", "E2", "E3", "E4", "E5"] }
+      },
+      "additionalProperties": false
+    },
+    "governance": {
+      "type": "object",
+      "required": ["policyContext", "riskClass", "decision"],
+      "properties": {
+        "policyContext": { "type": "string" },
+        "riskClass": { "enum": ["R0", "R1", "R2", "R3", "R4"] },
+        "decision": { "enum": ["APPROVE", "BLOCK", "ESCALATE", "REQUIRE_MORE_CONTEXT"] },
+        "reason": { "type": ["string", "null"] },
+        "decisionActor": { "type": ["string", "null"] },
+        "receiptHash": {
+          "type": ["string", "null"],
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "replayRef": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
