@@ -58,13 +58,21 @@ jobs:
           assert "\nsdk: gradio\n" in readme
           assert "\napp_file: app.py\n" in readme
 
-          assert workflow.count("actions/checkout@11d5960a326750d5838078e36cf38b85af677262") == 2
-          assert workflow.count("actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065") == 2
-          assert "github.ref == 'refs/heads/main'" in workflow
-          assert "group: hf-space-mirror-Denniscp8222-asin-ncea-evidence-harness-v0-1" in workflow
-          assert 'Mirror ${GITHUB_REPOSITORY}@${GITHUB_SHA}' in workflow
-          assert '$@{GITHUB_SHA}' not in workflow
-          assert workflow.count("HF_TOKEN: ${{ secrets.HF_TOKEN }}") == 1
+          checkout_pin = "actions/" + "checkout@" + "11d5960a326750d5838078e36cf38b85af677262"
+          setup_python_pin = "actions/" + "setup-python@" + "a26af69be951a213d495a4c3e4e4022e16d87065"
+          main_guard = "github.ref == " + "'refs/heads/main'"
+          target_group = "group: hf-space-mirror-" + "Denniscp8222-asin-ncea-evidence-harness-v0-1"
+          commit_message = "Mirror " + "$" + "{GITHUB_REPOSITORY}@" + "$" + "{GITHUB_SHA}"
+          malformed_message = "$@" + "{GITHUB_SHA}"
+          token_binding = "HF_TOKEN: " + "$" + "{{ secrets.HF_TOKEN }}"
+
+          assert workflow.count(checkout_pin) == 2
+          assert workflow.count(setup_python_pin) == 2
+          assert main_guard in workflow
+          assert target_group in workflow
+          assert commit_message in workflow
+          assert malformed_message not in workflow
+          assert workflow.count(token_binding) == 1
 
           print("Space package validation: PASS_WITH_HOLD")
           print("Publication workflow hardening: PASS")
