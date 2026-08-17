@@ -1,0 +1,143 @@
+name: Publish Hugging Face Space mirror
+
+on:
+  pull_request:
+    paths:
+      - "huggingface/asin-ncea-evidence-harness-v0-1/**"
+      - ".github/workflows/publish-hugging-face-space.yml"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the validated package to the public Hugging Face Space"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-space-mirror-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: huggingface/asin-ncea-evidence-harness-v0-1
+  HF_SPACE_ID: Denniscp8222/asin-ncea-evidence-harness-v0-1
+
+jobs:
+  validate:
+    name: Validate Space package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out canonical source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate source and evidence metadata
+        shell: bash
+        run: |
+          test -f "$SOURCE_DIR/README.md"
+          test -f "$SOURCE_DIR/app.py"
+          test -f "$SOURCE_DIR/requirements.txt"
+          test -f "$SOURCE_DIR/SPACE_MANIFEST.json"
+          python -m py_compile "$SOURCE_DIR/app.py"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["SOURCE_DIR"])
+          manifest = json.loads((root / "SPACE_MANIFEST.json").read_text())
+          readme = (root / "README.md").read_text()
+
+          assert manifest["promotion_verdict"] == "HOLD"
+          assert manifest["canonical_repository"] == "https://github.com/dbottrader/Holbrook-CP8-HHC"
+          assert manifest["target_space"] == "Denniscp8222/asin-ncea-evidence-harness-v0-1"
+          assert readme.startswith("---\n")
+          assert "\nsdk: gradio\n" in readme
+          assert "\napp_file: app.py\n" in readme
+          print("Space package validation: PASS_WITH_HOLD")
+          PY
+
+  publish:
+    name: Publish mirror
+    needs: validate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == true }}
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - name: Check out canonical source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the Hugging Face CLI
+        run: python -m pip install --disable-pip-version-check "huggingface_hub>=0.35,<2"
+
+      - name: Require the write token
+        shell: bash
+        run: |
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::HF_TOKEN is missing. Add a write-scoped Hugging Face token as a GitHub Actions repository secret."
+            exit 1
+          fi
+
+      - name: Build the provenance-stamped upload
+        shell: bash
+        run: |
+          MIRROR_DIR="$RUNNER_TEMP/hf-space"
+          mkdir -p "$MIRROR_DIR"
+          cp "$SOURCE_DIR/README.md" "$MIRROR_DIR/"
+          cp "$SOURCE_DIR/app.py" "$MIRROR_DIR/"
+          cp "$SOURCE_DIR/requirements.txt" "$MIRROR_DIR/"
+          cp "$SOURCE_DIR/SPACE_MANIFEST.json" "$MIRROR_DIR/"
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          receipt = {
+              "artifact": "ASIN-NCEA_HUGGINGFACE_DEPLOYMENT_RECEIPT_v1",
+              "source_repository": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}",
+              "source_commit": os.environ["GITHUB_SHA"],
+              "source_ref": os.environ["GITHUB_REF"],
+              "workflow_run": (
+                  f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+                  f"/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+              ),
+              "target_space": os.environ["HF_SPACE_ID"],
+              "published_at_utc": datetime.now(timezone.utc).isoformat(),
+              "promotion_verdict": "HOLD",
+              "witness_class": "MACHINE_EXECUTION_UNATTESTED",
+              "canonical_source": "GitHub",
+              "mirror_surface": "Hugging Face",
+          }
+          target = Path(os.environ["RUNNER_TEMP"]) / "hf-space" / "DEPLOYMENT_RECEIPT.json"
+          target.write_text(json.dumps(receipt, indent=2) + "\n")
+          PY
+
+      - name: Create the Space if needed
+        run: hf repos create "$HF_SPACE_ID" --repo-type space --sdk gradio --exist-ok
+
+      - name: Upload the mirror
+        run: >-
+          hf upload "$HF_SPACE_ID" "$RUNNER_TEMP/hf-space" .
+          --repo-type space
+          --commit-message "Mirror ${GITHUB_REPOSITORY}$@{GITHUB_SHA}"
+
+      - name: Verify the published Space
+        run: hf spaces info "$HF_SPACE_ID"
+
+      - name: Record the publication URL
+        run: |
+          echo "### Hugging Face publication" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://huggingface.co/spaces/$HF_SPACE_ID" >> "$GITHUB_STEP_SUMMARY"
