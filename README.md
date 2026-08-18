@@ -7,7 +7,9 @@ Fuses **HarmonyOS** super-device architecture + **CP8** integrity lattice + **HH
 **Status:** OPERATIONAL  
 **Protocol:** ASH-0.2  
 **License:** MIT  
-**HOS Ground Truth:** `63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320`  
+**HOS Ground Truth:** `63b5160ef51f0464295e86888c3e6605d8f6cc970635183887083818e8749320`
+
+> **Public Launch v1:** Start with [`PUBLIC_LAUNCH.md`](./PUBLIC_LAUNCH.md). It is the public routing index for live demonstrations, evidence boundaries, reproduction instructions, contribution paths, and current launch gates. Publication is active; ecosystem promotion remains `HOLD` until the documented evidence gates are earned.
 
 ---
 
@@ -25,6 +27,7 @@ See [`CREDITS.md`](./CREDITS.md) for the collaboration boundary.
 
 The repository is open source, but open source does not erase authorship, chronology, or attribution.
 
+- [`PUBLIC_LAUNCH.md`](./PUBLIC_LAUNCH.md) — public launch index, live surfaces, experimental boundaries, reproduction and contribution paths.
 - [`docs/PUBLIC_PROVENANCE_RECORD.md`](./docs/PUBLIC_PROVENANCE_RECORD.md) — human-readable chronology, evidence classes, authorship boundary, and convergence position.
 - [`provenance/public-record.json`](./provenance/public-record.json) — machine-readable public record using full commit identifiers.
 - [`CITATION.cff`](./CITATION.cff) — citation metadata for GitHub and research tooling.
@@ -60,6 +63,7 @@ These rules separate probabilistic assistance from authoritative execution. Mode
 
 | Path | Purpose | Status |
 |------|---------|--------|
+| `PUBLIC_LAUNCH.md` | Public launch routing index | Active |
 | `ARCHITECTURE.md` | Distributed node architecture | Implemented |
 | `docs/PUBLIC_PROVENANCE_RECORD.md` | Public chronology and evidence boundary | Maintained |
 | `provenance/public-record.json` | Machine-readable provenance summary | Maintained |
@@ -97,41 +101,6 @@ These rules separate probabilistic assistance from authoritative execution. Mode
 
 ## Current Boundaries
 
-| Area | Boundary |
-|------|----------|
-| Google Drive bridge | Code is present. Runtime requires account-owner OAuth setup. |
-| GitHub Actions workflow | Activation requires repository token scope that allows workflow writes. |
-| PQC keys | Registry records the planned key slot. Real key material must be generated before signing. |
-| DAR-P validator | Prototype implementation is present. Production authority requires dependency installation, test execution, CI, review, and signed receipts. |
-| External services | No external system is assumed active unless a commit, credentialed deployment, or service response proves it. |
-| Archived history | Internal dates and retrospective narratives are lineage evidence, not independent public timestamp proof. |
-| Patent references | Any provisional-application reference is a project-source anchor until verified against official records. |
+For the current public boundary, evidence levels, live surfaces, reproduction path, experimental claims, and launch gates, use [`PUBLIC_LAUNCH.md`](./PUBLIC_LAUNCH.md) together with the provenance records above.
 
----
-
-## CP8 Lattice Integration
-
-Holbrook is the orchestration layer for the broader CP8 ecosystem:
-
-- `cp8-provenance-workspace`: main build workspace.
-- `ASIN-HHC-Artifacts`: public artifact portfolio.
-- `ASIN-HHC-Collaboration`: public audit trail.
-- `Holbrook-CP8-HHC`: distributed coordination framework.
-- `CP8-Weights-`: public model, source-corpus, and checkpoint lineage.
-
-Shared anchors:
-- HOS Ground Truth hash.
-- ASH-0.2 protocol.
-- 111 Hz chronal anchor.
-
----
-
-## License
-
-Released under the [`MIT License`](./LICENSE). The copyright and permission notice must remain in copies or substantial portions of the software.
-
-For chronology-sensitive references, cite the exact artifact path and full commit SHA. Repository inclusion alone is not independent reproduction or technical validation.
-
----
-
-**Public record refreshed: 2026-07-30**
+The public launch is an invitation to inspect, run, challenge, reproduce, and build. A live demo, repository inclusion, or model agreement does not by itself establish independent reproduction or promotion authority.
