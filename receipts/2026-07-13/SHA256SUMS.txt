@@ -1,0 +1,6 @@
+# Detached SHA-256 manifest for the 2026-07-13 Weaver review receipt pair.
+# Calculated from the controlling uploaded files before publication.
+# This manifest provides integrity verification, not reviewer authentication.
+
+2bbeca18666fef7d11221121a7c843ec129eee223466fc72f0664621b0f45822  REVIEW_RECEIPT_2026-07-13.md
+3fd3ba91ba2cebd9b1471e9089670a612cc986c9c878ce5260b73edd21cef496  REVIEW_RECEIPT_2026-07-13.json
