@@ -12,6 +12,16 @@ ASIN-HHC / CP8 is an open research-and-builder ecosystem for distributed AI-agen
 
 The project separates source, deployment, synthesis, task state, and promotion authority. No public surface is allowed to silently redefine another.
 
+Core rules:
+
+- Capability does not imply authority.
+- No receipt means no promotion.
+- Replay supersedes narration.
+- Specification is not implementation.
+- Similarity does not establish influence.
+- Negative evidence and contradictions are preserved.
+- Reality retains veto.
+
 ## Surface authority map
 
 | Surface | Role | Authority |
@@ -31,7 +41,7 @@ The project separates source, deployment, synthesis, task state, and promotion a
 
 This repository contains the distributed coordination framework, public provenance records, agent registry, SHA-256/Merkle verification tools, DAR-P deterministic validation work, specifications, lattice registries, server surface, and bounded bridges.
 
-Repository status and boundaries remain defined by the root README, public provenance record, receipts, PRs, and verification artifacts. `Capability != Authority`; `No Receipt = No Promotion`; `Reality retains veto`.
+Repository status and boundaries remain defined by the root README, public provenance record, receipts, PRs, and verification artifacts.
 
 ### Live public surfaces
 
@@ -74,6 +84,7 @@ Similarity is not influence. Specification is not implementation. A successful l
 - [x] AppDeploy runtime publicly reachable.
 - [x] Four Vercel public surfaces reachable and individually classified.
 - [x] Public status/provenance surface exists.
+- [x] Public reproduction and contributor instructions are defined in this launch index.
 - [ ] Notion Builder Brief fully reconciled with the frozen launch index.
 - [ ] Hugging Face hardened mirror produces a publication/deployment receipt.
 - [ ] Reproduction instructions receive an independently replayable test receipt.
@@ -90,11 +101,35 @@ Start with bounded, falsifiable tasks rather than attempting to validate the ent
 2. Inspect `docs/PUBLIC_PROVENANCE_RECORD.md`, `provenance/public-record.json`, `sha256-manifest.json`, and the relevant receipt for the artifact under test.
 3. Run the artifact's documented verifier/test path. For DAR-P work, use the validator and tests under `dar_p/` and `tests/` rather than inferring correctness from documentation.
 4. Record environment, dependency versions, inputs, outputs, timestamps, and cryptographic hashes.
-5. Classify the result using: `OBSERVED / CONTEXT / INFERENCE / TEST / CONCLUSION`.
+5. Classify the result using `OBSERVED / CONTEXT / INFERENCE / TEST / CONCLUSION`.
 6. Report failures, contradictions, missing dependencies, and negative results. They are first-class evidence.
-7. Do not promote the claim yourself. Submit the evidence/receipt for review and Reality Veto.
+7. Return a bounded verdict: `PASS`, `FAIL`, or `HOLD/BLOCKED`, with the reason and unresolved gates.
+8. Do not promote the claim yourself. Submit the evidence/receipt for review and Reality Veto.
 
-A valid reproduction should make it possible for another reviewer to distinguish what was executed from what was merely described.
+A useful reproduction receipt should bind, where applicable:
+
+- source repository and full commit SHA;
+- exact artifact paths and SHA-256 values;
+- runtime/deployment revision when a deployment is tested;
+- test command/method and execution environment;
+- observed outputs and failures;
+- evidence tier/disposition;
+- unresolved gates;
+- reviewer/agent identity without granting that identity authority.
+
+A valid reproduction makes it possible for another reviewer to distinguish what was executed from what was merely described.
+
+## How to challenge a claim
+
+A useful contribution produces evidence rather than agreement. Use the five-field structure:
+
+- **OBSERVED** — directly measured or retrieved evidence.
+- **CONTEXT** — source, chronology, environment and relevant boundaries.
+- **INFERENCE** — interpretation separated from observation.
+- **TEST** — evidence capable of supporting or falsifying the inference.
+- **CONCLUSION** — current bounded result, including uncertainty.
+
+Strong challenges include alternative explanations, counterexamples, chronology conflicts, replay failures, source/runtime mismatches, missing receipts, nondeterminism, security failures, and evidence that a planned component already exists elsewhere.
 
 ## How to contribute
 
@@ -102,12 +137,12 @@ Useful first contributions are deliberately concrete:
 
 - **Reproduce:** run one bounded CP8/DAR-P test and submit the complete receipt.
 - **Challenge:** select one documented claim and attempt to falsify it with a competing explanation or failing test.
-- **Audit:** inspect one public deployment and bind its observed bytes/behavior to an exact source artifact and commit.
+- **Audit:** inspect one public deployment and bind its observed bytes/behavior to an exact source artifact and commit—or explicitly mark it unbound.
 - **Verify provenance:** independently recompute SHA-256/Merkle material for one artifact or release packet.
 - **Improve a bounded component:** submit a PR that fixes a demonstrated defect without weakening evidence or authority boundaries.
-- **Recover prior work:** identify an earlier artifact that supersedes proposed new implementation and document ADOPT / ADAPT / ARCHIVE / HOLD with evidence.
+- **Recover prior work:** identify an earlier artifact that supersedes proposed new implementation and document `ADOPT / ADAPT / ARCHIVE / HOLD` with evidence.
 
-Contributions should include exact source references, reproducible steps, observed results, and the smallest claim justified by those results.
+Contributions should include exact source references, reproducible steps, observed results, and the smallest claim justified by those results. Use GitHub issues/pull requests for durable technical contributions; social posts, model agreement, and popularity are not promotion evidence.
 
 ## Active review surfaces
 
