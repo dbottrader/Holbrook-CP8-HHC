@@ -142,35 +142,128 @@ jobs:
           --repo-type space
           --commit-message "Mirror ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
 
-      - name: Verify remote bytes against local upload
+      - name: Verify exact Hugging Face revision and seal remote bytes
+        id: verify
         shell: bash
         run: |
-          REMOTE_DIR="$RUNNER_TEMP/hf-space-verify"
-          hf download "$HF_SPACE_ID" --repo-type space --local-dir "$REMOTE_DIR"
           python - <<'PY'
           import hashlib
           import json
           import os
+          from datetime import datetime, timezone
           from pathlib import Path
+          from huggingface_hub import HfApi, snapshot_download
+
+          def sha256_bytes(data: bytes) -> str:
+              return hashlib.sha256(data).hexdigest()
+
+          def merkle_root_v1(file_hashes: dict[str, str]) -> str:
+              leaves = []
+              for name, digest in sorted(file_hashes.items()):
+                  payload = b"CP8-HF-MIRROR-LEAF-v1\x00" + name.encode("utf-8") + b"\x00" + bytes.fromhex(digest)
+                  leaves.append(hashlib.sha256(payload).digest())
+              if not leaves:
+                  return hashlib.sha256(b"CP8-HF-MIRROR-EMPTY-v1").hexdigest()
+              level = leaves
+              while len(level) > 1:
+                  next_level = []
+                  for index in range(0, len(level), 2):
+                      left = level[index]
+                      right = level[index + 1] if index + 1 < len(level) else left
+                      next_level.append(hashlib.sha256(b"CP8-HF-MIRROR-NODE-v1\x00" + left + right).digest())
+                  level = next_level
+              return level[0].hex()
+
+          token = os.environ["HF_TOKEN"]
+          repo_id = os.environ["HF_SPACE_ID"]
+          api = HfApi(token=token)
+          info = api.repo_info(repo_id=repo_id, repo_type="space")
+          hf_revision = info.sha
+          if not hf_revision:
+              raise SystemExit("Hugging Face did not return an immutable revision SHA")
 
           local = Path(os.environ["RUNNER_TEMP"]) / "hf-space"
-          remote = Path(os.environ["RUNNER_TEMP"]) / "hf-space-verify"
-          receipt = json.loads((local / "DEPLOYMENT_RECEIPT.json").read_text())
-          expected = dict(receipt["upload_file_sha256"])
-          expected["DEPLOYMENT_RECEIPT.json"] = hashlib.sha256((local / "DEPLOYMENT_RECEIPT.json").read_bytes()).hexdigest()
+          deployment_receipt_path = local / "DEPLOYMENT_RECEIPT.json"
+          deployment_receipt = json.loads(deployment_receipt_path.read_text())
+          expected = dict(deployment_receipt["upload_file_sha256"])
+          expected["DEPLOYMENT_RECEIPT.json"] = sha256_bytes(deployment_receipt_path.read_bytes())
+
+          remote_files = sorted(api.list_repo_files(repo_id=repo_id, repo_type="space", revision=hf_revision))
+          allowed_platform_files = {".gitattributes"}
+          expected_names = set(expected)
+          unexpected = sorted(set(remote_files) - expected_names - allowed_platform_files)
+          missing = sorted(expected_names - set(remote_files))
+          if unexpected or missing:
+              raise SystemExit(
+                  f"Remote file-set mismatch: unexpected={unexpected} missing={missing} remote={remote_files}"
+              )
+
+          remote_dir = Path(os.environ["RUNNER_TEMP"]) / "hf-space-verify"
+          snapshot_download(
+              repo_id=repo_id,
+              repo_type="space",
+              revision=hf_revision,
+              local_dir=remote_dir,
+              token=token,
+          )
           actual = {
-              name: hashlib.sha256((remote / name).read_bytes()).hexdigest()
-              for name in expected
+              name: sha256_bytes((remote_dir / name).read_bytes())
+              for name in sorted(expected)
           }
           if actual != expected:
               raise SystemExit(f"Remote hash mismatch: expected={expected} actual={actual}")
-          print(json.dumps({"remote_content_sha256": actual}, sort_keys=True))
+
+          merkle_root = merkle_root_v1(actual)
+          verification_receipt = {
+              "artifact": "ASIN-NCEA_HUGGINGFACE_VERIFICATION_RECEIPT_v1",
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "source_repository": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}",
+              "source_commit": os.environ["GITHUB_SHA"],
+              "source_ref": os.environ["GITHUB_REF"],
+              "workflow_run": (
+                  f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+                  f"/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+              ),
+              "target_space": repo_id,
+              "hf_revision": hf_revision,
+              "promotion_verdict": "HOLD",
+              "witness_class": "MACHINE_EXECUTION_UNATTESTED",
+              "remote_file_sha256": actual,
+              "remote_file_set": remote_files,
+              "allowed_platform_files": sorted(allowed_platform_files),
+              "merkle_profile": "CP8-HF-MIRROR-MERKLE-v1",
+              "merkle_root": merkle_root,
+              "deployment_receipt_sha256": expected["DEPLOYMENT_RECEIPT.json"],
+          }
+          receipt_path = Path(os.environ["RUNNER_TEMP"]) / "HF_MIRROR_VERIFICATION_RECEIPT.json"
+          receipt_path.write_text(json.dumps(verification_receipt, sort_keys=True, indent=2) + "\n")
+          verification_receipt_sha256 = sha256_bytes(receipt_path.read_bytes())
+
+          output = Path(os.environ["GITHUB_OUTPUT"])
+          with output.open("a", encoding="utf-8") as handle:
+              handle.write(f"hf_revision={hf_revision}\n")
+              handle.write(f"merkle_root={merkle_root}\n")
+              handle.write(f"verification_receipt_sha256={verification_receipt_sha256}\n")
+          print(json.dumps(verification_receipt, sort_keys=True))
           PY
+
+      - name: Preserve verification receipt as immutable Actions artifact
+        id: verification_artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: hf-mirror-verification-${{ github.run_id }}
+          path: ${{ runner.temp }}/HF_MIRROR_VERIFICATION_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Verify the published Space metadata
         run: hf spaces info "$HF_SPACE_ID"
 
-      - name: Record the publication URL
+      - name: Record the publication evidence
         run: |
           echo "### Hugging Face publication" >> "$GITHUB_STEP_SUMMARY"
           echo "https://huggingface.co/spaces/$HF_SPACE_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo "HF revision: ${{ steps.verify.outputs.hf_revision }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Mirror Merkle root: ${{ steps.verify.outputs.merkle_root }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Verification receipt SHA-256: ${{ steps.verify.outputs.verification_receipt_sha256 }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Actions artifact SHA-256: ${{ steps.verification_artifact.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"
