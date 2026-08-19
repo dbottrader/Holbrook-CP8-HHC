@@ -1,0 +1,107 @@
+{
+  "schema": "DTR-EXTERNAL-SOURCE-REGISTRY-v1",
+  "generated_at": "2026-08-19",
+  "supabase_project_ref": "ecenvlwyenpakrxfuqup",
+  "sources": [
+    {
+      "source_id": "DTR-SRC-THALESIAN-CUNEIFORMBASE-400M",
+      "name": "Thalesian cuneiformBase-400m",
+      "type": "MODEL",
+      "canonical_url": "https://huggingface.co/Thalesian/cuneiformBase-400m",
+      "license_terms": "Apache-2.0",
+      "last_observed_update": "2026-02-20",
+      "status": "ACTIVE",
+      "mirror_policy": "MIRROR_ALLOWED",
+      "provenance_strength": "GENERAL_SECONDARY",
+      "cp8_rule": "Hypothesis generator; verify promoted results against primary corpora."
+    },
+    {
+      "source_id": "DTR-SRC-FOLKMOTIF-270",
+      "name": "FolkMotif-270",
+      "type": "DATASET",
+      "canonical_url": "https://huggingface.co/datasets/Aragoner/folkmotif",
+      "license_terms": "CC BY 4.0",
+      "last_observed_update": "2026-08-08",
+      "status": "ACTIVE",
+      "mirror_policy": "MIRROR_ALLOWED",
+      "provenance_strength": "SCHOLARLY_SECONDARY",
+      "cp8_rule": "Control and cultural-readout-bias benchmark, not a common-origin truth table."
+    },
+    {
+      "source_id": "DTR-SRC-CCRA",
+      "name": "Crop Circle Research Archive",
+      "type": "ARCHIVE",
+      "canonical_url": "https://circleresearcharchive.com/mast/the-database/",
+      "status": "ACTIVE",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "dedupe_key_hint": "CCRA Reference",
+      "cp8_rule": "Preserve underlying copyright and contributor attribution per asset."
+    },
+    {
+      "source_id": "DTR-SRC-CROP-CIRCLE-CENTER",
+      "name": "Crop Circle Center",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.cropcirclecenter.com/",
+      "status": "ACTIVE",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Ingest sighting metadata separately from image rights and origin inference."
+    },
+    {
+      "source_id": "DTR-SRC-CROPDECODER",
+      "name": "Decoding the Codes / CropDecoder",
+      "type": "DATABASE",
+      "canonical_url": "https://cropdecoder.com/database",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Treat node/anomaly labels as source claims until independently validated."
+    },
+    {
+      "source_id": "DTR-SRC-ICCRA-USA",
+      "name": "ICCRA USA Formation Reports",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.iccra.org/byyear/usaformations-byyear.htm",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Historical regional provenance source; preserve report attribution."
+    },
+    {
+      "source_id": "DTR-SRC-CROP-CIRCLE-CONNECTOR",
+      "name": "Crop Circle Connector",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.cropcircleconnector.com/2026/reportacropcircle2026.html",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Never bypass or mirror member-only picture archives; ingest public metadata only."
+    },
+    {
+      "source_id": "DTR-SRC-ZENODO-20979174",
+      "name": "Zenodo 20979174 — Crop Circles & Geometry",
+      "type": "TECHNICAL_NOTE",
+      "canonical_url": "https://zenodo.org/records/20979174",
+      "last_observed_update": "2026-06-27",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "GENERAL_SECONDARY",
+      "cp8_rule": "External hypothesis/test artifact; replication required; no origin promotion from author conclusions alone."
+    }
+  ],
+  "seed_records": [
+    "DTR-REC-MODEL-CUNEIFORMBASE-400M-20260220",
+    "DTR-REC-FOLKMOTIF-270-20260808",
+    "DTR-REC-CCC-UK20260804-A",
+    "DTR-REC-ZENODO-20979174-V3"
+  ],
+  "seed_formations": [
+    {
+      "formation_id": "DTR-CC-20260804-WILTSHIRE-001",
+      "source_record": "DTR-REC-CCC-UK20260804-A",
+      "evidence_classification": "SOURCE_REPORTED",
+      "origin_classification": "ORIGIN_UNRESOLVED"
+    }
+  ]
+}
