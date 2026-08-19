@@ -102,11 +102,15 @@ Outcome: **PASS_INTERNAL_TRANSCRIPTION_WITH_ANOMALY.**
 
 This validates only the arithmetic of the published transcription. It does not independently validate crop-mark-to-bit extraction, message authenticity, authorship, or origin.
 
-## Batch receipt
+## Final batch receipt
 
-- receipt_id: `b3a52bd5-3aa2-498c-8bce-41f62c6065ec`
-- payload_hash: `5ed5025500d6b5730d78afc21ae5cc8712d32190b406554cc7eb675074a72db9`
-- receipt_hash: `fc231d2e3ee31c7ce039e27ee0e744d79dca9ad73f06de971a95be924ebacfa1`
+Final receipt binds the current GitHub registry/documentation head and supersedes the earlier interim receipt.
+
+- receipt_id: `69fee9fb-c492-4f7e-862b-7b50a18585f7`
+- payload_hash: `f2d6520795ace859fe7f6f3a364e31e5a5c6eed0e62c9e5dfbb8f9dbfa859ce8`
+- receipt_hash: `99673724a669ffd7020ddbf1b2632786a33d175098e8405da79c620a85c08126`
+- bound GitHub head: `d639f58ce7d57330bbf307c1b7234de5b34a11b3`
+- superseded interim receipt hash: `fc231d2e3ee31c7ce039e27ee0e744d79dca9ad73f06de971a95be924ebacfa1`
 - analysis runs bound: 5
 
 ## Analysis gate
