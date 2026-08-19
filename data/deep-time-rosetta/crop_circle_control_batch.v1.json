@@ -1,0 +1,96 @@
+{
+  "schema": "dtr-crop-circle-control-batch-v1",
+  "created_at": "2026-08-19",
+  "authority": "formation geometry and encoding analyses do not imply origin",
+  "controls": [
+    {
+      "id": "DTR-CC-19980307-WINTON-001",
+      "name": "Winton 1998",
+      "origin": "HUMAN_MADE_CONFIRMED",
+      "elements": 103,
+      "span_ft": 300,
+      "symmetry_order_pilot": 3,
+      "recursive_multiscale": 1,
+      "source": "https://www.cropcirclearchives.co.uk/archives/inter98/nz98.html"
+    },
+    {
+      "id": "DTR-CC-20010728-BECKHAMPTON-HTV-001",
+      "name": "HTV Beckhampton 2001",
+      "origin": "HUMAN_MADE_CONFIRMED",
+      "elements": 178,
+      "span_ft": 240,
+      "symmetry_order": 8,
+      "recursive_multiscale": 0,
+      "source": "https://www.circlemakers.org/htv.html"
+    },
+    {
+      "id": "DTR-CC-19980726-MILKHILL-BBC-001",
+      "name": "BBC Milk Hill 1998",
+      "origin": "HUMAN_MADE_CONFIRMED",
+      "elements_min": 101,
+      "span_ft_approx": 190,
+      "pilot_status": "calibration_only_missing_exact_features",
+      "source": "https://www.cropcirclearchives.co.uk/archives/1998/milk98.html"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "DTR-CC-19960729-WINDMILLHILL-001",
+      "name": "Windmill Hill 1996",
+      "origin": "ORIGIN_UNRESOLVED",
+      "elements": 194,
+      "span_ft": 500,
+      "span_rule": "conservative lower bound; archive field report also states at least 1000 ft",
+      "symmetry_order": 3,
+      "recursive_multiscale": 1,
+      "source": "https://www.cropcirclearchives.co.uk/archives/1996/wind96.html"
+    },
+    {
+      "id": "DTR-CC-20010814-MILKHILL-409-001",
+      "name": "Milk Hill 2001",
+      "origin": "ORIGIN_UNRESOLVED",
+      "elements": 409,
+      "span_ft": 900,
+      "symmetry_order": 6,
+      "recursive_multiscale": 1,
+      "source": "https://cropcircles.lucypringle.co.uk/photos/2001/uk2001df.shtml"
+    },
+    {
+      "id": "DTR-CC-20020815-CRABWOOD-001",
+      "name": "Crabwood 2002",
+      "origin": "ORIGIN_UNRESOLVED",
+      "representation": "raster-like face + circular coded disc",
+      "pilot_status": "encoding_audit_separate_from_circle_geometry",
+      "source": "https://www.cropcirclearchives.co.uk/archives/2002/Crabwood/crabwood2002a.html"
+    }
+  ],
+  "geometry_protocol": {
+    "id": "DTR-CC-BLIND-GEOMETRY-PILOT-V1",
+    "preregistered": false,
+    "complete_case_n": 4,
+    "spec_a": ["log1p(elements)", "log1p(span_ft)", "symmetry_order", "recursive_multiscale"],
+    "spec_b": ["log1p(elements)", "log1p(span_ft)", "recursive_multiscale"],
+    "standardization": "z-score",
+    "distance": "euclidean",
+    "labels_used": "after distance matrix only"
+  },
+  "geometry_result": {
+    "same_origin_nn_accuracy_spec_a": 0.5,
+    "same_origin_nn_accuracy_spec_b": 0.5,
+    "closest_pair_both_specs": ["Winton1998", "Windmill1996"],
+    "closest_pair_origins": ["HUMAN_MADE_CONFIRMED", "ORIGIN_UNRESOLVED"],
+    "spec_a_permutation_p_one_sided": 0.6666666666666666,
+    "spec_b_permutation_p_one_sided": 0.3333333333333333,
+    "conclusion": "No reliable geometry-only origin separation in this tiny pilot; complexity is not origin evidence.",
+    "result_sha256": "a2ec1914c7b2a2a6eaf47f204f933c7c5d06e28632a036c0fe6d23680d9ac13a"
+  },
+  "crabwood_ascii_audit": {
+    "standard_8bit_bytes_checked": 150,
+    "anomalous_segment_bits": "10101010110",
+    "anomalous_segment_length_bits": 11,
+    "anomalous_segment_decimal": 1366,
+    "outcome": "PASS_INTERNAL_TRANSCRIPTION_WITH_ANOMALY",
+    "scope_limit": "published transcription only; no independent crop-image bit extraction",
+    "result_sha256": "f599d9a958ff012758352c46864911aef4291f5314c0c5c3da3e05c84d451f8e"
+  }
+}
