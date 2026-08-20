@@ -38,5 +38,7 @@ jobs:
           python-version: "3.12"
       - name: Run Moltbook unit and contract tests
         run: python -m unittest discover -s tests -p 'test_moltbook_*.py'
-      - name: Verify source and evidence snapshot
+      - name: Verify source and contract integrity
         run: python scripts/verify_moltbook_snapshot.py
+      - name: Enforce evidence gates
+        run: python scripts/verify_moltbook_snapshot.py --strict-gates
