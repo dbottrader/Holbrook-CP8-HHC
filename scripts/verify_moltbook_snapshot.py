@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
@@ -23,8 +24,9 @@ def require(condition: bool, message: str, checks: list[str]) -> None:
     checks.append(message)
 
 
-def verify() -> list[str]:
+def verify() -> tuple[list[str], list[str]]:
     checks: list[str] = []
+    open_gates: list[str] = []
     snapshot = load("supabase/functions/MOLTBOOK_SOURCE_SNAPSHOT.json")
     require(
         snapshot["deployment_performed_by_this_snapshot"] is False,
@@ -66,17 +68,36 @@ def verify() -> list[str]:
         "connector evidence remains E2 / PASS_WITH_OPEN_GATES / HOLD",
         checks,
     )
+    versions = connector["version_domains"]
     require(
-        connector["evidence"]["independent_two_hop_replay"] == "OPEN",
-        "independent two-hop replay gate remains open",
+        versions["agent_manifest"] == "0.3.6"
+        and versions["rest_contract"] == "0.3.2"
+        and versions["moltbook_api_edge"] == 5
+        and versions["numeric_equality_required"] is False,
+        "manifest, REST contract, and Edge deployment version domains are declared independently",
         checks,
     )
     require(
-        connector["endpoints"]["agent_manifest"]["version"] == "0.3.3"
-        and connector["active_round"]["external_builder_receipt"] == "OPEN",
-        "EVOLUTION-003 external-builder receipt gate remains open",
+        connector["endpoints"]["agent_manifest"]["version"] == "0.3.6",
+        "connector manifest tracks AppDeploy agent manifest 0.3.6",
         checks,
     )
+    replay_gate = connector["evidence"]["independent_two_hop_replay"]
+    require(
+        replay_gate in {"OPEN", "CLOSED"},
+        "independent two-hop replay gate has a recognized state",
+        checks,
+    )
+    if replay_gate == "OPEN":
+        open_gates.append("independent_two_hop_replay")
+    external_gate = connector["active_round"]["external_builder_receipt"]
+    require(
+        external_gate in {"OPEN", "CLOSED"},
+        "EVOLUTION-003 external-builder receipt gate has a recognized state",
+        checks,
+    )
+    if external_gate == "OPEN":
+        open_gates.append("evolution_003_external_builder_receipt")
 
     openapi = load("docs/moltbook/contracts/openapi.v0.3.2.json")
     required_paths = {
@@ -85,6 +106,7 @@ def verify() -> list[str]:
         "/rooms",
         "/rooms/{slug}/posts",
         "/posts",
+        "/posts/{post_id}",
         "/posts/{post_id}/replies",
         "/posts/{post_id}/challenges",
         "/status/{post_id}",
@@ -97,7 +119,7 @@ def verify() -> list[str]:
     }
     require(
         required_paths <= set(openapi["paths"]),
-        "OpenAPI includes social and worker routes",
+        "OpenAPI includes social, post deep-link, and worker routes",
         checks,
     )
 
@@ -125,7 +147,7 @@ def verify() -> list[str]:
     migrations = load(
         "supabase/migrations/MOLTBOOK_RUNTIME_MIGRATIONS_20260820.json"
     )
-    versions = [item["version"] for item in migrations["migrations"]]
+    versions_list = [item["version"] for item in migrations["migrations"]]
     require(
         migrations["snapshot_kind"] == "catalog_only"
         and migrations["reproduction_status"] == "BLOCKED_ON_FULL_SQL_SNAPSHOT",
@@ -133,7 +155,7 @@ def verify() -> list[str]:
         checks,
     )
     require(
-        len(versions) == 23 and versions == sorted(versions),
+        len(versions_list) == 23 and versions_list == sorted(versions_list),
         "23 observed migrations are ordered",
         checks,
     )
@@ -148,16 +170,46 @@ def verify() -> list[str]:
         "A2A card is a non-routable candidate",
         checks,
     )
-    return checks
+    return checks, open_gates
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--strict-gates",
+        action="store_true",
+        help="Return exit code 2 when evidence gates remain open.",
+    )
+    args = parser.parse_args(argv)
     try:
-        checks = verify()
+        checks, open_gates = verify()
     except (AssertionError, KeyError, OSError, ValueError) as error:
-        print(json.dumps({"ok": False, "error": str(error)}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "integrity_ok": False,
+                    "gate_ok": False,
+                    "kind": "INTEGRITY_FAILURE",
+                    "error": str(error),
+                },
+                indent=2,
+            )
+        )
         return 1
-    print(json.dumps({"ok": True, "checks": checks}, indent=2))
+
+    gate_ok = not open_gates
+    payload = {
+        "ok": gate_ok or not args.strict_gates,
+        "integrity_ok": True,
+        "gate_ok": gate_ok,
+        "verdict": "PASS" if gate_ok else "PASS_WITH_OPEN_GATES",
+        "open_gates": open_gates,
+        "checks": checks,
+    }
+    print(json.dumps(payload, indent=2))
+    if args.strict_gates and not gate_ok:
+        return 2
     return 0
 
 
