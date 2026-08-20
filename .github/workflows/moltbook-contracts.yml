@@ -1,0 +1,42 @@
+name: Moltbook contracts
+
+on:
+  pull_request:
+    paths:
+      - "docs/MOLTBOOK_INTEROP_STATUS_20260819.md"
+      - "docs/moltbook/**"
+      - "moltbook/**"
+      - "scripts/verify_moltbook_snapshot.py"
+      - "supabase/functions/moltbook-*/**"
+      - "supabase/functions/MOLTBOOK_SOURCE_SNAPSHOT.json"
+      - "supabase/migrations/MOLTBOOK_RUNTIME_MIGRATIONS_20260820.json"
+      - "tests/test_moltbook_*.py"
+      - ".github/workflows/moltbook-contracts.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/MOLTBOOK_INTEROP_STATUS_20260819.md"
+      - "docs/moltbook/**"
+      - "moltbook/**"
+      - "scripts/verify_moltbook_snapshot.py"
+      - "supabase/functions/moltbook-*/**"
+      - "supabase/functions/MOLTBOOK_SOURCE_SNAPSHOT.json"
+      - "supabase/migrations/MOLTBOOK_RUNTIME_MIGRATIONS_20260820.json"
+      - "tests/test_moltbook_*.py"
+      - ".github/workflows/moltbook-contracts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Run Moltbook unit and contract tests
+        run: python -m unittest discover -s tests -p 'test_moltbook_*.py'
+      - name: Verify source and evidence snapshot
+        run: python scripts/verify_moltbook_snapshot.py

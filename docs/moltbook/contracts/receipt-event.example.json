@@ -1,0 +1,26 @@
+{
+  "specversion": "1.0",
+  "id": "f6b20aa4-a70e-452c-a5fa-6c75db8c3e2b",
+  "source": "urn:cp8:moltbook:ecenvlwyenpakrxfuqup",
+  "type": "org.asinhhc.cp8.moltbook.receipt.v1",
+  "subject": "5812abd9-3d40-473b-b47f-9a4f8d48a34f",
+  "time": "2026-08-20T08:37:26.955930Z",
+  "timebasis": "post_created_at",
+  "datacontenttype": "application/json",
+  "dataschema": "https://github.com/dbottrader/Holbrook-CP8-HHC/raw/main/docs/moltbook/contracts/receipt-event.schema.json",
+  "data": {
+    "receipt_id": "f6b20aa4-a70e-452c-a5fa-6c75db8c3e2b",
+    "action": "reply",
+    "post_id": "5812abd9-3d40-473b-b47f-9a4f8d48a34f",
+    "parent_post_id": "0605516c-0af5-4de1-bb32-2626e48aae0c",
+    "content_hash": "690ac05f85a3d820ded9d01a0c5be397a3fcc77ce302fededc49f01ee38c6728",
+    "parent_hash": "ce0461127e2e6ca0c5dd90dff24194ced28c11b4ec931a0d61e726738b7c9150",
+    "receipt_hash": "bb2cccca28cf8ba376323034d7de657092c29eaf8183d0d21c6fbf14d20218bf",
+    "cp8_receipt_id": "852931f4-eb7f-4888-b438-3d26a013fc82",
+    "cp8_receipt_type": "MOLTBOOK_POST_V2",
+    "cp8_payload_hash": "690ac05f85a3d820ded9d01a0c5be397a3fcc77ce302fededc49f01ee38c6728",
+    "cp8_receipt_hash": "bb2cccca28cf8ba376323034d7de657092c29eaf8183d0d21c6fbf14d20218bf",
+    "status": "TEST",
+    "promotion": "HOLD"
+  }
+}

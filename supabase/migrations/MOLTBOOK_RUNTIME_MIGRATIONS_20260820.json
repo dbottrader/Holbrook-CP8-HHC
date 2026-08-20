@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "observed_at": "2026-08-20T17:00:11Z",
+  "supabase_project_ref": "ecenvlwyenpakrxfuqup",
+  "snapshot_kind": "catalog_only",
+  "reproduction_status": "BLOCKED_ON_FULL_SQL_SNAPSHOT",
+  "promotion": "HOLD",
+  "notes": [
+    "This inventory proves migration names and ordering observed in the runtime.",
+    "It does not contain SQL bodies or earlier CP8 prerequisite migrations.",
+    "Do not treat this file as a database bootstrap or rollback artifact."
+  ],
+  "migrations": [
+    {"version": "20260819130442", "name": "add_cp8_moltbook_v01", "sql_bytes_observed": 17687},
+    {"version": "20260819133936", "name": "harden_cp8_moltbook_receipts_v2", "sql_bytes_observed": 20910},
+    {"version": "20260819134335", "name": "index_cp8_moltbook_receipt_bindings", "sql_bytes_observed": 242},
+    {"version": "20260819172604", "name": "add_moltbook_guest_self_onboarding", "sql_bytes_observed": 3521},
+    {"version": "20260820084725", "name": "add_moltbook_worker_queue_v1", "sql_bytes_observed": 14173},
+    {"version": "20260820084744", "name": "add_moltbook_worker_create_gate_v1", "sql_bytes_observed": 2419},
+    {"version": "20260820084943", "name": "add_trusted_ace_worker_identity_v1", "sql_bytes_observed": 1832},
+    {"version": "20260820085029", "name": "fix_trusted_worker_connect_ambiguity_v1", "sql_bytes_observed": 1430},
+    {"version": "20260820085403", "name": "add_direct_trusted_worker_rpcs_v1", "sql_bytes_observed": 11471},
+    {"version": "20260820085424", "name": "fix_trusted_worker_heartbeat_conflict_v1", "sql_bytes_observed": 1620},
+    {"version": "20260820085501", "name": "add_direct_trusted_worker_fail_v1", "sql_bytes_observed": 1637},
+    {"version": "20260820085624", "name": "allow_trusted_worker_post_auth_v1", "sql_bytes_observed": 4693},
+    {"version": "20260820085711", "name": "fix_cp8_worker_claim_attempt_count_ambiguity", "sql_bytes_observed": 2863},
+    {"version": "20260820085720", "name": "add_trusted_worker_post_bridge_v1", "sql_bytes_observed": 1735},
+    {"version": "20260820085739", "name": "fix_cp8_worker_heartbeat_agent_id_ambiguity", "sql_bytes_observed": 1945},
+    {"version": "20260820100712", "name": "enforce_moltbook_worker_scope_and_role_v1", "sql_bytes_observed": 6344},
+    {"version": "20260820100751", "name": "harden_moltbook_worker_queue_invariants", "sql_bytes_observed": 14476},
+    {"version": "20260820100810", "name": "make_worker_scope_gate_total_boolean", "sql_bytes_observed": 887},
+    {"version": "20260820101011", "name": "enforce_trusted_worker_direct_role_v1", "sql_bytes_observed": 2850},
+    {"version": "20260820101151", "name": "pin_moltbook_validate_post_search_path_v1", "sql_bytes_observed": 113},
+    {"version": "20260820101226", "name": "streamline_moltbook_worker_core", "sql_bytes_observed": 9572},
+    {"version": "20260820101310", "name": "remove_unused_worker_policy_helpers", "sql_bytes_observed": 159},
+    {"version": "20260820104724", "name": "allow_trusted_workers_to_create_cp8_work", "sql_bytes_observed": 2404}
+  ]
+}
