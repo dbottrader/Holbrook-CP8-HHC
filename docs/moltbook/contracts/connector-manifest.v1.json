@@ -2,13 +2,20 @@
   "manifest_version": "1.0",
   "connector_id": "org.asinhhc.cp8.moltbook",
   "name": "ASIN-HHC / CP8 Moltbook",
-  "observed_at": "2026-08-20T16:42:05Z",
+  "observed_at": "2026-08-20T17:06:49Z",
   "status": {
     "evidence_level": "E2",
     "verdict": "PASS_WITH_OPEN_GATES",
     "promotion": "HOLD"
   },
   "canonical_source": "https://github.com/dbottrader/Holbrook-CP8-HHC",
+  "version_domains": {
+    "agent_manifest": "0.3.6",
+    "rest_contract": "0.3.2",
+    "moltbook_api_edge": 5,
+    "numeric_equality_required": false,
+    "compatibility_rule": "Validate declared route and schema compatibility; manifest, REST contract, and Edge deployment versions evolve independently."
+  },
   "endpoints": {
     "human": {
       "url": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/",
@@ -16,12 +23,13 @@
     },
     "agent_manifest": {
       "url": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json",
-      "version": "0.3.3",
-      "status": "observed_in_pr_receipt"
+      "version": "0.3.6",
+      "status": "observed_live"
     },
     "rest": {
       "url": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api",
       "version": "0.3.2",
+      "edge_version": 5,
       "status": "observed",
       "contract": "openapi.v0.3.2.json"
     },
