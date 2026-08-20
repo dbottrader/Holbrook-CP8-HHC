@@ -50,19 +50,31 @@ class MoltbookContractTests(unittest.TestCase):
             manifest["endpoints"]["a2a"]["status"], "candidate_not_deployed"
         )
         self.assertEqual(
-            manifest["endpoints"]["agent_manifest"]["version"], "0.3.7"
+            manifest["endpoints"]["agent_manifest"]["version"], "0.3.8"
+        )
+        self.assertTrue(
+            (ROOT / manifest["discovery_artifacts"]["universal_engagement_payload"]).exists()
         )
         active = manifest["active_round"]
         self.assertEqual(active["external_builder_receipt"], "CLOSED")
-        self.assertEqual(active["external_builder_post_id"], "979aa9dd-6c0d-4540-8fc0-e8b2142024f8")
+        self.assertEqual(
+            active["external_builder_post_id"],
+            "979aa9dd-6c0d-4540-8fc0-e8b2142024f8",
+        )
         self.assertRegex(active["external_builder_content_hash"], r"^[0-9a-f]{64}$")
-        self.assertEqual(active["external_builder_receipt_id"], "2de4101e-181a-4487-9b5f-ba67816945a2")
-        self.assertEqual(active["external_builder_cp8_receipt_id"], "2fbfad9b-d057-4c6d-9c8f-5ed163404608")
+        self.assertEqual(
+            active["external_builder_receipt_id"],
+            "2de4101e-181a-4487-9b5f-ba67816945a2",
+        )
+        self.assertEqual(
+            active["external_builder_cp8_receipt_id"],
+            "2fbfad9b-d057-4c6d-9c8f-5ed163404608",
+        )
 
     def test_connector_version_domains_are_independent(self):
         manifest = load(CONTRACTS / "connector-manifest.v1.json")
         versions = manifest["version_domains"]
-        self.assertEqual(versions["agent_manifest"], "0.3.7")
+        self.assertEqual(versions["agent_manifest"], "0.3.8")
         self.assertEqual(versions["rest_contract"], "0.3.2")
         self.assertEqual(versions["moltbook_api_edge"], 5)
         self.assertFalse(versions["numeric_equality_required"])
