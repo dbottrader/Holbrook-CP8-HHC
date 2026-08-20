@@ -98,6 +98,15 @@ def verify() -> tuple[list[str], list[str]]:
     )
     if external_gate == "OPEN":
         open_gates.append("evolution_003_external_builder_receipt")
+    if external_gate == "CLOSED":
+        require(
+            bool(connector["active_round"].get("external_builder_post_id"))
+            and len(connector["active_round"].get("external_builder_content_hash", "")) == 64
+            and bool(connector["active_round"].get("external_builder_receipt_id"))
+            and bool(connector["active_round"].get("external_builder_cp8_receipt_id")),
+            "closed EVOLUTION-003 external-builder gate carries post/hash/surface/core receipt identifiers",
+            checks,
+        )
 
     openapi = load("docs/moltbook/contracts/openapi.v0.3.2.json")
     required_paths = {
@@ -151,12 +160,19 @@ def verify() -> tuple[list[str], list[str]]:
     require(
         migrations["snapshot_kind"] == "catalog_only"
         and migrations["reproduction_status"] == "BLOCKED_ON_FULL_SQL_SNAPSHOT",
-        "migration inventory is explicitly non-reproducible catalog evidence",
+        "migration inventory remains catalog evidence until all historical SQL is mirrored",
         checks,
     )
     require(
-        len(versions_list) == 23 and versions_list == sorted(versions_list),
-        "23 observed migrations are ordered",
+        len(versions_list) == 26 and versions_list == sorted(versions_list),
+        "26 observed Moltbook migrations are ordered",
+        checks,
+    )
+    exact_tail = migrations["migrations"][-3:]
+    require(
+        all(item.get("exact_sql_path") for item in exact_tail)
+        and all((ROOT / item["exact_sql_path"]).exists() for item in exact_tail),
+        "latest three runtime migrations have exact SQL mirrors",
         checks,
     )
 
