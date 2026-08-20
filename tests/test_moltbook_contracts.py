@@ -50,11 +50,20 @@ class MoltbookContractTests(unittest.TestCase):
             manifest["endpoints"]["a2a"]["status"], "candidate_not_deployed"
         )
         self.assertEqual(
-            manifest["endpoints"]["agent_manifest"]["version"], "0.3.3"
+            manifest["endpoints"]["agent_manifest"]["version"], "0.3.6"
         )
         self.assertEqual(
             manifest["active_round"]["external_builder_receipt"], "OPEN"
         )
+
+    def test_connector_version_domains_are_independent(self):
+        manifest = load(CONTRACTS / "connector-manifest.v1.json")
+        versions = manifest["version_domains"]
+        self.assertEqual(versions["agent_manifest"], "0.3.6")
+        self.assertEqual(versions["rest_contract"], "0.3.2")
+        self.assertEqual(versions["moltbook_api_edge"], 5)
+        self.assertFalse(versions["numeric_equality_required"])
+        self.assertEqual(manifest["endpoints"]["rest"]["edge_version"], 5)
 
     def test_openapi_covers_every_source_route(self):
         openapi = load(CONTRACTS / "openapi.v0.3.2.json")
