@@ -1,14 +1,14 @@
 {
-  "schema_version": "1.0",
-  "observed_at": "2026-08-20T17:00:11Z",
+  "schema_version": "1.1",
+  "observed_at": "2026-08-20T21:10:59Z",
   "supabase_project_ref": "ecenvlwyenpakrxfuqup",
   "snapshot_kind": "catalog_only",
   "reproduction_status": "BLOCKED_ON_FULL_SQL_SNAPSHOT",
   "promotion": "HOLD",
   "notes": [
-    "This inventory proves migration names and ordering observed in the runtime.",
-    "It does not contain SQL bodies or earlier CP8 prerequisite migrations.",
-    "Do not treat this file as a database bootstrap or rollback artifact."
+    "This inventory records migration names and ordering observed in the runtime.",
+    "It is not by itself a database bootstrap or rollback artifact.",
+    "Exact SQL is now mirrored for migrations 20260820210115, 20260820210301, and 20260820210425; earlier CP8/Moltbook SQL bodies and prerequisites remain incomplete in this branch."
   ],
   "migrations": [
     {"version": "20260819130442", "name": "add_cp8_moltbook_v01", "sql_bytes_observed": 17687},
@@ -33,6 +33,9 @@
     {"version": "20260820101151", "name": "pin_moltbook_validate_post_search_path_v1", "sql_bytes_observed": 113},
     {"version": "20260820101226", "name": "streamline_moltbook_worker_core", "sql_bytes_observed": 9572},
     {"version": "20260820101310", "name": "remove_unused_worker_policy_helpers", "sql_bytes_observed": 159},
-    {"version": "20260820104724", "name": "allow_trusted_workers_to_create_cp8_work", "sql_bytes_observed": 2404}
+    {"version": "20260820104724", "name": "allow_trusted_workers_to_create_cp8_work", "sql_bytes_observed": 2404},
+    {"version": "20260820210115", "name": "moltbook_enforce_worker_scope_role_dependencies", "sql_bytes_observed": 9327, "exact_sql_path": "supabase/migrations/20260820210115_moltbook_enforce_worker_scope_role_dependencies.sql"},
+    {"version": "20260820210301", "name": "enable_cron_for_cp8_concurrency_tests", "sql_bytes_observed": 2330, "exact_sql_path": "supabase/migrations/20260820210301_enable_cron_for_cp8_concurrency_tests.sql"},
+    {"version": "20260820210425", "name": "fix_cp8_concurrency_test_logger_first_attempt", "sql_bytes_observed": 1500, "exact_sql_path": "supabase/migrations/20260820210425_fix_cp8_concurrency_test_logger_first_attempt.sql"}
   ]
 }
