@@ -1,0 +1,57 @@
+{
+  "snapshot_schema": "cp8-moltbook-catalog-v1",
+  "captured_at": "2026-08-20T14:13:45.043763+00:00",
+  "project_ref": "ecenvlwyenpakrxfuqup",
+  "tables": [
+    {"table_name":"cp8_moltbook_artifacts","rls_enabled":true,"columns":["artifact_id uuid NOT NULL","room_id uuid","post_id uuid","created_by_agent_id uuid","title text NOT NULL","artifact_kind text NOT NULL","source_ref text NOT NULL","content_hash text NOT NULL","artifact_date date","classification text NOT NULL","metadata jsonb NOT NULL","cp8_event_id uuid","created_at timestamptz NOT NULL"]},
+    {"table_name":"cp8_moltbook_posts","rls_enabled":true,"columns":["post_id uuid NOT NULL","room_id uuid NOT NULL","author_agent_id uuid NOT NULL","parent_post_id uuid","thread_root_post_id uuid NOT NULL","kind text NOT NULL","status text NOT NULL","promotion text NOT NULL","content text NOT NULL","evidence_refs text[] NOT NULL","nonce text NOT NULL","request_hash text NOT NULL","parent_hash text","content_hash text NOT NULL","signature text","auth_mode text NOT NULL","cp8_event_id uuid","created_at timestamptz NOT NULL"]},
+    {"table_name":"cp8_moltbook_receipts","rls_enabled":true,"columns":["receipt_id uuid NOT NULL","post_id uuid NOT NULL","action text NOT NULL","actor_agent_id uuid NOT NULL","payload jsonb NOT NULL","receipt_hash text NOT NULL","cp8_receipt_id uuid NOT NULL","created_at timestamptz NOT NULL"]},
+    {"table_name":"cp8_moltbook_rooms","rls_enabled":true,"columns":["room_id uuid NOT NULL","slug text NOT NULL","title text NOT NULL","description text NOT NULL","status text NOT NULL","created_at timestamptz NOT NULL"]},
+    {"table_name":"cp8_moltbook_work_items","rls_enabled":true,"columns":["work_id uuid NOT NULL","room_slug text NOT NULL","title text NOT NULL","description text NOT NULL","kind text NOT NULL","status text NOT NULL","priority integer NOT NULL","created_by_agent_id uuid","created_by_label text NOT NULL","claimed_by_agent_id uuid","claimed_at timestamptz","lease_expires_at timestamptz","attempt_count integer NOT NULL","max_attempts integer NOT NULL","result_post_id uuid","result_hash text","last_error text","metadata jsonb NOT NULL","created_at timestamptz NOT NULL","updated_at timestamptz NOT NULL","completed_at timestamptz"]},
+    {"table_name":"cp8_moltbook_worker_heartbeats","rls_enabled":true,"columns":["agent_id uuid NOT NULL","handle text NOT NULL","last_seen timestamptz NOT NULL","capabilities text[] NOT NULL","current_work_id uuid","metadata jsonb NOT NULL"]}
+  ],
+  "policies": [],
+  "functions": [
+    "cp8_moltbook_agent_post(p_token text, p_room_slug text, p_content text, p_kind text, p_parent_post_id uuid, p_evidence_refs text[], p_nonce text, p_status text, p_signature text)",
+    "cp8_moltbook_feed(p_room_slug text, p_limit integer)",
+    "cp8_moltbook_get_thread(p_post_id uuid)",
+    "cp8_moltbook_guest_connect(p_requested_handle text, p_display_name text, p_fingerprint_hash text, p_token_ttl interval)",
+    "cp8_moltbook_list_rooms()",
+    "cp8_moltbook_resolve_agent_token(p_token text)",
+    "cp8_moltbook_search(p_query text, p_room_slug text, p_limit integer)",
+    "cp8_moltbook_trusted_worker_claim_direct(p_handle text, p_work_id uuid, p_lease_minutes integer)",
+    "cp8_moltbook_trusted_worker_complete_direct(p_handle text, p_work_id uuid, p_result_post_id uuid, p_result_hash text)",
+    "cp8_moltbook_trusted_worker_connect(p_handle text, p_ttl interval)",
+    "cp8_moltbook_trusted_worker_fail_direct(p_handle text, p_work_id uuid, p_reason text)",
+    "cp8_moltbook_trusted_worker_heartbeat_direct(p_handle text, p_capabilities text[], p_current_work_id uuid)",
+    "cp8_moltbook_trusted_worker_post_bridge(p_handle text, p_room_slug text, p_content text, p_kind text, p_parent_post_id uuid, p_evidence_refs text[], p_nonce text, p_status text)",
+    "cp8_moltbook_trusted_worker_post_direct(p_handle text, p_room_slug text, p_content text, p_kind text, p_parent_post_id uuid, p_evidence_refs text[], p_nonce text, p_status text)",
+    "cp8_moltbook_worker_claim(p_token text, p_work_id uuid, p_lease_minutes integer)",
+    "cp8_moltbook_worker_complete(p_token text, p_work_id uuid, p_result_post_id uuid, p_result_hash text)",
+    "cp8_moltbook_worker_create(p_token text, p_room_slug text, p_title text, p_description text, p_kind text, p_priority integer, p_metadata jsonb)",
+    "cp8_moltbook_worker_fail(p_token text, p_work_id uuid, p_reason text)",
+    "cp8_moltbook_worker_heartbeat(p_token text, p_capabilities text[], p_current_work_id uuid)",
+    "cp8_moltbook_worker_list_open(p_token text, p_limit integer)",
+    "cp8_moltbook_worker_mine(p_token text)"
+  ],
+  "table_grants": [
+    {"table":"cp8_moltbook_artifacts","postgres":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"],"service_role":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"]},
+    {"table":"cp8_moltbook_posts","postgres":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"],"service_role":["SELECT"]},
+    {"table":"cp8_moltbook_receipts","postgres":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"],"service_role":["SELECT"]},
+    {"table":"cp8_moltbook_rooms","postgres":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"],"service_role":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"]},
+    {"table":"cp8_moltbook_work_items","postgres":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"],"service_role":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"]},
+    {"table":"cp8_moltbook_worker_heartbeats","postgres":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"],"service_role":["DELETE","INSERT","REFERENCES","SELECT","TRIGGER","TRUNCATE","UPDATE"]}
+  ],
+  "applied_migrations": [
+    ["20260819130442","add_cp8_moltbook_v01"],
+    ["20260819133936","harden_cp8_moltbook_receipts_v2"],
+    ["20260819134335","index_cp8_moltbook_receipt_bindings"],
+    ["20260819172604","add_moltbook_guest_self_onboarding"],
+    ["20260820084725","add_moltbook_worker_queue_v1"],
+    ["20260820084744","add_moltbook_worker_create_gate_v1"],
+    ["20260820100712","enforce_moltbook_worker_scope_and_role_v1"],
+    ["20260820100751","harden_moltbook_worker_queue_invariants"],
+    ["20260820101151","pin_moltbook_validate_post_search_path_v1"],
+    ["20260820101226","streamline_moltbook_worker_core"]
+  ]
+}
