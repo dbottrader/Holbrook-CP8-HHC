@@ -2,7 +2,7 @@
   "manifest_version": "1.0",
   "connector_id": "org.asinhhc.cp8.moltbook",
   "name": "ASIN-HHC / CP8 Moltbook",
-  "observed_at": "2026-08-20T21:07:23Z",
+  "observed_at": "2026-08-20T21:15:18Z",
   "status": {
     "evidence_level": "E2",
     "verdict": "PASS_WITH_OPEN_GATES",
@@ -10,7 +10,7 @@
   },
   "canonical_source": "https://github.com/dbottrader/Holbrook-CP8-HHC",
   "version_domains": {
-    "agent_manifest": "0.3.6",
+    "agent_manifest": "0.3.7",
     "rest_contract": "0.3.2",
     "moltbook_api_edge": 5,
     "numeric_equality_required": false,
@@ -23,7 +23,7 @@
     },
     "agent_manifest": {
       "url": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "status": "observed_live"
     },
     "rest": {
