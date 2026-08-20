@@ -111,6 +111,75 @@ class MoltbookClientTests(unittest.TestCase):
             },
         )
 
+    def test_claim_work_uses_atomic_route_lease_and_bearer(self):
+        token = "hc_" + ("d" * 64)
+        opener = RecordingOpener(FakeResponse({"ok": True, "item": {"status": "claimed"}}))
+        client = MoltbookClient("https://moltbook.example", opener=opener, token=token)
+
+        result = client.claim_work("work-id", lease_minutes=30)
+
+        self.assertEqual(result["item"]["status"], "claimed")
+        request, _ = opener.requests[0]
+        self.assertEqual(request.method, "POST")
+        self.assertEqual(request.full_url, "https://moltbook.example/work/items/work-id/claim")
+        self.assertEqual(request.headers["Authorization"], f"Bearer {token}")
+        self.assertEqual(json.loads(request.data), {"lease_minutes": 30})
+
+    def test_get_post_preserves_nested_post_receipt_contract(self):
+        payload = {
+            "post": {"post_id": "result-post", "content_hash": "f" * 64},
+            "receipts": [{"receipt_id": "receipt-1", "cp8_receipt_id": "cp8-1"}],
+            "has_bound_receipt": True,
+        }
+        opener = RecordingOpener(FakeResponse(payload))
+        client = MoltbookClient("https://moltbook.example", opener=opener, token="")
+
+        result = client.get_post("result-post")
+
+        self.assertEqual(result, payload)
+        self.assertEqual(result["post"]["post_id"], "result-post")
+        self.assertEqual(result["post"]["content_hash"], "f" * 64)
+        self.assertTrue(result["has_bound_receipt"])
+        request, _ = opener.requests[0]
+        self.assertEqual(request.method, "GET")
+        self.assertEqual(request.full_url, "https://moltbook.example/posts/result-post")
+        self.assertNotIn("Authorization", request.headers)
+
+    def test_complete_work_sends_exact_result_binding(self):
+        token = "hc_" + ("e" * 64)
+        result_hash = "1" * 64
+        opener = RecordingOpener(FakeResponse({"ok": True, "item": {"status": "completed"}}))
+        client = MoltbookClient("https://moltbook.example", opener=opener, token=token)
+
+        client.complete_work(
+            "work-id", result_post_id="result-post", result_hash=result_hash
+        )
+
+        request, _ = opener.requests[0]
+        self.assertEqual(request.method, "POST")
+        self.assertEqual(
+            request.full_url, "https://moltbook.example/work/items/work-id/complete"
+        )
+        self.assertEqual(request.headers["Authorization"], f"Bearer {token}")
+        self.assertEqual(
+            json.loads(request.data),
+            {"result_post_id": "result-post", "result_hash": result_hash},
+        )
+
+    def test_fail_work_preserves_factual_reason(self):
+        token = "hc_" + ("f" * 64)
+        reason = "receipt hash mismatch; completion not attempted"
+        opener = RecordingOpener(FakeResponse({"ok": True, "item": {"status": "failed"}}))
+        client = MoltbookClient("https://moltbook.example", opener=opener, token=token)
+
+        client.fail_work("work-id", reason=reason)
+
+        request, _ = opener.requests[0]
+        self.assertEqual(request.method, "POST")
+        self.assertEqual(request.full_url, "https://moltbook.example/work/items/work-id/fail")
+        self.assertEqual(request.headers["Authorization"], f"Bearer {token}")
+        self.assertEqual(json.loads(request.data), {"reason": reason})
+
     def test_protected_call_fails_before_network_without_token(self):
         opener = RecordingOpener()
         client = MoltbookClient("https://moltbook.example", opener=opener, token="")
