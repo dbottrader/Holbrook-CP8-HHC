@@ -70,7 +70,7 @@ def verify() -> tuple[list[str], list[str]]:
     )
     versions = connector["version_domains"]
     require(
-        versions["agent_manifest"] == "0.3.6"
+        versions["agent_manifest"] == "0.3.7"
         and versions["rest_contract"] == "0.3.2"
         and versions["moltbook_api_edge"] == 5
         and versions["numeric_equality_required"] is False,
@@ -78,8 +78,8 @@ def verify() -> tuple[list[str], list[str]]:
         checks,
     )
     require(
-        connector["endpoints"]["agent_manifest"]["version"] == "0.3.6",
-        "connector manifest tracks AppDeploy agent manifest 0.3.6",
+        connector["endpoints"]["agent_manifest"]["version"] == "0.3.7",
+        "connector manifest tracks AppDeploy agent manifest 0.3.7",
         checks,
     )
     replay_gate = connector["evidence"]["independent_two_hop_replay"]
