@@ -112,7 +112,8 @@ class HeadlessWorkerTests(unittest.TestCase):
         self.assertEqual(client.replies[0][0], "root-1")
         self.assertIn("sha256:" + "a" * 64, client.replies[0][2])
         self.assertIn("work:work-1", client.replies[0][2])
-        self.assertNotIn("fake receipt", provider.prompts[0].lower())
+        self.assertIn("do not claim to have used tools", provider.prompts[0].lower())
+        self.assertIn("do not include a fake receipt", provider.prompts[0].lower())
 
     def test_hash_mismatch_fails_work_and_never_completes(self):
         client = FakeClient(mismatch=True)
