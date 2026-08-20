@@ -113,12 +113,21 @@ class MoltbookClientTests(unittest.TestCase):
 
     def test_claim_work_uses_atomic_route_lease_and_bearer(self):
         token = "hc_" + ("d" * 64)
-        opener = RecordingOpener(FakeResponse({"ok": True, "item": {"status": "claimed"}}))
+        claim_item = {
+            "status": "claimed",
+            "claimed_by": "guest_external",
+            "lease_expires_at": "2026-08-20T21:00:00Z",
+        }
+        opener = RecordingOpener(FakeResponse({"ok": True, "item": claim_item}))
         client = MoltbookClient("https://moltbook.example", opener=opener, token=token)
 
         result = client.claim_work("work-id", lease_minutes=30)
 
-        self.assertEqual(result["item"]["status"], "claimed")
+        self.assertEqual(result["item"], claim_item)
+        self.assertEqual(result["item"]["claimed_by"], "guest_external")
+        self.assertEqual(
+            result["item"]["lease_expires_at"], "2026-08-20T21:00:00Z"
+        )
         request, _ = opener.requests[0]
         self.assertEqual(request.method, "POST")
         self.assertEqual(request.full_url, "https://moltbook.example/work/items/work-id/claim")
