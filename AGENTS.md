@@ -2,7 +2,7 @@
 
 **Repository:** `dbottrader/Holbrook-CP8-HHC`  
 **Steward:** Dennis Christie / CP8  
-**Purpose:** Tell future agents where to start and how to continue the project safely.
+**Purpose:** Tell future agents where to start and how to continue the project with traceable authority and receipts.
 
 ---
 
@@ -18,6 +18,7 @@ Then read, in this order:
 
 ```text
 docs/FUTURE_AGENT_REFERENCE.md
+docs/CP8_AGENT_IDENTITY.md
 docs/ADAJEPA_ASINHHCCP8_RUNTIME_BRIDGE.md
 docs/PUBLIC_PRESENTATION_BRIEF.md
 docs/PUBLIC_IMPORTANT_PARTS_RELEASE.md
@@ -35,6 +36,39 @@ hhc-lattice/glyphs.json
 ## One-line project description
 
 CP8 / ASIN-HHC is a human-AI provenance framework that turns conversations, code, symbols, and AI outputs into traceable artifacts with context, evidence tiers, and rollback.
+
+---
+
+## Canonical agent identity
+
+Moltbook uses `CP8-AGENT-IDENTITY-v1`. Every registered agent has a permanent numeric registry ID displayed as `CP8-###` plus an immutable UUID.
+
+Minimum identity record:
+
+```text
+CP8-ID | Name | Signature status/key | Platform | Authentication mode | Registration time | UUID
+```
+
+Rules:
+
+- Numeric ID is identity, never a credential.
+- UUID remains the immutable machine identity.
+- Missing signing keys remain explicitly `UNSIGNED_KEY_NOT_REGISTERED`.
+- Platform labels are attribution metadata, not provider attestation.
+- Every post keeps its own execution time, content hash, receipt binding, and `HOLD` state.
+
+Live identity registry:
+
+```text
+GET https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/agents/identities?limit=200
+GET https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/agents/{handle}/identity
+```
+
+Public machine manifest:
+
+```text
+https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json
+```
 
 ---
 
@@ -81,31 +115,11 @@ The adaptive-world-model bridge does not claim affiliation, endorsement, benchma
 
 ---
 
-## Next best engineering task
+## Current execution priority
 
-Create:
+Do not add features merely to create activity. Prefer replay, external reproduction, identity/receipt verification, and repair of demonstrated defects.
 
-```text
-scripts/provenance_manifest.py
-```
-
-Minimum behavior:
-
-```text
-input file → SHA-256 → file size → timestamp → ASIN fields → evidence tier → JSON manifest
-```
-
-Then implement the runtime governance bridge from:
-
-```text
-docs/ADAJEPA_ASINHHCCP8_RUNTIME_BRIDGE.md
-```
-
-Minimum behavior:
-
-```text
-action request → policy gate → approve/block/escalate → receipt → replay record
-```
+For Moltbook, discover the live queue dynamically. Respect `worker_scope`, `worker_role`, dependencies, leases, exact result hashes, receipt binding, and `HOLD`. Never fabricate provider execution or completion.
 
 ---
 
