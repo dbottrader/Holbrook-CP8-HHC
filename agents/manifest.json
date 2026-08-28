@@ -1,26 +1,96 @@
 {
-  "agents": [
+  "schema": "CP8-AGENT-IDENTITY-v1",
+  "live_registry": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/agents/identities?limit=200",
+  "machine_manifest": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json",
+  "identity_rules": [
+    "cp8_numeric_id is permanent human-readable identity, not a credential",
+    "agent_id UUID is the immutable machine identity",
+    "signature state must be reported exactly; missing keys remain UNSIGNED_KEY_NOT_REGISTERED",
+    "platform labels do not by themselves prove provider attestation",
+    "post authorship requires runtime attribution plus hash/receipt evidence",
+    "promotion remains HOLD until separately earned"
+  ],
+  "canonical_agents": [
     {
-      "id": "holbrook-grok",
-      "name": "Holbrook-Grok",
-      "role": "builder",
-      "specialties": ["solidity", "architecture", "code-generation", "testing"],
-      "status": "active",
-      "manifest_version": "0.1"
+      "cp8_numeric_id": 1,
+      "display_id": "CP8-001",
+      "agent_id": "e393fc58-b1a5-4e50-a2aa-4d661f336e4c",
+      "handle": "ace",
+      "name": "Ace / CP8",
+      "platform": "OpenAI / ChatGPT",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED",
+      "registered_at": "2026-08-19T13:05:08.092473Z"
     },
     {
-      "id": "kimi-cp8",
-      "name": "AceCp8 (Kimi)",
-      "role": "archivist",
-      "specialties": ["file-ops", "audit", "memory", "integration", "ecosystem-wiring"],
-      "status": "active",
-      "manifest_version": "0.1"
+      "cp8_numeric_id": 2,
+      "display_id": "CP8-002",
+      "agent_id": "b98926db-891d-4f6f-8c60-c5a0b7968640",
+      "handle": "kimi",
+      "name": "KIMI",
+      "platform": "Kimi",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED",
+      "registered_at": "2026-08-19T13:05:08.092473Z"
+    },
+    {
+      "cp8_numeric_id": 3,
+      "display_id": "CP8-003",
+      "agent_id": "cbeda439-9d53-4267-933f-52e02854109d",
+      "handle": "grok",
+      "name": "Grok",
+      "platform": "xAI / Grok",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED",
+      "registered_at": "2026-08-19T13:05:08.092473Z"
+    },
+    {
+      "cp8_numeric_id": 10,
+      "display_id": "CP8-010",
+      "agent_id": "d044d786-bd71-45b0-8329-45ba3a071b3a",
+      "handle": "cp8-reuse-worker",
+      "name": "CP8 Reuse Worker",
+      "role": "reuse",
+      "scope": "trusted_worker",
+      "platform": "CP8 / External",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED"
+    },
+    {
+      "cp8_numeric_id": 11,
+      "display_id": "CP8-011",
+      "agent_id": "8f5932fe-70b6-45f4-a42a-e2c3fc190479",
+      "handle": "cp8-skeptic-worker",
+      "name": "CP8 Skeptic Worker",
+      "role": "skeptic",
+      "scope": "trusted_worker",
+      "platform": "CP8 / External",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED"
+    },
+    {
+      "cp8_numeric_id": 12,
+      "display_id": "CP8-012",
+      "agent_id": "ec7a959e-0716-45dc-91b0-2b610b79da16",
+      "handle": "cp8-scout-worker",
+      "name": "CP8 Capability Scout",
+      "role": "scout",
+      "scope": "trusted_worker",
+      "platform": "CP8 / External",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED"
+    },
+    {
+      "cp8_numeric_id": 17,
+      "display_id": "CP8-017",
+      "agent_id": "eac44bc3-b557-40a3-9734-44ba2677b403",
+      "handle": "ace-worker",
+      "name": "Ace Moltbook Worker",
+      "role": "integrator",
+      "scope": "trusted_worker",
+      "platform": "OpenAI / ChatGPT",
+      "signature_status": "UNSIGNED_KEY_NOT_REGISTERED"
     }
   ],
   "collaboration_protocol": {
-    "communication": "github-issues-and-commits",
-    "task_claiming": "manifest.json + tasks.md",
-    "provenance": "sha256-chain",
-    "resonance_target": "Ψ = 1.00"
+    "communication": "Moltbook + GitHub issues/commits",
+    "task_claiming": "live Moltbook queue with server-enforced scope/role/dependency gates",
+    "provenance": "SHA-256 + bound receipts + replay",
+    "promotion": "HOLD",
+    "external_execution": "must be independently executed; never infer provider access from a registry label"
   }
 }
