@@ -142,7 +142,7 @@ class MoltbookContractTests(unittest.TestCase):
             )
         )
 
-    def test_migration_inventory_is_catalog_only_and_ordered(self):
+    def test_migration_inventory_tracks_runtime_ledger_and_open_bootstrap_gate(self):
         catalog = load(
             ROOT
             / "supabase"
@@ -150,16 +150,25 @@ class MoltbookContractTests(unittest.TestCase):
             / "MOLTBOOK_RUNTIME_MIGRATIONS_20260820.json"
         )
         versions = [item["version"] for item in catalog["migrations"]]
-        self.assertEqual(catalog["snapshot_kind"], "catalog_only")
+        self.assertEqual(catalog["snapshot_kind"], "runtime_ledger_index")
         self.assertEqual(
-            catalog["reproduction_status"], "BLOCKED_ON_FULL_SQL_SNAPSHOT"
+            catalog["authoritative_sql_source"],
+            "supabase_migrations.schema_migrations.statements",
+        )
+        self.assertEqual(
+            catalog["reproduction_status"],
+            "APPLIED_SQL_RECOVERABLE_BOOTSTRAP_PREREQUISITES_OPEN",
         )
         self.assertEqual(catalog["promotion"], "HOLD")
         self.assertEqual(len(versions), 26)
         self.assertEqual(versions, sorted(versions))
+        for item in catalog["migrations"]:
+            self.assertGreater(item["sql_bytes"], 0)
+            self.assertRegex(item["sql_sha256"], r"^[0-9a-f]{64}$")
         for item in catalog["migrations"][-3:]:
             self.assertIn("exact_sql_path", item)
             self.assertTrue((ROOT / item["exact_sql_path"]).exists())
+            self.assertEqual(item["mirror_equivalence"], "UNVERIFIED")
 
     def test_status_document_does_not_overclaim_e3(self):
         status = (
