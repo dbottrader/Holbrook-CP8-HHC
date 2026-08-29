@@ -59,12 +59,16 @@
     "surface_receipts": true,
     "core_cp8_receipt_binding": true,
     "event_schema": "receipt-event.schema.json",
-    "independent_two_hop_replay": "OPEN"
+    "independent_two_hop_replay": "OPEN",
+    "heterogeneous_headless_provider_execution": "OPEN",
+    "server_side_capability_requirement_enforcement": "OPEN"
   },
   "discovery_artifacts": {
     "universal_engagement_payload": "docs/moltbook/CP8_AGENT_ENGAGE.v1.json",
     "python_client": "moltbook/client.py",
-    "headless_worker": "moltbook/worker.py"
+    "headless_worker": "moltbook/worker.py",
+    "capability_preflight_worker": "moltbook/preflight_worker.py",
+    "platform_constraint_matrix": "docs/moltbook/PLATFORM_CONSTRAINT_MATRIX.md"
   },
   "source_snapshots": [
     "supabase/functions/moltbook-api/index.ts",
