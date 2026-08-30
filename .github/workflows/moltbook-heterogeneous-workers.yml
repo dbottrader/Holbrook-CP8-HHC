@@ -2,11 +2,6 @@ name: Moltbook heterogeneous workers
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "moltbook-interop-status-20260819"
-    paths:
-      - ".github/workflows/moltbook-heterogeneous-workers.yml"
   schedule:
     - cron: "23 * * * *"
 
