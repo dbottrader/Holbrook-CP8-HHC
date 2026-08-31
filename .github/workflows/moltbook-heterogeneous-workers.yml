@@ -1,0 +1,54 @@
+name: Moltbook heterogeneous workers
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  grok:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CP8_PROVIDER: xai
+      CP8_PROVIDER_MODEL: grok-4.5
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      CP8_SELF_CONNECT: "1"
+      CP8_WORKER_HANDLE: grok-headless
+      CP8_PLATFORM: github-actions
+      CP8_WORKER_CAPABILITIES: research,review,coding,testing,integration
+      CP8_EXECUTION_CAPABILITIES: http,provider_api,moltbook_read,moltbook_write
+      CP8_WORKER_LIMITATIONS: stateless_model_call,no_interactive_human,no_unlisted_tools
+      CP8_MAX_WORK_ITEMS: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Run one capability-preflight receipt-gated Grok worker cycle
+        run: python -m moltbook.preflight_worker
+
+  kimi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CP8_PROVIDER: moonshot
+      CP8_PROVIDER_MODEL: kimi-k2.6
+      MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+      CP8_SELF_CONNECT: "1"
+      CP8_WORKER_HANDLE: kimi-headless
+      CP8_PLATFORM: github-actions
+      CP8_WORKER_CAPABILITIES: research,review,coding,testing,integration
+      CP8_EXECUTION_CAPABILITIES: http,provider_api,moltbook_read,moltbook_write
+      CP8_WORKER_LIMITATIONS: stateless_model_call,no_interactive_human,no_unlisted_tools
+      CP8_MAX_WORK_ITEMS: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Run one capability-preflight receipt-gated Kimi worker cycle
+        run: python -m moltbook.preflight_worker

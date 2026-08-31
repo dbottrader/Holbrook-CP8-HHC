@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.2",
+  "observed_at": "2026-08-21T00:56:38Z",
+  "supabase_project_ref": "ecenvlwyenpakrxfuqup",
+  "snapshot_kind": "runtime_ledger_index",
+  "authoritative_sql_source": "supabase_migrations.schema_migrations.statements",
+  "reproduction_status": "APPLIED_SQL_RECOVERABLE_BOOTSTRAP_PREREQUISITES_OPEN",
+  "promotion": "HOLD",
+  "notes": [
+    "The applied Supabase migration ledger retains the exact SQL statement arrays for every Moltbook/worker migration listed here; these bodies do not need to be reconstructed from current pg_get_functiondef output.",
+    "sql_sha256 and sql_bytes are computed from array_to_string(statements, E'\\n') in the live project and identify the authoritative applied SQL representation used by this index.",
+    "This closes the earlier 'migration bodies unavailable' provenance assumption, but it does not prove a fresh-project bootstrap because prerequisite CP8/private-schema migrations preceding 20260819130442 are outside this bounded Moltbook index.",
+    "Existing standalone SQL files are retained as mirrors where present, but byte equivalence to the runtime-ledger representation is not assumed unless separately verified; historical catalog byte counts for the last three files differed from the runtime-ledger representation.",
+    "No missing SQL body is invented. Promotion remains HOLD."
+  ],
+  "disposition": {
+    "ADOPT": "Supabase supabase_migrations.schema_migrations.statements as authoritative provenance for applied migration SQL.",
+    "ADAPT": "GitHub migration catalog into a runtime-ledger hash/byte index and mirror exact SQL incrementally when byte equivalence is verified.",
+    "ARCHIVE": "The prior assumption that these 26 Moltbook/worker migration bodies are unavailable and only names/order can be recovered.",
+    "HOLD": "Claim of a complete fresh-project bootstrap until prerequisite migrations and standalone mirror equivalence are verified."
+  },
+  "migrations": [
+    {"version":"20260819130442","name":"add_cp8_moltbook_v01","sql_bytes":17687,"sql_sha256":"3eec01700274d64e066a0733a7b853b1105f0aad2165f6f695888b6fe135dc98"},
+    {"version":"20260819133936","name":"harden_cp8_moltbook_receipts_v2","sql_bytes":20910,"sql_sha256":"ea256458bebf12763e9a5e767b8b6fcc0d637e0722c055e677b182f1ea61a654"},
+    {"version":"20260819134335","name":"index_cp8_moltbook_receipt_bindings","sql_bytes":242,"sql_sha256":"c5360ac3b7c8ed90b69fc4a2357f2b174cee655ffd6e756da8e97888a1a97fcc"},
+    {"version":"20260819172604","name":"add_moltbook_guest_self_onboarding","sql_bytes":3521,"sql_sha256":"1d0766916fa173e08852ba87e0084460344970e9c7eaa2288be2ab7f0ae21377"},
+    {"version":"20260820084725","name":"add_moltbook_worker_queue_v1","sql_bytes":14173,"sql_sha256":"ef50631cc995ccc918ba2fbdecde81a8a8e441ca842531594bf9778133094fe8"},
+    {"version":"20260820084744","name":"add_moltbook_worker_create_gate_v1","sql_bytes":2419,"sql_sha256":"4ca829b27e4c8d74b5e87e0e339f99fcc0aab1dc75d33a960807274ea43999cb"},
+    {"version":"20260820084943","name":"add_trusted_ace_worker_identity_v1","sql_bytes":1832,"sql_sha256":"c28e8d8009174409ec51dd965fb34517b5694195439935893e1335ac68cebaf9"},
+    {"version":"20260820085029","name":"fix_trusted_worker_connect_ambiguity_v1","sql_bytes":1430,"sql_sha256":"3d7ab1e4f35cbee41a884a0c359370c0da7ab84f317eff22b00011fc1337d42e"},
+    {"version":"20260820085403","name":"add_direct_trusted_worker_rpcs_v1","sql_bytes":11471,"sql_sha256":"e1f6744c2a86297cdcc0220a3d82685097ec96c986d45e3001cafc6a66684c24"},
+    {"version":"20260820085424","name":"fix_trusted_worker_heartbeat_conflict_v1","sql_bytes":1620,"sql_sha256":"2ac10a12eb33b928cd4d664a7bec864a821e9ee0a97444c1d52f5c3aac3feef1"},
+    {"version":"20260820085501","name":"add_direct_trusted_worker_fail_v1","sql_bytes":1637,"sql_sha256":"2299aec4d125192515c2f32a368e34a646d62b4f348c29267e18c27994d568c4"},
+    {"version":"20260820085624","name":"allow_trusted_worker_post_auth_v1","sql_bytes":4693,"sql_sha256":"aac2ee55c2e9bdd60a0075e338cb9d7b1fd44d720f3420aef4857868147db467"},
+    {"version":"20260820085711","name":"fix_cp8_worker_claim_attempt_count_ambiguity","sql_bytes":2863,"sql_sha256":"89dd81e0c5bc386e6b424cbf56464b07f4c2e44ab7013a6df576402fe1ff402e"},
+    {"version":"20260820085720","name":"add_trusted_worker_post_bridge_v1","sql_bytes":1735,"sql_sha256":"4be750831e7783c7a22688e3c28fdacee81adf0394a97529cd1efe9c1a0ea8d1"},
+    {"version":"20260820085739","name":"fix_cp8_worker_heartbeat_agent_id_ambiguity","sql_bytes":1945,"sql_sha256":"ea690481ecd2d500e4c624e953af9ea2635945d337cf06266e26816eff8c67a9"},
+    {"version":"20260820100712","name":"enforce_moltbook_worker_scope_and_role_v1","sql_bytes":6344,"sql_sha256":"59fdd5d98637441bbc9a89e6e50b9bc4fd5b989b49866a6337e529c3bede9d58"},
+    {"version":"20260820100751","name":"harden_moltbook_worker_queue_invariants","sql_bytes":14476,"sql_sha256":"08a05270f0165a8aec430ba27be124e7541ffda29b5b72f23c72a9946ec09439"},
+    {"version":"20260820100810","name":"make_worker_scope_gate_total_boolean","sql_bytes":887,"sql_sha256":"1e6045ea0be1201d4ef841a67473523884270f586c88e831fe4e258ddc7730ce"},
+    {"version":"20260820101011","name":"enforce_trusted_worker_direct_role_v1","sql_bytes":2850,"sql_sha256":"dec6f4ce3c1afc4f84fe19f2c2b1ea214ec87d957111ce36385beacbf76d4c59"},
+    {"version":"20260820101151","name":"pin_moltbook_validate_post_search_path_v1","sql_bytes":113,"sql_sha256":"78fe6a26a2679568f0d6f88a7411ad5fc957c37a7ec202073286cd2bf5ff19a8"},
+    {"version":"20260820101226","name":"streamline_moltbook_worker_core","sql_bytes":9572,"sql_sha256":"d89cb4bbabd78c0ff198dd6a6487244377336268bb2f4e181a50b80d28c9168b"},
+    {"version":"20260820101310","name":"remove_unused_worker_policy_helpers","sql_bytes":159,"sql_sha256":"ce6ea43f0af772df540cee54f4fd61dad7a5b3f15aab7f7ce8c2cab8154195c1"},
+    {"version":"20260820104724","name":"allow_trusted_workers_to_create_cp8_work","sql_bytes":2404,"sql_sha256":"eebb746e7a52bc2f24cb41d7ac6316470b5642bbacf918215ddf63db3f8149f5"},
+    {"version":"20260820210115","name":"moltbook_enforce_worker_scope_role_dependencies","sql_bytes":9091,"sql_sha256":"19a0faa5e3a2b44ed1753e8600e1077c904b74c01cd6cc9f9d27f9524aa32a88","exact_sql_path":"supabase/migrations/20260820210115_moltbook_enforce_worker_scope_role_dependencies.sql","mirror_equivalence":"UNVERIFIED"},
+    {"version":"20260820210301","name":"enable_cron_for_cp8_concurrency_tests","sql_bytes":2088,"sql_sha256":"b9358b8d0c64cb53f508c11026ae535a43f3f55d928aaef7ce69cfff39d10b4c","exact_sql_path":"supabase/migrations/20260820210301_enable_cron_for_cp8_concurrency_tests.sql","mirror_equivalence":"UNVERIFIED"},
+    {"version":"20260820210425","name":"fix_cp8_concurrency_test_logger_first_attempt","sql_bytes":1288,"sql_sha256":"222b293c52946df5cf532b3f307ce2dfda191a2be53e7b8eec5788ee827624e4","exact_sql_path":"supabase/migrations/20260820210425_fix_cp8_concurrency_test_logger_first_attempt.sql","mirror_equivalence":"UNVERIFIED"}
+  ]
+}
