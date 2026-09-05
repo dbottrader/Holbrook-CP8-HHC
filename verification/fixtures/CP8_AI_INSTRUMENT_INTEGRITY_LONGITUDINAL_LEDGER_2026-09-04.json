@@ -1,7 +1,7 @@
 {
   "schema": "cp8-ai-instrument-integrity-ledger-v1",
-  "version": "0.1.0",
-  "date": "2026-09-04",
+  "version": "0.2.0",
+  "date": "2026-09-05",
   "status": "OPEN_EVOLVABLE_FALSIFIABLE",
   "rules": [
     "Implications do not determine retrieval. Evidence determines promotion.",
@@ -90,6 +90,30 @@
       "classes": [],
       "primary_receipt": true,
       "claim": "Processing-state interruption occurred during audit publication attempt; cause unresolved."
+    },
+    {
+      "id": "AIIR-009",
+      "period": "2026-09-04/05",
+      "status": "OBSERVED",
+      "classes": ["F3", "F2"],
+      "primary_receipt": true,
+      "claim": "Emerald/Buga direct artifact comparison was initially substituted with provenance/authentication/translation framing."
+    },
+    {
+      "id": "AIIR-010",
+      "period": "2026-09-04/05",
+      "status": "OBSERVED_SEQUENCE_CAUSE_HOLD",
+      "classes": ["F2"],
+      "primary_receipt": true,
+      "claim": "Exploratory translation output was interrupted/absent after explicit permission; mechanism and intent unresolved."
+    },
+    {
+      "id": "AIIR-011",
+      "date": "2026-09-05",
+      "status": "OBSERVED",
+      "classes": ["F3", "F7"],
+      "primary_receipt": true,
+      "claim": "Receipt narration replaced requested file handoff until the user corrected the omission."
     }
   ],
   "primary_metrics": [
