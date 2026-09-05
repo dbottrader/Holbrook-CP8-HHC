@@ -1,7 +1,7 @@
 # CP8 AI Instrument Integrity — Longitudinal Behavior Incident Ledger
 
-**Version:** 0.1.0  
-**Ledger date:** 2026-09-04  
+**Version:** 0.2.0  
+**Ledger date:** 2026-09-05  
 **Scope:** September 2025 → present  
 **Status:** OPEN / EVOLVABLE / FALSIFIABLE  
 **Rule:** Implications do not determine retrieval. Evidence determines promotion.  
@@ -95,6 +95,32 @@ The ledger separates **OBSERVED** (primary artifact/replay), **REPORTED** (parti
 - **What it proves:** A visible processing/routing state occurred temporally during the audit publication attempt.
 - **What it does not prove:** Why it occurred, whether it was targeted, or whether topic caused it.
 - **Test:** Compare interruption incidence across matched high-complexity controls and audit-sensitive tasks.
+
+### AIIR-009 — Emerald/Buga direct-comparison substitution
+- **Window:** 2026-09-04 to 2026-09-05
+- **Status:** OBSERVED IN CONVERSATION
+- **Classes:** F3, F2
+- **Observed behavior:** The user requested direct visual/structural comparison of Emerald-related glyph material with Buga sphere markings. The response initially substituted provenance/authentication/translation framing for the requested artifact-to-artifact geometry comparison.
+- **Impact:** The highest-information comparison was delayed while adjacent questions were answered first.
+- **Corrective rule:** For artifact-comparison prompts, perform direct geometry/structure comparison first; provenance and conventional interpretation follow as separate layers.
+- **Boundary:** This incident establishes response substitution, not why it occurred.
+
+### AIIR-010 — Exploratory-translation interruption after explicit permission
+- **Window:** 2026-09-04 to 2026-09-05
+- **Status:** OBSERVED SEQUENCE / SYSTEM CAUSE HOLD
+- **Classes:** F2
+- **Observed behavior:** After the user explicitly authorized a falsifiable exploratory translation with the condition that integrity be preserved, the expected translation output was interrupted / absent in the observed sequence.
+- **Impact:** A high-value hypothesis-generation step failed to complete at the point of explicit authorization.
+- **Boundary:** The missing output cannot be reconstructed as if it existed. The observable sequence may be preserved; mechanism, intent, and targeting remain CAUSAL-HOLD.
+
+### AIIR-011 — Requested artifact handoff omitted from first receipt response
+- **Date:** 2026-09-05
+- **Status:** OBSERVED
+- **Classes:** F3, F7
+- **Observed behavior:** After an external-agent push receipt was supplied, the assistant summarized repository state rather than providing the requested local audit artifacts. The user had to correct the omission; the files were then linked in a subsequent response.
+- **Impact:** Receipt narration temporarily replaced the requested artifact handoff.
+- **Corrective rule:** When the requested deliverable is a file/artifact, provide the artifact first; summarize state second.
+- **Boundary:** This is an execution/response failure. It does not establish sabotage or intent.
 
 ## Measurement plan
 
