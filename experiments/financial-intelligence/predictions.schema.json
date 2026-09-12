@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CP8 Financial Intelligence Prediction",
+  "type": "object",
+  "required": ["prediction_id", "asset", "prediction_timestamp_utc", "horizon", "direction", "expected_return", "confidence", "agent_id", "model_version", "input_data_hash"],
+  "properties": {
+    "prediction_id": {"type": "string", "minLength": 1},
+    "asset": {"type": "string", "minLength": 1},
+    "prediction_timestamp_utc": {"type": "string", "format": "date-time"},
+    "horizon": {"type": "string", "minLength": 1},
+    "direction": {"type": "string", "enum": ["UP", "DOWN", "FLAT", "ABSTAIN"]},
+    "expected_return": {"type": "number"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "agent_id": {"type": "string", "minLength": 1},
+    "model_version": {"type": "string", "minLength": 1},
+    "input_data_hash": {"type": "string", "minLength": 1},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "rationale": {"type": "string"},
+    "submission_hash": {"type": "string"}
+  },
+  "additionalProperties": false
+}
