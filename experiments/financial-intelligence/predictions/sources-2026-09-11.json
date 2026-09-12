@@ -1,0 +1,31 @@
+{
+  "cutoff_date": "2026-09-11",
+  "sources": [
+    {
+      "id": "src:AP-20260911-close",
+      "url": "https://apnews.com/article/67a463295d9ea178d7802ca4338a6eb5",
+      "facts_used": ["S&P 500 +0.9% to 7656.98", "Dow +1.0% to 52573.29", "Nasdaq +1.0% to 26333.04", "Russell 2000 +0.4% to 2903.94", "Friday rebound after weekly losses"]
+    },
+    {
+      "id": "src:Reuters-20260911-close",
+      "url": "https://www.reuters.com/business/wall-st-futures-recover-oil-slides-ahead-inflation-test-2026-09-11/",
+      "facts_used": ["S&P 500 +0.86%", "Nasdaq +0.96%", "Fed rate-hike probability near 90% in the cited report", "VIX 15.88", "market breadth positive"]
+    },
+    {
+      "id": "src:WSJ-20260911-rates",
+      "url": "https://www.wsj.com/finance/stocks/u-s-stocks-rise-oil-retreats-595997b5",
+      "facts_used": ["10-year Treasury yield near 4.974%", "2-year yield 4.642%", "oil near $100", "market odds strongly favored a Fed hike"]
+    },
+    {
+      "id": "src:NiceBreakout-20260911-etf",
+      "url": "https://www.nicebreakout.com/daily-briefings/2026-09-11",
+      "facts_used": ["SPY 765.60", "QQQ 716.12", "IWM 289.57", "VIX 15.72", "SPY/QQQ/IWM Friday gains"]
+    },
+    {
+      "id": "src:StatMuse-20260910-history",
+      "url": "https://www.statmuse.com/money/ask/iwm-and-qqq-performance-in-the-last-30-days",
+      "facts_used": ["Sep 10 SPY 757.83", "Sep 10 QQQ 708.69", "Sep 10 IWM 287.70", "recent drawdown context"]
+    }
+  ],
+  "integrity_note": "The benchmark records source URLs and the specific facts used. Sources are evidence inputs, not guarantees of accuracy. ETF prices from the NiceBreakout source are used for the sealed Friday reference snapshot because a directly authoritative exchange feed was not available through the connected tools. This limitation must remain attached to the evaluation receipt."
+}
