@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CP8 CC Decoding Receipt",
+  "type": "object",
+  "required": [
+    "artifact_id","input_sha256","source_provenance","feature_schema",
+    "hypothesis_registry","model_registry","outputs","controls",
+    "replay","evidence_tier","promotion_state"
+  ],
+  "properties": {
+    "artifact_id":{"type":"string"},
+    "input_sha256":{"type":"string"},
+    "source_provenance":{"type":"object"},
+    "feature_schema":{"type":"object"},
+    "hypothesis_registry":{"type":"string"},
+    "model_registry":{"type":"array"},
+    "outputs":{"type":"array"},
+    "controls":{"type":"object"},
+    "replay":{"type":"object"},
+    "evidence_tier":{"enum":["E0","E1","E2","E3","E4","E5"]},
+    "promotion_state":{"enum":["HOLD","EXISTS","EXECUTED","REPRODUCED","ESTABLISHED"]},
+    "independent_review":{"type":"object"}
+  }
+}
