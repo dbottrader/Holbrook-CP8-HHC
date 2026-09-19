@@ -1,0 +1,52 @@
+{
+  "schema": "CP8-CC-EXECUTION-RESULT-v1",
+  "artifact_id": "CCD-9-791-LOOM-EMBEDDED",
+  "status": "EXECUTED_EXPLORATORY_HOLD",
+  "inputs": {
+    "html_sha256": "900bf538b6a8138d6bd3880b6f579f1e4ec7aa09f1f596dabe12e7349917613d",
+    "embedded_png_sha256": "7f747d643c2b90fd6ddf3fb0af6d0796a62fafaa2a6a4f95821cd4f6d42e1e11",
+    "embedded_png_bytes": 773611
+  },
+  "measurement": {
+    "method": "polar_angular_spectral_scan",
+    "center_px_in_crop": [310, 205],
+    "ellipse_radii_px": [190, 130],
+    "angular_samples": 1440,
+    "radial_samples": 8,
+    "h15_energy_fraction_1_to_30": 0.1998894513,
+    "h12_energy_fraction_1_to_30": 0.1303211451,
+    "permutation_null": {
+      "n": 5000,
+      "h15_mean": 0.0334002843,
+      "h15_sd": 0.0321210445,
+      "h15_95_percentile": 0.0988810416,
+      "empirical_p": 0.00159968
+    }
+  },
+  "observations": [
+    "The embedded presentation image contains repeated radial petal/lobe structure and a central ring/disc.",
+    "The measured image contains a strong 15th angular harmonic.",
+    "The simple permutation null is exploratory and is not a geometry-matched null.",
+    "The sun/sky presentation is not evidence of the original capture conditions."
+  ],
+  "claim_tests": {
+    "eight_petals": "not_supported_by_current_measurement; 15-fold component observed",
+    "three_concentric_rings": "not_established",
+    "octagonal_boundary": "not_established",
+    "solar_apex_capture": "not_established",
+    "111_432_528_hz_assignments": "not_derivable_from_image_geometry",
+    "8x3_equals_24_semantic_mapping": "semantic hypothesis, not image-derived evidence"
+  },
+  "source_reconciliation": {
+    "html_label": "CCD-9 DECODE / Formation 791 / June 29 2026",
+    "wanborough_2026_match": false,
+    "likely_geometry_source": "Ware Farm Manor, Nr Lyme Regis, Devon, reported 28 June 2025",
+    "confidence": "moderate_visual_match_only",
+    "reason": "Formation geometry and Crop Circles From Above watermark visually match the 2025 Ware Farm Manor source imagery; the official source discussion describes a 15-circle wheel around a central disc."
+  },
+  "hypothesis": {
+    "statement": "The strongest geometry-first hypothesis for this input is 15-fold radial organization, not the HTML's 8-fold interpretation.",
+    "next_test": "Perspective-rectified original source image plus geometry-matched nulls and held-out reconstruction."
+  },
+  "promotion": "HOLD"
+}
