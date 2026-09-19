@@ -1,0 +1,31 @@
+{
+  "schema": "CP8-CC-HYPOTHESIS-REGISTRY-v1",
+  "status": "OPEN",
+  "rule": "Hypotheses must be committed before scoring; semantic readings cannot tune the feature extractor that generated them.",
+  "targets": [
+    {
+      "id": "CC-H001",
+      "question": "Does the formation contain statistically unusual geometric structure relative to matched nulls?",
+      "prediction": "Pre-registered geometric descriptors distinguish the target from matched randomized/perturbed controls.",
+      "required_tests": ["rotation", "reflection", "perturbation", "geometry-matched nulls", "multiple-comparison correction"]
+    },
+    {
+      "id": "CC-H002",
+      "question": "Does the formation contain a repeatable primitive/glyph grammar?",
+      "prediction": "Independent segmentation procedures recover materially similar primitive families without semantic prompting.",
+      "required_tests": ["blind segmentation", "inter-rater/model agreement", "alternative segmentation", "held-out motif test"]
+    },
+    {
+      "id": "CC-H003",
+      "question": "Do candidate structures map to an external writing/calendar system better than chance?",
+      "prediction": "A pre-registered mapping survives held-out elements and controls after multiple-comparison correction.",
+      "required_tests": ["blind mapping", "held-out motifs", "negative-control corpora", "chance baseline", "multiple-comparison correction"]
+    },
+    {
+      "id": "CC-H004",
+      "question": "Does CCD-9 show a reproducible relationship to the previously proposed mathematical/harmonic representation?",
+      "prediction": "The representation remains stable under independent reconstruction and parameter perturbation.",
+      "required_tests": ["independent reconstruction", "parameter sensitivity", "alternative model comparison", "replay"]
+    }
+  ]
+}
