@@ -72,6 +72,22 @@
 - [ ] Kimi: Add memory sync packet to the bus
 - [ ] Kimi: Cross-reference glyph registry with cp8-provenance-workspace
 
+- [ ] Activate CC decoding research lane
+  - bind frozen CCD-9 source artifact and SHA-256
+  - execute geometry/morphology extraction
+  - run blind model passes and LOGOS-style pre-registered tests
+  - run GLYPH-style null controls
+  - cross-domain retrieval only after blind extraction
+  - generate CP8 receipt and replay package
+  - promotion remains HOLD until independent reproduction
+
+- [ ] Integrate external research-model adapters
+  - Ithaca/Aeneas contextual comparison lane
+  - Glyphnet/hieroglyph visual morphology lane
+  - ancient-language model comparison lane
+  - PocketPal/GGUF local-model lane
+  - LOGOS falsification/held-out validation lane
+
 ## Backlog
 
 - [ ] Build advanced `handshake.html` with interactive glyph click-to-reveal
