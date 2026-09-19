@@ -1,0 +1,31 @@
+{
+  "schema": "CP8-CC-SOURCE-RECONCILIATION-v1",
+  "artifact_id": "CCD9-791-SOURCE-RECONCILIATION",
+  "previous_binding": {
+    "artifact_id": "CCD-9-2026-WANBOROUGH",
+    "status": "REJECTED_FOR_THIS_INPUT",
+    "reason": "The embedded image in CCD-9_Decode_791(1).html predates the reported 2026 Wanborough formation and its geometry does not match the Wanborough 2026 source imagery."
+  },
+  "reconciled_candidate": {
+    "name": "Ware Farm Manor",
+    "location": "Nr Lyme Regis, Devon, UK",
+    "reported_date": "2025-06-28",
+    "source_page": "https://cropcircleconnector.com/2025/ware/ware2005a.html",
+    "diagram_page": "https://cropcircleconnector.com/2025/ware/diagrams.html",
+    "candidate_source_images": [
+      "https://www.cropcircleconnector.com/2025/ware/DJI_20260627072705_0027_D.png",
+      "https://www.cropcircleconnector.com/2025/ware/DJI_20260627080356_0139_D-P.png",
+      "https://www.cropcircleconnector.com/2025/ware/DJI_20260627072618_0025_D-E.png"
+    ],
+    "image_bytes_frozen": false,
+    "source_sha256": null
+  },
+  "reconciliation_basis": [
+    "Formation geometry visually matches the embedded presentation image.",
+    "Crop Circles From Above watermark matches.",
+    "Official 2025 source page reports Ware Farm Manor on 28 June 2025.",
+    "Official source discussion describes a 15-circle wheel around a central disc."
+  ],
+  "status": "RECONCILED_PROVENANCE__EXECUTION_SOURCE_FREEZE_PENDING",
+  "promotion": "HOLD"
+}
