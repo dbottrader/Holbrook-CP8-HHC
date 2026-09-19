@@ -80,6 +80,7 @@ These rules separate probabilistic assistance from authoritative execution. Mode
 | `dar_p/` | Deterministic Artifact Runtime Protocol validator | Implemented |
 | `tests/` | DAR-P and validator test coverage | Active |
 | `specs/` | Technical specifications | Implemented |
+| `specs/CC-DECODING-001.md` | Governed crop-circle decoding, blind analysis, null controls, replay and promotion gates | Draft / HOLD |
 | `manifests/lattice-registry.json` | Cross-repo CP8 lattice map | Implemented |
 | `chains/registry.json` | Chain abstraction registry | Implemented |
 | `server/` | Lightweight API server | Implemented |
