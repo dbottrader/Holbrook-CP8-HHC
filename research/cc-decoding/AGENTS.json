@@ -1,0 +1,65 @@
+{
+  "schema": "CP8-CC-RESEARCH-NODES-v1",
+  "nodes": [
+    {
+      "id": "CC-GEOM",
+      "role": "geometry",
+      "function": "deterministic geometric feature extraction and null controls",
+      "authority": "NONE"
+    },
+    {
+      "id": "CC-MORPH",
+      "role": "morphology",
+      "function": "blind visual primitive/glyph segmentation",
+      "authority": "NONE"
+    },
+    {
+      "id": "CC-RETRIEVAL",
+      "role": "cross-domain retrieval",
+      "function": "compare extracted structures to ancient corpora after blind feature extraction",
+      "authority": "NONE"
+    },
+    {
+      "id": "CC-FALSIFY",
+      "role": "skeptic",
+      "function": "LOGOS-style preregistration, held-out testing, contamination and multiple-comparison controls",
+      "authority": "NONE"
+    },
+    {
+      "id": "CC-REPLAY",
+      "role": "reproducer",
+      "function": "rerun frozen inputs with pinned versions and verify receipt",
+      "authority": "NONE"
+    },
+    {
+      "id": "CC-PROMOTION",
+      "role": "gate",
+      "function": "map results to EXISTS/EXECUTED/REPRODUCED/ESTABLISHED",
+      "authority": "GOVERNANCE_ONLY"
+    },
+    {
+      "id": "Ithaca-Aeneas",
+      "role": "external_reference",
+      "function": "ancient inscription contextualization/restoration analogy",
+      "execution_status": "REFERENCE_ONLY"
+    },
+    {
+      "id": "Glyphnet",
+      "role": "external_reference",
+      "function": "hieroglyph image classification analogy",
+      "execution_status": "REFERENCE_ONLY"
+    },
+    {
+      "id": "Ancient-Language-Models",
+      "role": "external_reference",
+      "function": "Akkadian/Egyptian structural comparison after blind extraction",
+      "execution_status": "REFERENCE_ONLY"
+    },
+    {
+      "id": "PocketPal-GGUF",
+      "role": "local_model_lane",
+      "function": "run compatible quantized models locally when available",
+      "execution_status": "AVAILABILITY_TO_VERIFY"
+    }
+  ]
+}
