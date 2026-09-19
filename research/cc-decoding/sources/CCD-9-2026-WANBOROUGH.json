@@ -1,0 +1,20 @@
+{
+  "schema": "CP8-CC-SOURCE-v1",
+  "artifact_id": "CCD-9-2026-WANBOROUGH",
+  "title": "Wanborough Plain crop formation",
+  "reported_date": "2026-07-21",
+  "location": "Wanborough Plain, Nr Liddington, Wiltshire, UK",
+  "map_reference": "SU2283380804",
+  "approximate_size_m": 90,
+  "source_urls": [
+    "https://www.cropcircleconnector.com/2026/Wanborough/Wanborough2026a.html",
+    "https://www.cropcircleconnector.com/2026/Wanborough/diagrams.html"
+  ],
+  "source_observation": "Crop Circle Connector lists aerial shots, ground shots and diagrams, with image dates beginning 23 July 2026 and an update on 11 August 2026.",
+  "source_class": "SECONDARY_ARCHIVAL_SOURCE",
+  "input_sha256": null,
+  "freeze_status": "NOT_FROZEN",
+  "reason": "The public page establishes provenance but the underlying image bytes have not yet been imported and hashed into the CP8 workspace.",
+  "evidence_tier": "E1",
+  "promotion_state": "HOLD"
+}
