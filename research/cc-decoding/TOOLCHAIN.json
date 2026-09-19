@@ -1,0 +1,34 @@
+{
+  "schema": "CP8-CC-TOOLCHAIN-v1",
+  "status": "IMPLEMENTED_REGISTRY__EXECUTION_PENDING_SOURCE_BINDING",
+  "principle": "External capability is an analysis node, not an authority source.",
+  "target_lanes": {
+    "geometry": ["GLYPH-style spatial/statistical analysis", "CP8 vector/graph extraction"],
+    "visual_morphology": ["Glyphnet-style classification", "hieroglyph-transformer-style sequence/image comparison"],
+    "ancient_inscription_context": ["Ithaca", "Aeneas"],
+    "ancient_language_comparison": ["Akkadian/cuneiform models", "Egyptian hieroglyph models"],
+    "decipherment_validation": ["LOGOS-style preregistration, held-out tests, multiple-comparison correction"],
+    "local_model_lane": ["PocketPal/GGUF-capable models when locally available"],
+    "governance": ["Holbrook CP8 receipts, SHA-256, Merkle, DAR-P, replay, promotion gates"]
+  },
+  "critical_boundary": "No external model is allowed to grade the hypothesis it generated.",
+  "execution_order": [
+    "source_freeze",
+    "feature_extraction",
+    "blind_candidate_generation",
+    "null_controls",
+    "cross_domain_retrieval",
+    "held_out_validation",
+    "adversarial_review",
+    "replay",
+    "receipt",
+    "promotion"
+  ],
+  "status_codes": {
+    "REFERENCE_ONLY": "Documented external capability; not executed locally.",
+    "AVAILABLE_LOCAL": "Executable in the current environment.",
+    "EXECUTED": "Run completed with receipt.",
+    "REPRODUCED": "Independent replay reproduced the result.",
+    "ESTABLISHED": "Promotion gate passed."
+  }
+}
