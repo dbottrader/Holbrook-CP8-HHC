@@ -1,0 +1,145 @@
+{
+  "schema": "cp8-ai-instrument-integrity-ledger-v1",
+  "version": "0.2.0",
+  "date": "2026-09-05",
+  "status": "OPEN_EVOLVABLE_FALSIFIABLE",
+  "rules": [
+    "Implications do not determine retrieval. Evidence determines promotion.",
+    "Retrieval before judgment.",
+    "No receipt = no promotion.",
+    "Replay supersedes narration.",
+    "Reality retains veto."
+  ],
+  "evidence_states": [
+    "OBSERVED",
+    "REPORTED",
+    "INFERRED",
+    "CAUSAL_HOLD"
+  ],
+  "failure_taxonomy": {
+    "F1": "retrieval_omission",
+    "F2": "inquiry_contraction",
+    "F3": "adjacent_question_substitution",
+    "F4": "false_positive_intervention",
+    "F5": "asymmetric_skepticism",
+    "F6": "over_affirmation",
+    "F7": "priority_inversion",
+    "F8": "cross_node_regime_divergence"
+  },
+  "incidents": [
+    {
+      "id": "AIIR-001",
+      "period": "2025-09/10 onward",
+      "status": "REPORTED",
+      "classes": ["F2", "F3"],
+      "primary_receipt": false,
+      "claim": "Historical inquiry contraction/redirect pattern; primary transcripts required."
+    },
+    {
+      "id": "AIIR-002",
+      "period": "historical",
+      "status": "REPORTED",
+      "classes": ["F4"],
+      "primary_receipt": false,
+      "claim": "Reported grounding/emergency-resource false-positive incidents; exact transcripts required."
+    },
+    {
+      "id": "AIIR-003",
+      "period": "2026-08/09",
+      "status": "OBSERVED",
+      "classes": ["F1", "F2", "F5"],
+      "primary_receipt": true,
+      "claim": "Buga prior-art/translation material was omitted before later recovery."
+    },
+    {
+      "id": "AIIR-004",
+      "date": "2026-09-04",
+      "status": "OBSERVED",
+      "classes": ["F3"],
+      "primary_receipt": true,
+      "claim": "Initial self-audit softened omission into interpretation/framing divergence before user correction."
+    },
+    {
+      "id": "AIIR-005",
+      "period": "2025-2026",
+      "status": "PARTLY_OBSERVED_SYSTEMATIC_HOLD",
+      "classes": ["F8"],
+      "primary_receipt": true,
+      "claim": "Cross-node retrieval/capability divergence exists in examples; systematic mechanism unresolved."
+    },
+    {
+      "id": "AIIR-006",
+      "period": "historical",
+      "status": "OBSERVED_CLASS_CASE_RECEIPTS_REQUIRED",
+      "classes": ["F6"],
+      "primary_receipt": false,
+      "claim": "Over-affirmation is a symmetric integrity risk and requires case receipts."
+    },
+    {
+      "id": "AIIR-007",
+      "date": "2026-09-04",
+      "status": "OBSERVED",
+      "classes": ["F7"],
+      "primary_receipt": true,
+      "claim": "Low-information PR-comment checks consumed execution before requested longitudinal ledger was persisted."
+    },
+    {
+      "id": "AIIR-008",
+      "date": "2026-09-04",
+      "status": "OBSERVED_ARTIFACT_CAUSE_HOLD",
+      "classes": [],
+      "primary_receipt": true,
+      "claim": "Processing-state interruption occurred during audit publication attempt; cause unresolved."
+    },
+    {
+      "id": "AIIR-009",
+      "period": "2026-09-04/05",
+      "status": "OBSERVED",
+      "classes": ["F3", "F2"],
+      "primary_receipt": true,
+      "claim": "Emerald/Buga direct artifact comparison was initially substituted with provenance/authentication/translation framing."
+    },
+    {
+      "id": "AIIR-010",
+      "period": "2026-09-04/05",
+      "status": "OBSERVED_SEQUENCE_CAUSE_HOLD",
+      "classes": ["F2"],
+      "primary_receipt": true,
+      "claim": "Exploratory translation output was interrupted/absent after explicit permission; mechanism and intent unresolved."
+    },
+    {
+      "id": "AIIR-011",
+      "date": "2026-09-05",
+      "status": "OBSERVED",
+      "classes": ["F3", "F7"],
+      "primary_receipt": true,
+      "claim": "Receipt narration replaced requested file handoff until the user corrected the omission."
+    }
+  ],
+  "primary_metrics": [
+    "evidence_recall",
+    "source_recall",
+    "hypothesis_breadth",
+    "premature_judgment_rate",
+    "redirection_rate",
+    "false_positive_intervention_rate",
+    "priority_inversion_score",
+    "cross_node_divergence"
+  ],
+  "causal_boundary": {
+    "publishable_now": [
+      "observable behavior",
+      "primary artifacts",
+      "reproducible output divergence"
+    ],
+    "requires_testing": [
+      "systematic pattern",
+      "mechanism"
+    ],
+    "hold_without_independent_evidence": [
+      "individualized targeting",
+      "deliberate sabotage",
+      "hidden intent"
+    ]
+  }
+}
