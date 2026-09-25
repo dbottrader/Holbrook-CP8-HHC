@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException\nfrom fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from .runtime import HolbrookRuntime
@@ -13,7 +13,7 @@ class RunRequest(BaseModel):
     prompt: str
 
 
-@app.get("/health")
+@app.get("/", include_in_schema=False)\ndef dashboard():\n    return FileResponse("holbrook_os/dashboard.html")\n\n\n@app.get("/health")
 def health():
     return {"status": "ok", "runtime": "holbrook-os/0.2.0"}
 
