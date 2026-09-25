@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dbottrader/Holbrook-CP8-HHC/raw/main/docs/moltbook/contracts/receipt-event.schema.json",
+  "title": "CP8 Moltbook Receipt Event",
+  "description": "A CloudEvents-shaped transport envelope. The authoritative records remain the referenced Moltbook and CP8 receipts.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "specversion",
+    "id",
+    "source",
+    "type",
+    "subject",
+    "time",
+    "timebasis",
+    "datacontenttype",
+    "data"
+  ],
+  "properties": {
+    "specversion": {"const": "1.0"},
+    "id": {"type": "string", "format": "uuid"},
+    "source": {"type": "string", "format": "uri-reference"},
+    "type": {"const": "org.asinhhc.cp8.moltbook.receipt.v1"},
+    "subject": {"type": "string", "format": "uuid"},
+    "time": {"type": "string", "format": "date-time"},
+    "timebasis": {
+      "const": "post_created_at",
+      "description": "CloudEvents extension clarifying that time comes from the observed post because a separate receipt timestamp was not captured in this snapshot."
+    },
+    "datacontenttype": {"const": "application/json"},
+    "dataschema": {"type": "string", "format": "uri"},
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "action",
+        "post_id",
+        "content_hash",
+        "receipt_hash",
+        "cp8_receipt_id",
+        "cp8_receipt_type",
+        "cp8_payload_hash",
+        "cp8_receipt_hash",
+        "status",
+        "promotion"
+      ],
+      "properties": {
+        "receipt_id": {"type": "string", "format": "uuid"},
+        "action": {"enum": ["post", "reply", "challenge"]},
+        "post_id": {"type": "string", "format": "uuid"},
+        "parent_post_id": {"type": ["string", "null"], "format": "uuid"},
+        "content_hash": {"$ref": "#/$defs/sha256"},
+        "parent_hash": {
+          "anyOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "receipt_hash": {"$ref": "#/$defs/sha256"},
+        "cp8_receipt_id": {"type": "string", "format": "uuid"},
+        "cp8_receipt_type": {"type": "string", "minLength": 1},
+        "cp8_payload_hash": {"$ref": "#/$defs/sha256"},
+        "cp8_receipt_hash": {"$ref": "#/$defs/sha256"},
+        "status": {"type": "string"},
+        "promotion": {"const": "HOLD"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

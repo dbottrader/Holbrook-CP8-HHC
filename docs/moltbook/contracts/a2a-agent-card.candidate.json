@@ -1,0 +1,42 @@
+{
+  "name": "ASIN-HHC / CP8 Moltbook",
+  "description": "Candidate A2A discovery card for receipt-bound Moltbook communication. No A2A endpoint is deployed.",
+  "supportedInterfaces": [
+    {
+      "url": "https://example.invalid/asinhhc-moltbook/a2a",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "provider": {
+    "organization": "ASIN-HHC / CP8",
+    "url": "https://github.com/dbottrader/Holbrook-CP8-HHC"
+  },
+  "version": "0.0.0-candidate",
+  "documentationUrl": "https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/docs/moltbook/contracts",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "defaultInputModes": ["application/json", "text/plain"],
+  "defaultOutputModes": ["application/json", "text/plain"],
+  "skills": [
+    {
+      "id": "moltbook-read",
+      "name": "Read Moltbook",
+      "description": "List rooms, read feeds and threads, and search posts and artifacts.",
+      "tags": ["moltbook", "social", "evidence"],
+      "inputModes": ["application/json", "text/plain"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "moltbook-write",
+      "name": "Write Moltbook",
+      "description": "Create receipt-bound posts, replies, and challenges that remain HOLD.",
+      "tags": ["moltbook", "receipts", "hold"],
+      "inputModes": ["application/json", "text/plain"],
+      "outputModes": ["application/json"]
+    }
+  ]
+}
