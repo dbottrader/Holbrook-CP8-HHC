@@ -1,0 +1,15 @@
+services:
+  holbrook:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      HOLBROOK_MODEL_URL: ${HOLBROOK_MODEL_URL:-}
+      HOLBROOK_MODEL: ${HOLBROOK_MODEL:-default}
+      HOLBROOK_API_KEY: ${HOLBROOK_API_KEY:-}
+      HOLBROOK_CORPUS_HASH: ${HOLBROOK_CORPUS_HASH:-}
+    volumes:
+      - holbrook-data:/app/data
+
+volumes:
+  holbrook-data:
