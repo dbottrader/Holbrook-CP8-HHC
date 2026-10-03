@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Holbrook OS</title>
+<style>
+body{font-family:system-ui;max-width:1000px;margin:40px auto;padding:0 20px}
+article{border:1px solid #ddd;border-radius:8px;padding:16px;margin:16px 0}
+pre{white-space:pre-wrap;overflow:auto}
+button{padding:8px 12px}
+</style>
+</head>
+<body>
+<h1>Holbrook OS</h1>
+<p>Read-only receipt inspection surface.</p>
+<button onclick="load()">Refresh receipts</button>
+<div id="out"><p>Loading...</p></div>
+<script>
+async function load(){
+  const r = await fetch('/receipts');
+  const data = await r.json();
+  document.getElementById('out').innerHTML =
+    data.receipts.map(x =>
+      '<article><h3>'+x.receipt_id+'</h3><p>Decision: '+x.decision+
+      ' | Adapter: '+x.adapter+' | Model: '+x.model+
+      '</p><pre>'+JSON.stringify(x,null,2)+'</pre></article>'
+    ).join('') || '<p>No receipts.</p>';
+}
+load();
+</script>
+</body>
+</html>
