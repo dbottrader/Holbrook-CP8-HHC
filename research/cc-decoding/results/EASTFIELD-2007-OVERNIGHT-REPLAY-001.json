@@ -1,0 +1,46 @@
+{
+  "schema": "CP8-CC-OS-PUZZLE-NODE-v1",
+  "node_id": "EASTFIELD-2007-OVERNIGHT-REPLAY-001",
+  "status": "NEW_SOURCE_HOLD",
+  "source_update": {
+    "date_added": "2026-09-24",
+    "archive": "Crop Circle Research Archive",
+    "description": "Video analysis of the overnight appearance of the 7 July 2007 OM 7-7-7 formation in East Field was added to the archive video collection."
+  },
+  "observed": [
+    "A dated archive update identifies a dedicated video analysis of the formation's overnight appearance.",
+    "The source concerns temporal appearance evidence rather than a new geometric interpretation.",
+    "The archive also provides a growing provenance corpus containing photographs, contemporaneous reports, surveys, geometry, and scientific research."
+  ],
+  "inference": {
+    "statement": "If the underlying video preserves a sufficiently bounded time interval and stable landmarks, the formation can be treated as a temporal state-transition experiment rather than only a static geometry.",
+    "not_established": true
+  },
+  "cc_os_test": {
+    "name": "temporal_state_transition_replay",
+    "inputs": [
+      "original video bytes if recoverable",
+      "frame timestamps",
+      "camera metadata if available",
+      "fixed landmarks",
+      "formation mask per frame"
+    ],
+    "measurements": [
+      "first detectable deviation",
+      "growth of flattened-area mask",
+      "component birth order",
+      "topology changes",
+      "spatial propagation model",
+      "time-to-completion",
+      "frame-to-frame residual"
+    ],
+    "nulls": [
+      "ordinary human construction performed during an unobserved interval",
+      "editing/frame omission",
+      "lighting/weather-induced segmentation changes",
+      "camera motion"
+    ],
+    "promotion_rule": "No temporal mechanism is promoted without original media provenance, frame-level replay, and independent extraction."
+  },
+  "promotion": "HOLD"
+}
