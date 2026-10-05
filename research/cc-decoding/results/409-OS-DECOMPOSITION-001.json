@@ -1,0 +1,30 @@
+{
+  "schema": "CP8-CC-OS-EXPERIMENT-v1",
+  "experiment_id": "409-OS-DECOMPOSITION-001",
+  "status": "EXECUTED_EXPLORATORY_HOLD",
+  "inputs": {
+    "reported_total_circles": 409,
+    "reported_arm_count": 6,
+    "reported_spine_circles_per_arm": 13,
+    "center_nodes_assumed": 1
+  },
+  "derived_structure": {
+    "nodes_per_arm": 68,
+    "satellite_nodes_per_arm": 55,
+    "reconstructed_total": 409,
+    "equation": "409 = 1 + 6*(13 + 55)"
+  },
+  "discovery": {
+    "type": "exact_arithmetic_constraint",
+    "candidate_os_address_space": "1 center + 6 modules; each module = 13 spine + 55 residual",
+    "novelty_boundary": "The 55-per-arm quantity is derived, not directly observed.",
+    "next_test": "Blindly segment the highest-resolution aerial source and test six-sector membership, 13-node spine recovery, and 55-node residual balance."
+  },
+  "falsifiers": [
+    "Complete reconstruction changes the total count.",
+    "Blind geometry extraction does not recover six arm modules.",
+    "The alleged 13-circle spine cannot be independently recovered.",
+    "Residual nodes fail the predicted 55-per-arm partition after perspective and terrain correction."
+  ],
+  "promotion": "HOLD"
+}
