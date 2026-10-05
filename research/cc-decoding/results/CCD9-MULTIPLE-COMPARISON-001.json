@@ -1,0 +1,28 @@
+{
+  "schema": "CP8-CC-OS-EXPERIMENT-v1",
+  "experiment_id": "CCD9-MULTIPLE-COMPARISON-001",
+  "status": "EXECUTED_EXPLORATORY_HOLD",
+  "input_artifact": "CCD-9-791-LOOM-EMBEDDED",
+  "observed_inputs": {
+    "h15_energy_fraction": 0.1998894513,
+    "h12_energy_fraction": 0.1303211451,
+    "permutation_null_n": 5000,
+    "h15_null_mean": 0.0334002843,
+    "h15_null_sd": 0.0321210445,
+    "reported_empirical_p_h15": 0.00159968,
+    "scanned_harmonics": 30
+  },
+  "derived_tests": {
+    "h15_z_vs_null_mean_sd": 5.183180360152983,
+    "h15_to_h12_energy_ratio": 1.5338220911627025,
+    "bonferroni_upper_bound_for_30_harmonics": 0.0479904
+  },
+  "discovery": {
+    "statement": "The previously reported H15 result is much less decisive once the fact that harmonics 1-30 were scanned is accounted for.",
+    "reason": "The supplied receipt reports a single-frequency empirical p-value for H15, but does not report a max-over-30-harmonics permutation statistic.",
+    "consequence": "The nominal p=0.00159968 cannot be treated as a corpus-level discovery. A conservative Bonferroni correction places the result near the conventional 0.05 boundary.",
+    "stronger_next_test": "Re-run the frozen image with a max-statistic null that records the maximum harmonic energy over the entire preregistered harmonic family for every permutation."
+  },
+  "promotion": "HOLD",
+  "replay_requirement": "Raw angular signal or frozen image bytes plus the exact extraction code are required for a true max-statistic replay."
+}
