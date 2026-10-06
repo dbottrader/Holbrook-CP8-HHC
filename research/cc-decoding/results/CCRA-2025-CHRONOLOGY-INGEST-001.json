@@ -1,0 +1,17 @@
+{
+  "schema": "CP8-CC-OS-PROVENANCE-UPDATE-v1",
+  "update_id": "CCRA-2025-CHRONOLOGY-INGEST-001",
+  "status": "OBSERVED_EXECUTED_HOLD",
+  "observed_date": "2026-10-04",
+  "source": "Crop Circle Research Archive",
+  "observation": "The Archive added 2025 to its year-by-year Chronology page on 2026-10-04. Its database reports nearly 17,000 information records cross-referenced to more than 2,850 formations, including surveys, nearly 8,000 photographs, contemporaneous reports, scientific research, shadow diagrams and geometry.",
+  "change_from_prior_lattice": "The provenance corpus is now materially expanded for 2025 and can be mined for source triangulation, geometry, chronology and independently documented formation records.",
+  "inference": "This is a data-infrastructure upgrade, not evidence that any particular formation has anomalous origin or intentional encoding.",
+  "new_test": "CCRA-2025-CORPUS-MINING-001: extract 2025 formation identifiers, locations, dates, diagrams, surveys and image references; bind each to source-level provenance; identify formations with multi-source geometry and temporal evidence; convert qualifying cases into frozen CC-OS inputs.",
+  "promotion": "HOLD",
+  "falsifiers": [
+    "Chronology entries lack source-level identifiers or recoverable imagery.",
+    "Geometry cannot be independently reconstructed from the available records.",
+    "Dates/locations conflict across primary contemporaneous sources."
+  ]
+}
