@@ -50,6 +50,22 @@ demonstrated. Evidence tier: E1.
 
 ---
 
+## CP8 core evidence index (2026-10-07)
+
+For the actual CP8 morphology work — what code implements it, what was executed, what input produced each result, where the receipts are, and what is OBSERVED vs TESTED vs PROMOTED vs HOLD — read:
+
+```text
+manifests/cp8-core-index-2026-10-07.json
+docs/CP8_CORE_EVIDENCE_MAP_2026-10-07.md
+docs/CP8_REPLAY_GUIDE_2026-10-07.md
+```
+
+Rule recorded there: **the index describes evidence; it does not promote evidence.**
+
+Headline audit state, 2026-10-07: CCD-9 (`research/cc-decoding/results/CCD9-EXECUTION-001`) is the canonical executed case, TESTED exploratory, promotion HOLD. The Pass 0-6 morphology code and the CCD-9 scan code are not in public GitHub, so those results are reported, not yet replayable — the replay guide gives the exact unblock checklists. Promoted (ESTABLISHED) findings in the morphology core: none.
+
+---
+
 ## One-line project description
 
 CP8 / ASIN-HHC is a human-AI provenance framework that turns conversations, code, symbols, and AI outputs into traceable artifacts with context, evidence tiers, and rollback.
