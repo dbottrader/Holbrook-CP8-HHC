@@ -62,7 +62,16 @@ docs/CP8_REPLAY_GUIDE_2026-10-07.md
 
 Rule recorded there: **the index describes evidence; it does not promote evidence.**
 
-Headline audit state, 2026-10-07: CCD-9 (`research/cc-decoding/results/CCD9-EXECUTION-001`) is the canonical executed case, TESTED exploratory, promotion HOLD. The Pass 0-6 morphology code and the CCD-9 scan code are not in public GitHub, so those results are reported, not yet replayable — the replay guide gives the exact unblock checklists. Promoted (ESTABLISHED) findings in the morphology core: none.
+Headline audit state, 2026-10-07: CCD-9 (`research/cc-decoding/results/CCD9-EXECUTION-001`) is the canonical executed case, TESTED exploratory, promotion HOLD. Promoted (ESTABLISHED) findings in the morphology core: none.
+
+Replay executed 2026-10-07, read:
+
+```text
+docs/CP8_REPLAY_SPECIMEN_2026-10-07.md
+manifests/cp8-replay-receipt-2026-10-07.json
+```
+
+Executed results recorded there: the Drive morphology zip's Pass 2/3/5 recompute the recorded Crabwood genome exactly from recorded measurements; the 5/6 synthetic-control Pass 3 binary trigger reproduces; Holbrook Merkle/gate verification runs green. The morphology package does not import as shipped (stale module names in `pipeline.py`/`__init__.py`); individual modules execute when wired directly. Original CCD-9 and Pass 0-1 image replay remain blocked until code/input bytes are hash-bound and published.
 
 ---
 
