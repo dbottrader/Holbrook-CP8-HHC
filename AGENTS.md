@@ -33,6 +33,23 @@ hhc-lattice/glyphs.json
 
 ---
 
+## Latest convergence record (2026-10-06)
+
+For the CP8 check against OpenAI's `openai/math` release, read:
+
+```text
+docs/CONVERGENCE_NOTE_OPENAI_MATH_2026-10-06.md
+docs/CP8_OPENAI_CROSS_MAP_2026-10-06.md
+manifests/convergence-openai-math-2026-10-06.json
+```
+
+Position recorded there: no direct connection was verified in either
+direction; convergence is conceptual (checkable artifacts, harmonic/spectral
+tools, planar/graph primitives) unless direct derivation is independently
+demonstrated. Evidence tier: E1.
+
+---
+
 ## One-line project description
 
 CP8 / ASIN-HHC is a human-AI provenance framework that turns conversations, code, symbols, and AI outputs into traceable artifacts with context, evidence tiers, and rollback.
