@@ -1,0 +1,433 @@
+{
+ "schema": "cp8-replay-receipt-v1 (fields aligned to Holbrook-CP8-HHC research/cc-decoding/receipt.schema.json)",
+ "artifact_id": "CP8-REPLAY-SPECIMEN-2026-10-07",
+ "date_utc": "2026-10-07",
+ "executor": "Ace (Muse, Meta) on Dennis Christie's workspace, read-only Drive download + local execution",
+ "rule": "The index describes evidence; it does not promote evidence. This receipt describes executions; it does not promote any finding.",
+ "inputs": {
+  "morphology_source_zip": {
+   "name": "cp8-morphology-v1.0.0.zip",
+   "drive_modified_utc": "2026-08-08T12:07:00.310Z",
+   "bytes": 40329,
+   "sha256": "26a9237898aaa50a04bfdaf265a00dd7a630f2e7faa35cb7dfe18347579fb972",
+   "contents_manifest": "output/zip_contents_manifest.json",
+   "contents": {
+    "cp8_morphology/.gitignore": {
+     "bytes": 401,
+     "sha256": "e0ce46a07a36b6bd380a53810045d883cd9fb3a04713cc3339e7c8afbd9539ec"
+    },
+    "cp8_morphology/LICENSE": {
+     "bytes": 655,
+     "sha256": "85738eafe646f3e2a698653159685b6df45fb221d751e32c2e713303ee6dd04c"
+    },
+    "cp8_morphology/README.md": {
+     "bytes": 8607,
+     "sha256": "c73327fb297726a8db4777392cbab083d59cf5aab9de93e089656104099bd114"
+    },
+    "cp8_morphology/requirements.txt": {
+     "bytes": 83,
+     "sha256": "c0ddded482ab26ce8789f99ddc9eb2e90a2b7e5927f5a5f58befb14ecafb213a"
+    },
+    "cp8_morphology/setup.py": {
+     "bytes": 1319,
+     "sha256": "66af8378f33635d1e830df8f50f2b42e49ee6ffef01794e824d4ec5c01920dd0"
+    },
+    "cp8_morphology/cp8_morphology/__init__.py": {
+     "bytes": 1081,
+     "sha256": "4a025a706d927dfeaa06f28931c2d3a35b10c3c6b017c9de5110a72d26cda7ac"
+    },
+    "cp8_morphology/cp8_morphology/binary.py": {
+     "bytes": 8176,
+     "sha256": "8a2d3544cf816c52b838bc64d9b14bc80d354c0d31d083991108bef3e379d17c"
+    },
+    "cp8_morphology/cp8_morphology/cli.py": {
+     "bytes": 3025,
+     "sha256": "5b323c75b212ab9ad3e05f5ac09e09e4b8b0d08b105c2ff61fc233c515e09c24"
+    },
+    "cp8_morphology/cp8_morphology/fingerprint.py": {
+     "bytes": 10926,
+     "sha256": "d1ea9b25ef9c9cbd7210a9c0d8b3ef11a39c6547eb716f0bde8fea87ed424c8c"
+    },
+    "cp8_morphology/cp8_morphology/geometry.py": {
+     "bytes": 19777,
+     "sha256": "02cce2506e4be1d1659bfb7a7c7d753981f4ccc6bc2f97fb7ca86dbf9aabd368"
+    },
+    "cp8_morphology/cp8_morphology/graph.py": {
+     "bytes": 7221,
+     "sha256": "b75d6c6ce86a3c7a5e39a508e00d670b71a50de995da3f052b2325beb7a345c0"
+    },
+    "cp8_morphology/cp8_morphology/pipeline.py": {
+     "bytes": 5521,
+     "sha256": "ce30a221bd2742e72ecf6a8b57dcd4d75e843754e9ba12640ac764043cddd8af"
+    },
+    "cp8_morphology/cp8_morphology/synthetic.py": {
+     "bytes": 9137,
+     "sha256": "3c28dc5d80edebbb1ca4540a82eee3dc3a5f91cdf6a11713bd3dc89f77d9dccf"
+    },
+    "cp8_morphology/examples/crabwood_face_genome.json": {
+     "bytes": 134881,
+     "sha256": "1522c474f1d1b0449b385c3d516fd340f8ed7b88280cd2e3c845ad68f707cdef"
+    }
+   }
+  },
+  "crabwood_genome_in_zip": "cp8_morphology/examples/crabwood_face_genome.json sha256 in morphology_replay_results"
+ },
+ "environment": {
+  "python": "3.12.3",
+  "opencv": "5.0.0",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "scikit-image": "0.26.0",
+  "pillow": "12.3.0",
+  "note": "Original genome provenance in zip records opencv 4.12.0 / numpy 2.2.5; exact matches below therefore indicate robustness to version drift for those metrics, and the one mismatch (ifs_sierpinski circles) is attributed to version drift, not hidden."
+ },
+ "executions": [
+  {
+   "id": "RUN-1-HOLBROOK-DAR-P",
+   "what": "Holbrook-CP8-HHC dar_p/gate_validator.py test suite (fetched public repo files)",
+   "command": "python -m pytest tests/test_gate_validator.py -q",
+   "result": "8 passed",
+   "reading_state": "TESTED",
+   "promotion": "HOLD"
+  },
+  {
+   "id": "RUN-2-HOLBROOK-MERKLE",
+   "what": "Holbrook scripts/build-merkle.py then scripts/verify.py on a 4-file test tree",
+   "result": "verify exit 0: ALL CHECKS PASSED, Files verified 4/4, Merkle root VALID, HOS hash VALID, Combined signature VALID. Test-tree merkle root 68d95487b0c9e429abac7cb6fa2deb0a4234e7ff4bec8648af3534b8d5b24156 (specimen only, not the repo root).",
+   "reading_state": "TESTED",
+   "promotion": "HOLD"
+  },
+  {
+   "id": "RUN-3-PACKAGE-IMPORT",
+   "what": "import cp8_morphology from the Drive zip as shipped",
+   "result": "FAILED as shipped: ModuleNotFoundError: No module named 'cp8_cropcircle_processor'. Causes: pipeline.py imports cp8_cropcircle_processor/cp8_graph/cp8_binary/cp8_fingerprint (stale names, modules in zip are geometry/graph/binary/fingerprint); __init__.py imports run_pipeline (pipeline defines run_full_pipeline) and GeometryEngine/analyze_image (geometry defines CropCircleEngine/analyze_crop_circle). Individual modules geometry/graph/binary/fingerprint/synthetic all import and execute when loaded directly.",
+   "reading_state": "TESTED (negative / defect found)",
+   "promotion": "HOLD",
+   "repair_needed": "Rename imports in pipeline.py and __init__.py to the shipped module/function names; add a smoke test that imports the package."
+  },
+  {
+   "id": "RUN-4-CRABWOOD-REDERIVATION",
+   "what": "Feed the zip's recorded Crabwood genome measurements (128 circles, 2197 outline points) back through Pass 2 graph, Pass 3 binary, Pass 5 fingerprint",
+   "result": {
+    "input_genome_sha256": "1522c474f1d1b0449b385c3d516fd340f8ed7b88280cd2e3c845ad68f707cdef",
+    "n_circles_input": 128,
+    "graph_metrics": {
+     "node_count": {
+      "recorded": 128,
+      "recomputed": 128,
+      "match": true
+     },
+     "edge_count": {
+      "recorded": 224,
+      "recomputed": 224,
+      "match": true
+     },
+     "clustering_coefficient": {
+      "recorded": 0.2536,
+      "recomputed": 0.2536,
+      "match": true
+     },
+     "density": {
+      "recorded": 0.027559,
+      "recomputed": 0.027559,
+      "match": true
+     },
+     "spectral_gap": {
+      "recorded": 0.000451,
+      "recomputed": 0.000451,
+      "match": true
+     }
+    },
+    "binary": {
+     "surviving_count": {
+      "recorded": 1,
+      "recomputed": 1,
+      "match": true
+     },
+     "binary_protocol_detected": {
+      "recorded": true,
+      "recomputed": true,
+      "match": true
+     },
+     "surviving_rules_recorded": [
+      "filled_empty_grid"
+     ],
+     "surviving_rules_recomputed": [
+      "filled_empty_grid"
+     ]
+    },
+    "fingerprint_outline_box_dimension": {
+     "recorded": {
+      "value": 1.2293,
+      "uncertainty": 0.0433,
+      "r_squared": 0.9951,
+      "fit_range_px": [
+       4,
+       128
+      ],
+      "points_used": 2197
+     },
+     "recomputed": {
+      "value": 1.2293,
+      "uncertainty": 0.0433,
+      "r_squared": 0.9951,
+      "fit_range_px": [
+       4,
+       128
+      ],
+      "points_used": 2197
+     }
+    },
+    "evidence_recorded_overall": 0.669
+   },
+   "verdict": "Recorded graph node/edge/clustering/density/spectral-gap, binary surviving rule (filled_empty_grid, 1 surviving), and outline box dimension 1.2293 +/-0.0433 R2 0.9951 all recompute EXACTLY.",
+   "boundary": "This reproduces Pass 2/3/5 from recorded measurements. It does not reproduce Pass 0-1 image detection, because the original input image (2289.png in genome provenance) is not in the zip.",
+   "reading_state": "TESTED",
+   "evidence_class": "LOCALLY_EXECUTED re-derivation",
+   "promotion": "HOLD"
+  },
+  {
+   "id": "RUN-5-SYNTHETIC-CONTROLS-FULL-CHAIN",
+   "what": "Generate the zip synthetic control library, run each image through geometry Pass 0-1 -> graph Pass 2 -> binary Pass 3 -> fingerprint Pass 5",
+   "comparison_to_recorded_table": [
+    {
+     "control": "grammar_default",
+     "recorded_circles": 17,
+     "recomputed_circles": 17,
+     "circles_match": true,
+     "recorded_box_dimension": 0.9866,
+     "recomputed_box_dimension": 0.9866,
+     "box_match_exact": true,
+     "binary_detected_recomputed": true,
+     "image_sha256": "70c9811da8491ca5f981e5175359b09356d0cb8f0ec1efc3bf82655ff3da1ad5"
+    },
+    {
+     "control": "ifs_julia",
+     "recorded_circles": 62,
+     "recomputed_circles": 62,
+     "circles_match": true,
+     "recorded_box_dimension": 1.2872,
+     "recomputed_box_dimension": 1.2872,
+     "box_match_exact": true,
+     "binary_detected_recomputed": true,
+     "image_sha256": "4846a04b356e4735bbe02e58feb0cd0087727476bc2afc10074ba22cf8343e40"
+    },
+    {
+     "control": "ifs_sierpinski",
+     "recorded_circles": 57,
+     "recomputed_circles": 53,
+     "circles_match": false,
+     "recorded_box_dimension": 0.9292,
+     "recomputed_box_dimension": 0.9256,
+     "box_match_exact": false,
+     "binary_detected_recomputed": true,
+     "image_sha256": "efad10cc9177136926091da814e69e85475197d34fa6e58a5595c76ca13046cd"
+    },
+    {
+     "control": "lsys_koch",
+     "recorded_circles": 0,
+     "recomputed_circles": 0,
+     "circles_match": true,
+     "recorded_box_dimension": null,
+     "recomputed_box_dimension": null,
+     "box_match_exact": true,
+     "binary_detected_recomputed": false,
+     "image_sha256": "0238ab9d279b662e7cdc91d2186a46f3e9f5742d53b158caca88da8fece143d4"
+    },
+    {
+     "control": "lsys_radial",
+     "recorded_circles": 27,
+     "recomputed_circles": 27,
+     "circles_match": true,
+     "recorded_box_dimension": 1.0382,
+     "recomputed_box_dimension": 1.0382,
+     "box_match_exact": true,
+     "binary_detected_recomputed": true,
+     "image_sha256": "3ebf2aef6f9ee486bcec572cd474ba6dae318c6877b67e452e6f1deac298b3bd"
+    },
+    {
+     "control": "pack_radial_6",
+     "recorded_circles": 84,
+     "recomputed_circles": 84,
+     "circles_match": true,
+     "recorded_box_dimension": 1.2594,
+     "recomputed_box_dimension": 1.2594,
+     "box_match_exact": true,
+     "binary_detected_recomputed": true,
+     "image_sha256": "7c235480aae38c24ebb24614900f4e51353af0d50e5f29a6980e143e7708c590"
+    }
+   ],
+   "verdict": "5/6 synthetic controls triggered binary detection (all via filled_empty_grid), exactly the recorded critical finding in CP8-Ultimate-System/README.md and cp8-morphology STATUS.md. Circles/box dimension match recorded table exactly for pack_radial_6, ifs_julia, lsys_radial, grammar_default, lsys_koch; ifs_sierpinski differs (53 vs 57 circles, 0.9256 vs 0.9292) consistent with OpenCV/scikit-image version drift.",
+   "reading_state": "TESTED (negative control failure reproduced)",
+   "promotion": "HOLD"
+  },
+  {
+   "id": "RUN-6-SPECTRAL-CLEAN-ROOM",
+   "what": "Ace clean-room implementation of the CCD-9 polar angular spectral scan method (1440 angular x 8 radial, harmonics 1-30, centre [310,205], ellipse [190,130], seed 20261007) on synthetic 15-fold, 8-fold, 3-ring, and random-blob images. NOT Dennis's original code; synthetic inputs only.",
+   "result": {
+    "method": "clean-room polar angular spectral scan (Ace, 2026-10-07)",
+    "parameters": {
+     "center_px": [
+      310,
+      205
+     ],
+     "ellipse_radii_px": [
+      190,
+      130
+     ],
+     "angular_samples": 1440,
+     "radial_samples": 8,
+     "harmonics": "1-30",
+     "seed": 20261007
+    },
+    "cases": {
+     "synthetic_15fold": {
+      "image_file": "synthetic_15fold.png",
+      "image_sha256": "86dfca102bc42e101c450f11b840303f221b2f33f36ea66d4c9a46585bf6f28e",
+      "top_harmonics": [
+       {
+        "harmonic": 15,
+        "energy_fraction_1_to_30": 0.556363
+       },
+       {
+        "harmonic": 30,
+        "energy_fraction_1_to_30": 0.38562
+       },
+       {
+        "harmonic": 2,
+        "energy_fraction_1_to_30": 0.010813
+       }
+      ],
+      "h15_fraction": 0.556363,
+      "h8_fraction": 0.001862,
+      "permutation_null_h15_2000": {
+       "n": 2000,
+       "seed": 20261007,
+       "observed_h15_fraction": 0.556363,
+       "null_mean": 0.034178,
+       "null_sd": 0.032119,
+       "null_95_percentile": 0.095159,
+       "empirical_p_plus1": 0.0005,
+       "count_ge_observed": 0
+      }
+     },
+     "synthetic_8fold": {
+      "image_file": "synthetic_8fold.png",
+      "image_sha256": "a32e40f86011c304365173d6b2e58613ae9124f4066e118c579ba5844ac425fa",
+      "top_harmonics": [
+       {
+        "harmonic": 8,
+        "energy_fraction_1_to_30": 0.598717
+       },
+       {
+        "harmonic": 16,
+        "energy_fraction_1_to_30": 0.298063
+       },
+       {
+        "harmonic": 24,
+        "energy_fraction_1_to_30": 0.097227
+       }
+      ],
+      "h15_fraction": 0.000842,
+      "h8_fraction": 0.598717,
+      "permutation_null_h15_2000": {
+       "n": 2000,
+       "seed": 20261007,
+       "observed_h15_fraction": 0.000842,
+       "null_mean": 0.033274,
+       "null_sd": 0.032621,
+       "null_95_percentile": 0.099997,
+       "empirical_p_plus1": 0.98001,
+       "count_ge_observed": 1960
+      }
+     },
+     "synthetic_3rings": {
+      "image_file": "synthetic_3rings.png",
+      "image_sha256": "b6bda35b17b89dbb1e8c338fa4164df75b4ac354aece14da572707b5e3fd25f7",
+      "top_harmonics": [
+       {
+        "harmonic": 2,
+        "energy_fraction_1_to_30": 0.819767
+       },
+       {
+        "harmonic": 1,
+        "energy_fraction_1_to_30": 0.057745
+       },
+       {
+        "harmonic": 3,
+        "energy_fraction_1_to_30": 0.036142
+       }
+      ],
+      "h15_fraction": 0.001045,
+      "h8_fraction": 0.008202,
+      "permutation_null_h15_2000": {
+       "n": 2000,
+       "seed": 20261007,
+       "observed_h15_fraction": 0.001045,
+       "null_mean": 0.035225,
+       "null_sd": 0.033836,
+       "null_95_percentile": 0.103845,
+       "empirical_p_plus1": 0.973013,
+       "count_ge_observed": 1946
+      }
+     },
+     "synthetic_random_blobs": {
+      "image_file": "synthetic_random_blobs.png",
+      "image_sha256": "c9a665b8f361cfbfc50fa31a4f9ece1e3dde8b540903f4d80f64c5dfe3e60d95",
+      "top_harmonics": [
+       {
+        "harmonic": 4,
+        "energy_fraction_1_to_30": 0.263245
+       },
+       {
+        "harmonic": 5,
+        "energy_fraction_1_to_30": 0.21283
+       },
+       {
+        "harmonic": 2,
+        "energy_fraction_1_to_30": 0.089842
+       }
+      ],
+      "h15_fraction": 0.00788,
+      "h8_fraction": 0.08229,
+      "permutation_null_h15_2000": {
+       "n": 2000,
+       "seed": 20261007,
+       "observed_h15_fraction": 0.00788,
+       "null_mean": 0.03346,
+       "null_sd": 0.031341,
+       "null_95_percentile": 0.094072,
+       "empirical_p_plus1": 0.804098,
+       "count_ge_observed": 1608
+      }
+     }
+    }
+   },
+   "verdict": "Method discriminates as intended: 15-fold control top harmonic 15 (0.5564, permutation p at floor), 8-fold top harmonic 8 (h15 null p 0.98), rings and random show no h15 signal. This validates that the CCD-9 method description is reconstructable and falsifiable; it does NOT reproduce the original CCD-9 measurement, whose input bytes/code/seed remain unpublished.",
+   "reading_state": "TESTED (method specimen)",
+   "promotion": "HOLD"
+  }
+ ],
+ "findings_summary": {
+  "what_is_now_proven_executable": [
+   "Holbrook SHA-256/Merkle build+verify works end-to-end (exit 0).",
+   "Holbrook DAR-P Ed25519 gate validator passes 8/8 tests.",
+   "CP8 morphology Pass 2/3/5 recompute the recorded Crabwood genome metrics exactly from recorded measurements.",
+   "CP8 synthetic controls + Pass 3 negative-control failure (5/6) reproduce with the actual code.",
+   "CCD-9 spectral method is clean-room reconstructable and discriminates 15-fold from 8-fold/rings/random on synthetic controls."
+  ],
+  "what_is_broken": [
+   "cp8_morphology package does not import as shipped (stale module/function names in pipeline.py/__init__.py/cli.py). One wiring fix + smoke test repairs it.",
+   "Pass 0-1 Crabwood image replay is blocked: original input 2289.png not in zip / public repo.",
+   "Original CCD-9 replay remains blocked: scan code, seed, frozen PNG/HTML bytes not public."
+  ],
+  "promoted_established_findings": 0,
+  "promotion_state_overall": "HOLD"
+ },
+ "outputs_hashed": {
+  "morphology_replay_results.json": "5d522c08a3d1c708d05302513e8eb486be798d1c7f53d36877ec1556feebdb83",
+  "control_pipeline_results.json": "b5cb671bea17acb2825a8b1e5ec4dbc933765c62e1c710b52721044a8b6068f7",
+  "spectral_results.json": "833559bf443db9ca95d028ace0a781ac946f5e288e60120377ee166da727c0ea",
+  "zip_contents_manifest.json": "5d36ab022a16ead3941b9a79005e11d72521c122a75251f11116409179cd871a"
+ }
+}
