@@ -1,0 +1,51 @@
+{
+  "schema": "CP8-CC-OS-EXTERNAL-CROSS-EXAM-v1",
+  "node_id": "CCFA-3382-CORPUS-CROSS-EXAM-001",
+  "status": "OBSERVED_EXTERNAL_ANALYSIS__REPLAY_PENDING__HOLD",
+  "source": {
+    "repository": "xxxallistarxxx-one/crop-formation-analysis",
+    "url": "https://github.com/xxxallistarxxx-one/crop-formation-analysis",
+    "latest_observed_commit": "8a8860b7d3815354de3c9e2b1595c2e680895d74",
+    "latest_observed_commit_date": "2026-09-23T10:31:43Z",
+    "source_period": "1990-2020",
+    "source_type": "CorelDRAW-exported vector diagrams in 31 annual books, not field photographs",
+    "source_files_redistributed": false,
+    "source_manifest_available": true,
+    "replay_blocker": "Original source PDFs are not in the repository; manifest lists filenames, byte sizes, and SHA-256 hashes."
+  },
+  "observed_reported_results": {
+    "headline_corpus_size": 3382,
+    "catalog_plates_reported": 3387,
+    "phase8_topology_n": 3386,
+    "reported_tests_in_readme_and_summary": 148,
+    "reported_tests_in_phase8_and_latest_commit": 161,
+    "complexity_over_time_spearman_rho": 0.37,
+    "six_fold_share_1990s": 0.025,
+    "six_fold_share_2010s": 0.101,
+    "radial_order_conditional_entropy_fraction": 0.48,
+    "median_holes_1990s": 1,
+    "median_holes_2000s": 4,
+    "median_holes_2010s": 6,
+    "topology_rho_all": 0.346,
+    "topology_rho_england_only": 0.447,
+    "topology_rho_wiltshire_only": 0.360,
+    "topology_rho_outside_england": 0.301,
+    "topology_residual_rho_after_primitive_count": 0.136
+  },
+  "cross_exam_findings": [
+    "The study explicitly measures illustrator-produced diagrams, not physical field geometry; it reports 46 percent of curves are drawing-tool circles, no surveyed scale, and no maker attribution.",
+    "The study documents false positives caused by degenerate nulls, features reused in clustering and testing, and control mismatch in ring thickness.",
+    "The reported topological trend is a candidate structural/historical trend, but appears largely coupled to rising primitive count.",
+    "Public metadata disagrees: headline 3382 formations, catalog 3387 plates, Phase 8 N=3386; README/summary say 148 tests while Phase 8 says 161. Reconcile populations and summaries before replay."
+  ],
+  "new_tests": [
+    "Reconcile stable formation IDs and per-phase eligible N across catalog, descriptors, test log, and Phase 8 outputs.",
+    "Replay topology trend from per-formation data and test sensitivity to mask connectivity and inclusion rules.",
+    "Test topology after adjustment for primitive count, era, county, book/illustrator, and selection coverage.",
+    "Use documented null-model failures as regression fixtures for CC-OS null validation.",
+    "Cross-compare CC-OS generative grammar on held-out vector diagrams, then separately validate on field imagery.",
+    "Bridge diagram and field layers using formations with surveyed dimensions or rectified aerial imagery."
+  ],
+  "promotion": "HOLD",
+  "promotion_reason": "Substantive external analysis, but source PDFs are not redistributed and geometry is diagram-level. Independent replay and population reconciliation remain pending."
+}
