@@ -1,0 +1,25 @@
+{
+  "schema": "CP8-CC-OS-INDEPENDENT-REPLAY-v1",
+  "node_id": "CCFA-3382-INDEPENDENT-REPLAY-001",
+  "status": "EXECUTED_DERIVED_TABLES_ONLY__HOLD",
+  "source_commit": "8a8860b7d3815354de3c9e2b1595c2e680895d74",
+  "topology_blob_sha": "c0c57f46f1683cfe63463074f7e41ecd821ae897",
+  "descriptors_blob_sha": "83025af3a98b7381841103f64e5846a4a71224a8",
+  "joined_rows": 3386,
+  "duplicate_ids": 0,
+  "unmatched_ids": 0,
+  "independent_results": {
+    "spearman_year_b1": 0.3459,
+    "spearman_b1_primitive_count": 0.7831,
+    "partial_spearman_year_b1_given_primitive_count": 0.1362,
+    "median_b1_1990s": 1,
+    "median_b1_2000s": 4,
+    "median_b1_2010_to_2020": 6,
+    "top_one_percent_b1_cutoff": 140,
+    "rows_above_cutoff": 34,
+    "spearman_year_b1_after_excluding_above_cutoff": 0.3436
+  },
+  "method": "Joined published phase8_topology.csv to descriptors.csv by formation_id. Spearman correlations use average ranks for ties.",
+  "limits": "Derived-table replay only. Source PDFs, field imagery, and p-value recalculation were not part of this test. Top-one-percent sensitivity is analyst-selected.",
+  "promotion": "HOLD"
+}
