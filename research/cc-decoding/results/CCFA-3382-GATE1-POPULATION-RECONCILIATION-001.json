@@ -5,7 +5,7 @@
   "protocol_version": "v0.3",
   "status": "INCONCLUSIVE_WITH_SUBSTANTIVE_RECONCILIATION__HOLD",
   "executed_at_utc": "2026-10-09",
-  "execution_scope": "Read-only inspection of publicly available derived repository artifacts and independent row/set reconciliation. No source PDFs downloaded or hashed; no geometry extraction or statistical replay performed.",
+  "execution_scope": "Read-only inspection of public derived repository artifacts, exact row-ID reconciliation, and exploratory duplicate-sensitivity replay of published descriptor/topology CSVs. Source PDFs and original masks were not downloaded or independently hashed; no fresh geometry extraction performed.",
   "source": {
     "repository": "xxxallistarxxx-one/crop-formation-analysis",
     "ref": "main",
@@ -76,25 +76,18 @@
       "exact_match": true
     },
     "catalog_plate_record_ids_vs_descriptor_formation_ids": {
-      "matched": 3385,
-      "catalog_plate_only": [
-        "y2010_p111"
-      ],
-      "descriptor_only": 0
+      "matched": 3386,
+      "catalog_plate_only": [],
+      "descriptor_only": [],
+      "exact_match": true,
+      "note": "Corrected prior receipt: compare catalog.id to descriptors.formation_id, not catalog.formation_id. The latter is an F#### duplicate-group key. All 3,386 plate record IDs match descriptor row IDs exactly."
     },
     "descriptor_ids_vs_topology_ids": {
       "matched": 3386,
-      "descriptor_only": 0,
-      "topology_only": 0,
-      "exact_match": true
-    },
-    "missing_derived_record": {
-      "id": "y2010_p111",
-      "page_kind": "composite_illustration",
-      "source_pdf": "crops 20101605903521168.pdf",
-      "page_index": 111,
-      "caption": "TWO PREVIOUS FORMATIONS COMBINED",
-      "interpretation": "Its exclusion from descriptor/topology tables is consistent with the documented page_kind being composite_illustration rather than plate."
+      "descriptor_only": [],
+      "topology_only": [],
+      "exact_match": true,
+      "note": "descriptors.formation_id and topology.formation_id are row-level IDs (yYYYY_pNNN), not catalog F#### group keys."
     },
     "duplicate_formation_groups": [
       {
@@ -135,29 +128,30 @@
         "nonrepresentative_records": 1
       }
     ],
-    "stable_identifier_note": "The catalog `id` values match the formation_ids.csv `formation_id_key` values exactly. The catalog `formation_id` field is a group key (F####), not the same identifier namespace as the row-level id. Cross-source matching should preserve this distinction."
+    "stable_identifier_note": "Identifier namespaces: catalog.id matches formation_ids.csv.formation_id_key and descriptors.csv / data/phase8_topology.csv formation_id row keys. catalog.formation_id is the F#### duplicate-group key. Do not compare catalog.formation_id directly to descriptor/topology row keys."
   },
   "discrepancies": [
     {
       "issue": "Headline 3382 versus catalog 3387 and topology/descriptors 3386",
       "status": "PARTIALLY_EXPLAINED__SEMANTIC_COUNT_UNRESOLVED",
-      "evidence": "Catalog has 3386 plate rows plus one composite_illustration row; five plate rows are marked nonrepresentative across four repeated formation groups; descriptor and topology tables both contain 3386 rows and omit the composite row.",
-      "unresolved_question": "The catalog has 3381 distinct group IDs among plate rows, while 3382 distinct group IDs when the composite row is included. The headline count of 3382 therefore matches all catalog group IDs including the composite, not the number of distinct plate group IDs. No explicit rule found in the inspected artifacts establishes whether this is intended."
+      "evidence": "Catalog has 3386 plate rows plus one composite_illustration row; five plate rows are marked nonrepresentative across four repeated formation groups. Descriptor and topology tables each contain 3386 rows and match the plate row IDs exactly. Distinct catalog group keys: 3381 among plate rows and 3382 including the composite illustration.",
+      "unresolved_question": "The README headline count of 3382 matches the number of distinct catalog group keys only when the composite_illustration row is included. The source classification explicitly marks that row as a composite rather than a plate, so the intended semantics of the headline count remain unresolved."
     },
     {
       "issue": "148 tests in README/findings summary versus 161 in test log/Phase 8 report",
-      "status": "RECONCILED_AS_STALE_SUMMARY_LIKELY__RULE_NOT_EXPLICIT",
+      "status": "STALE_SUMMARY_LIKELY__VERSION_HISTORY_NOT_VERIFIED",
       "evidence": "test_log.csv has 161 rows, with 13 Phase 8 rows; PHASE8_REPORT.md states 161 tests now logged, while findings_summary.md says 148.",
       "unresolved_question": "The arithmetic strongly suggests the summary was not updated after adding 13 Phase 8 tests, but the inspected files do not explicitly document that update history."
     }
   ],
   "gate1_decision": {
     "state": "INCONCLUSIVE",
-    "reason": "All record IDs in catalog and formation_ids index reconcile; descriptor and topology IDs reconcile exactly; the lone excluded row is explicitly labeled a composite illustration. However, the headline 3382 formation population does not map cleanly to distinct plate group IDs under the catalog's own grouping fields, and the 148/161 test-count discrepancy is not explicitly documented as a versioning rule.",
-    "next_required_action": "Ask repository maintainer to document the headline population rule (including treatment of the composite illustration and repeated plates) and update/version the stale test count. Preserve current counts without normalization."
+    "reason": "Record-level IDs reconcile exactly across catalog, formation-ID index, descriptors, and topology. The composite illustration is consistently excluded from descriptor/topology rows. The headline count semantics remain unresolved because 3382 distinct catalog group keys include the composite row, versus 3381 groups among plate rows; README/findings summary test count 148 also conflicts with 161 in the test log and Phase 8 report.",
+    "next_required_action": "Keep HOLD on formal promotion; prioritize analysis of available derived data. Maintainer clarification is useful but not a prerequisite for exploratory sensitivity tests."
   },
   "gate2_state": "BLOCKED_SOURCE_PDFS_NOT_REDISTRIBUTED",
   "gates3_to_6": "NOT_EXECUTED",
-  "statistical_claim": "No new statistical replay performed. Existing correlation values were not recalculated in this gate.",
-  "promotion": "HOLD"
+  "statistical_claim": "Exploratory duplicate-sensitivity replay now performed separately in CCFA-3382-DUPLICATE-SENSITIVITY-001. It is not an independent reproduction because source PDFs/masks were not recovered.",
+  "promotion": "HOLD",
+  "exploratory_sensitivity_result": "Spearman(year,b1) was 0.345551 for all 3386 plate rows and 0.344611 for 3381 representative rows; rank-residual partial association controlling for primitive count was 0.136209 vs 0.135917. Duplicate handling barely changes point estimates. Formal p-values and cluster-aware uncertainty were not recomputed in this sensitivity pass."
 }
