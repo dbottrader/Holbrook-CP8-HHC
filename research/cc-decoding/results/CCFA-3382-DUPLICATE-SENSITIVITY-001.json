@@ -1,0 +1,221 @@
+{
+  "schema": "CP8-CC-OS-EXPLORATORY-SENSITIVITY-v1",
+  "node_id": "CCFA-3382-DUPLICATE-SENSITIVITY-001",
+  "protocol": "CCFA-3382-REPLAY-GATE-002",
+  "protocol_version": "v0.3",
+  "status": "EXPLORATORY_RESULT__FORMAL_PROMOTION_HOLD",
+  "executed_at_utc": "2026-10-09",
+  "question": "Does the reported temporal increase in diagram topology depend materially on the five catalog rows marked nonrepresentative across four repeated formation groups?",
+  "source": {
+    "repository": "xxxallistarxxx-one/crop-formation-analysis",
+    "ref": "main",
+    "artifacts": [
+      {
+        "path": "catalog.csv",
+        "blob_sha": "94eae291be42b73a7b673fdaa315b95cb3665c86"
+      },
+      {
+        "path": "descriptors.csv",
+        "blob_sha": "83025af3a98b7381841103f64e5846a4a71224a8"
+      },
+      {
+        "path": "data/phase8_topology.csv",
+        "blob_sha": "c0c57f46f1683cfe63463074f7e41ecd821ae897"
+      },
+      {
+        "path": "PHASE8_REPORT.md",
+        "blob_sha": "119afb910b1f097cf7a35e6656de26a431e6467a"
+      },
+      {
+        "path": "src/phase8_tests.py",
+        "note": "Inspected from main; algorithm uses Spearman trend permutation and rank-residual partial association."
+      }
+    ]
+  },
+  "method": {
+    "merge_key": "catalog.id == descriptors.formation_id == phase8_topology.formation_id",
+    "populations": [
+      "All plate records",
+      "Representative-only records where catalog.is_representative == 1",
+      "Duplicate groups collapsed by within-group mean for b1, b0, n_primitives, and year"
+    ],
+    "statistics": [
+      "Spearman correlation of year with b1 (enclosed holes)",
+      "Spearman correlation of year with b0 (connected ink components)",
+      "Spearman correlation of year with primitive count",
+      "Rank-residual partial correlation of year with b1 controlling for primitive count"
+    ],
+    "status": "Exploratory sensitivity analysis of derived CSVs; not a replacement for the pre-registered Gate 4 replay."
+  },
+  "population_reconciliation": {
+    "catalog_rows": 3387,
+    "plate_rows": 3386,
+    "composite_illustration_rows": 1,
+    "descriptor_rows": 3386,
+    "topology_rows": 3386,
+    "exact_plate_descriptor_row_id_match": true,
+    "exact_descriptor_topology_row_id_match": true,
+    "duplicate_groups": 4,
+    "rows_in_duplicate_groups": 9,
+    "nonrepresentative_rows": 5,
+    "groups": [
+      {
+        "formation_group_id": "F0660",
+        "rows": [
+          "y1995_p094",
+          "y1995_p095"
+        ]
+      },
+      {
+        "formation_group_id": "F2714",
+        "rows": [
+          "y2010_p104",
+          "y2010_p105",
+          "y2010_p106"
+        ]
+      },
+      {
+        "formation_group_id": "F2764",
+        "rows": [
+          "y2011_p040",
+          "y2011_p041"
+        ]
+      },
+      {
+        "formation_group_id": "F3185",
+        "rows": [
+          "y2016_p022",
+          "y2016_p023"
+        ]
+      }
+    ]
+  },
+  "results": {
+    "all_records": {
+      "n": 3386,
+      "spearman_year_b1": 0.345551,
+      "spearman_year_b0": 0.199385,
+      "spearman_year_n_primitives": 0.339525,
+      "rank_residual_partial_year_b1_controlling_n_primitives": 0.136209,
+      "eras": [
+        {
+          "era": "1990-99",
+          "n": 1243,
+          "median_b1": 1,
+          "mean_b1": 4.753,
+          "pct_with_holes": 69.4
+        },
+        {
+          "era": "2000-09",
+          "n": 1370,
+          "median_b1": 4,
+          "mean_b1": 15.058,
+          "pct_with_holes": 85.8
+        },
+        {
+          "era": "2010-20",
+          "n": 773,
+          "median_b1": 6,
+          "mean_b1": 15.952,
+          "pct_with_holes": 90.6
+        }
+      ]
+    },
+    "representative_only": {
+      "n": 3381,
+      "spearman_year_b1": 0.344611,
+      "spearman_year_b0": 0.19818,
+      "spearman_year_n_primitives": 0.338634,
+      "rank_residual_partial_year_b1_controlling_n_primitives": 0.135917,
+      "eras": [
+        {
+          "era": "1990-99",
+          "n": 1242,
+          "median_b1": 1,
+          "mean_b1": 4.753,
+          "pct_with_holes": 69.4
+        },
+        {
+          "era": "2000-09",
+          "n": 1370,
+          "median_b1": 4,
+          "mean_b1": 15.058,
+          "pct_with_holes": 85.8
+        },
+        {
+          "era": "2010-20",
+          "n": 769,
+          "median_b1": 6,
+          "mean_b1": 15.38,
+          "pct_with_holes": 90.5
+        }
+      ]
+    },
+    "duplicate_groups_collapsed_by_mean": {
+      "n": 3381,
+      "spearman_year_b1": 0.344639,
+      "spearman_year_b0": 0.198191,
+      "spearman_year_n_primitives": 0.338675,
+      "rank_residual_partial_year_b1_controlling_n_primitives": 0.13592,
+      "eras": [
+        {
+          "era": "1990-99",
+          "n": 1242,
+          "median_b1": 1,
+          "mean_b1": 4.726,
+          "pct_with_holes": 69.4
+        },
+        {
+          "era": "2000-09",
+          "n": 1370,
+          "median_b1": 4,
+          "mean_b1": 15.058,
+          "pct_with_holes": 85.8
+        },
+        {
+          "era": "2010-20",
+          "n": 769,
+          "median_b1": 6,
+          "mean_b1": 15.378,
+          "pct_with_holes": 90.5
+        }
+      ]
+    }
+  },
+  "observations": [
+    {
+      "state": "OBSERVED",
+      "claim": "The year-to-b1 Spearman point estimate changes from 0.345551 to 0.344611 when all five nonrepresentative records are removed.",
+      "meaning": "The reported temporal topology trend is not materially driven by these five marked duplicate records."
+    },
+    {
+      "state": "OBSERVED",
+      "claim": "The rank-residual partial association controlling for primitive count changes from 0.136209 to 0.135917 under representative-only selection.",
+      "meaning": "The small residual temporal association is also insensitive to these five records at the point-estimate level."
+    },
+    {
+      "state": "OBSERVED",
+      "claim": "Median b1 rises from 1 in 1990-99 to 4 in 2000-09 and 6 in 2010-20 in all-record and representative-only populations.",
+      "meaning": "The era-level shift is unchanged by representative-only selection."
+    },
+    {
+      "state": "HYPOTHESIS",
+      "claim": "The temporal trend reflects a genuine change in formation design rather than only catalog artifacts.",
+      "meaning": "Not established: all outcomes are computed from vector diagrams, not surveyed field geometry."
+    }
+  ],
+  "limitations": [
+    "This analysis uses published derived CSVs and is not an independent reproduction of mask extraction.",
+    "Original source PDFs and geom.npz masks were not downloaded or hashed.",
+    "No cluster-aware confidence intervals or new permutation p-values were computed in this sensitivity pass.",
+    "Duplicate groups are few, but repeated diagrams share location and near dates; dependence should be handled in the formal replay.",
+    "The source report's partial Spearman calculation uses its own implementation; the reported values here are independently computed rank-residual correlations and may differ slightly."
+  ],
+  "conclusion": {
+    "result": "DUPLICATE_SENSITIVITY_LOW_IMPACT_ON_POINT_ESTIMATES",
+    "established": "The published trend's point estimates are robust to excluding or collapsing the five catalog-marked nonrepresentative rows.",
+    "not_established": "This does not independently establish statistical significance, causal explanation, field-level properties, or the correctness of the original topology extraction.",
+    "next_test": "Proceed to a pre-specified dependence-aware replay of H10/H11 using the derived table, then repeat extraction from source diagrams if source access becomes available."
+  },
+  "promotion": "HOLD"
+}
