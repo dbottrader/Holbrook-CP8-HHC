@@ -1,0 +1,163 @@
+{
+  "schema": "CP8-CC-OS-POPULATION-RECONCILIATION-v1",
+  "node_id": "CCFA-3382-GATE1-POPULATION-RECONCILIATION-001",
+  "protocol": "CCFA-3382-REPLAY-GATE-002",
+  "protocol_version": "v0.3",
+  "status": "INCONCLUSIVE_WITH_SUBSTANTIVE_RECONCILIATION__HOLD",
+  "executed_at_utc": "2026-10-09",
+  "execution_scope": "Read-only inspection of publicly available derived repository artifacts and independent row/set reconciliation. No source PDFs downloaded or hashed; no geometry extraction or statistical replay performed.",
+  "source": {
+    "repository": "xxxallistarxxx-one/crop-formation-analysis",
+    "ref": "main",
+    "artifacts": [
+      {
+        "path": "catalog.csv",
+        "blob_sha": "94eae291be42b73a7b673fdaa315b95cb3665c86"
+      },
+      {
+        "path": "data/formation_ids.csv",
+        "blob_sha": "503f8b1b64fb3e3bb486ade9efab681a9e940a71"
+      },
+      {
+        "path": "descriptors.csv",
+        "blob_sha": "83025af3a98b7381841103f64e5846a4a71224a8"
+      },
+      {
+        "path": "data/phase8_topology.csv",
+        "blob_sha": "c0c57f46f1683cfe63463074f7e41ecd821ae897"
+      },
+      {
+        "path": "data/source_manifest.json",
+        "blob_sha": "01fa54cf5fac1cd1e108e69b0c4c2b30bc272d1e"
+      },
+      {
+        "path": "test_log.csv",
+        "blob_sha": "37f7f6f87e228ea70cc4c928aac242ab69b649b2"
+      },
+      {
+        "path": "findings_summary.md",
+        "blob_sha": "3780de0b548d0dff61f4ec1dce9ded9a6c33451d"
+      },
+      {
+        "path": "PHASE8_REPORT.md",
+        "blob_sha": "119afb910b1f097cf7a35e6656de26a431e6467a"
+      },
+      {
+        "path": "README.md",
+        "blob_sha": "e0c1513422daf68eeef048110319b450678a818e"
+      }
+    ]
+  },
+  "observed_counts": {
+    "catalog_rows": 3387,
+    "catalog_plate_rows": 3386,
+    "catalog_composite_illustration_rows": 1,
+    "catalog_unique_record_ids": 3387,
+    "catalog_unique_formation_group_ids_including_composite": 3382,
+    "catalog_unique_formation_group_ids_for_plate_rows": 3381,
+    "catalog_nonrepresentative_rows": 5,
+    "formation_ids_rows": 3387,
+    "descriptor_rows": 3386,
+    "topology_rows": 3386,
+    "source_manifest_pdf_entries": 32,
+    "test_log_rows": 161,
+    "test_log_phase_counts": {
+      "3": 79,
+      "4": 19,
+      "5": 22,
+      "6": 28,
+      "8": 13
+    }
+  },
+  "set_reconciliation": {
+    "catalog_record_ids_vs_formation_id_index": {
+      "catalog_only": 0,
+      "index_only": 0,
+      "exact_match": true
+    },
+    "catalog_plate_record_ids_vs_descriptor_formation_ids": {
+      "matched": 3385,
+      "catalog_plate_only": [
+        "y2010_p111"
+      ],
+      "descriptor_only": 0
+    },
+    "descriptor_ids_vs_topology_ids": {
+      "matched": 3386,
+      "descriptor_only": 0,
+      "topology_only": 0,
+      "exact_match": true
+    },
+    "missing_derived_record": {
+      "id": "y2010_p111",
+      "page_kind": "composite_illustration",
+      "source_pdf": "crops 20101605903521168.pdf",
+      "page_index": 111,
+      "caption": "TWO PREVIOUS FORMATIONS COMBINED",
+      "interpretation": "Its exclusion from descriptor/topology tables is consistent with the documented page_kind being composite_illustration rather than plate."
+    },
+    "duplicate_formation_groups": [
+      {
+        "group_id": "F0660",
+        "record_ids": [
+          "y1995_p094",
+          "y1995_p095"
+        ],
+        "group_size": 2,
+        "nonrepresentative_records": 1
+      },
+      {
+        "group_id": "F2714",
+        "record_ids": [
+          "y2010_p104",
+          "y2010_p105",
+          "y2010_p106"
+        ],
+        "group_size": 3,
+        "nonrepresentative_records": 2
+      },
+      {
+        "group_id": "F2764",
+        "record_ids": [
+          "y2011_p040",
+          "y2011_p041"
+        ],
+        "group_size": 2,
+        "nonrepresentative_records": 1
+      },
+      {
+        "group_id": "F3185",
+        "record_ids": [
+          "y2016_p022",
+          "y2016_p023"
+        ],
+        "group_size": 2,
+        "nonrepresentative_records": 1
+      }
+    ],
+    "stable_identifier_note": "The catalog `id` values match the formation_ids.csv `formation_id_key` values exactly. The catalog `formation_id` field is a group key (F####), not the same identifier namespace as the row-level id. Cross-source matching should preserve this distinction."
+  },
+  "discrepancies": [
+    {
+      "issue": "Headline 3382 versus catalog 3387 and topology/descriptors 3386",
+      "status": "PARTIALLY_EXPLAINED__SEMANTIC_COUNT_UNRESOLVED",
+      "evidence": "Catalog has 3386 plate rows plus one composite_illustration row; five plate rows are marked nonrepresentative across four repeated formation groups; descriptor and topology tables both contain 3386 rows and omit the composite row.",
+      "unresolved_question": "The catalog has 3381 distinct group IDs among plate rows, while 3382 distinct group IDs when the composite row is included. The headline count of 3382 therefore matches all catalog group IDs including the composite, not the number of distinct plate group IDs. No explicit rule found in the inspected artifacts establishes whether this is intended."
+    },
+    {
+      "issue": "148 tests in README/findings summary versus 161 in test log/Phase 8 report",
+      "status": "RECONCILED_AS_STALE_SUMMARY_LIKELY__RULE_NOT_EXPLICIT",
+      "evidence": "test_log.csv has 161 rows, with 13 Phase 8 rows; PHASE8_REPORT.md states 161 tests now logged, while findings_summary.md says 148.",
+      "unresolved_question": "The arithmetic strongly suggests the summary was not updated after adding 13 Phase 8 tests, but the inspected files do not explicitly document that update history."
+    }
+  ],
+  "gate1_decision": {
+    "state": "INCONCLUSIVE",
+    "reason": "All record IDs in catalog and formation_ids index reconcile; descriptor and topology IDs reconcile exactly; the lone excluded row is explicitly labeled a composite illustration. However, the headline 3382 formation population does not map cleanly to distinct plate group IDs under the catalog's own grouping fields, and the 148/161 test-count discrepancy is not explicitly documented as a versioning rule.",
+    "next_required_action": "Ask repository maintainer to document the headline population rule (including treatment of the composite illustration and repeated plates) and update/version the stale test count. Preserve current counts without normalization."
+  },
+  "gate2_state": "BLOCKED_SOURCE_PDFS_NOT_REDISTRIBUTED",
+  "gates3_to_6": "NOT_EXECUTED",
+  "statistical_claim": "No new statistical replay performed. Existing correlation values were not recalculated in this gate.",
+  "promotion": "HOLD"
+}
