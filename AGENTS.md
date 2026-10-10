@@ -80,7 +80,16 @@ docs/CP8_FULLRUN_SPECIMEN_2026-10-10.md
 manifests/cp8-fullrun-receipt-2026-10-10.json
 ```
 
-Executed results recorded there: full Pass 0-6 pipeline on 14 synthetic controls — 9 of 14 trigger Pass 3 binary detection via `filled_empty_grid`, strengthening the negative control (encoding claims remain barred); evidence scores reproduce the recorded table exactly. Roundway 2023/2026 recorded polar scans both show a dominant 18-fold spectral component (permutation p at floor), but the raw scans correlate weakly (Pearson r = 0.16) and both measurement-receipt JSONs are byte-identical stubs, so this is OBSERVED, not established. Crabwood Pass 2/3/5 re-derivation exact again; DAR-P gate suite 8 passed. Promoted (ESTABLISHED) findings: still none.
+Executed results recorded there: full Pass 0-6 pipeline on 12 synthetic controls — 9 of 12 trigger Pass 3 binary detection via `filled_empty_grid`, strengthening the negative control (encoding claims remain barred); evidence scores reproduce the recorded table exactly. Roundway 2023/2026 recorded polar scans both show a dominant 18-fold spectral component (permutation p at floor), but the raw scans correlate weakly (Pearson r = 0.16) and both measurement-receipt JSONs are byte-identical stubs, so this is OBSERVED, not established. Crabwood Pass 2/3/5 re-derivation exact again; DAR-P gate suite 8 passed. Promoted (ESTABLISHED) findings: still none.
+
+Decode attempt executed 2026-10-10, read:
+
+```text
+docs/CP8_DECODE_2026-10-10.md
+manifests/cp8-decode-receipt-2026-10-10.json
+```
+
+Executed results recorded there: (A) Roundway 2023/2026 polar scans (360 samples each, hash-verified) - CC-H002 grammar test finds a genuine 12-fold sectoral alternation, identical symbol string 040404040404 in both years (LZ 0.772 vs null mean ~1.05, p ~0.005, Holm-significant); CC-H003-lite calendar mapping (h18=Aztec/Haab 18, h54~52 Calendar Round) does NOT beat chance (corrected p 0.84-1.0). (B) Buga peptide package independently re-verified: 6-bit lexicographic traversal + standard genetic code reproduces KNKNTTTTRSRSIIMIQHQHPPPP exactly (AUG at 15, zero stops mechanically forced); Gray-code traversal also generates strong modularity. The binary-to-genetic-code interface is real and reproducible; whether Buga glyph geometry independently encodes the 6-bit values is the untested layer. Promotion HOLD; established findings: 0.
 
 ---
 
