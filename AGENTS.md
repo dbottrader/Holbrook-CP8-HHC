@@ -100,6 +100,15 @@ manifests/cp8-roundway-deepdive-receipt-2026-10-10.json
 
 Executed results recorded there (corrected same day): (1) the two measurement-receipt JSONs are NOT byte-identical stubs; they differ, each source_hash matches its CSV SHA-256 exactly (hash binding verified), both carry SIMULATED-provenance fits under governance hold. (2) BOTH superformula 18-fold fits independently re-verified with the engine exact forward model (t = theta - rot, radians; engine HTML pinned): RSS 667.6=667.6 (2023), 726.7=726.7 (2026). An initial 2026 non-reproduction was the analyst’s sign-convention error, corrected same day. (3) 2023->2026: raw radii smaller (mean delta -15.4px, p=0.011, distributed, no edit arcs) but invariant scale identical (99.88 vs 100.09) — the “shrink” phrasing retracted as scale–a degeneracy; stable 18-family amplitudes, 2026 adds a 9-family, phases rotated 72–156 deg; 12 morph stages identical. (4) 12-fold alternation quantization-robust at aligned boundaries (identical cross-year strings at L3/L5/L7); 2023 more boundary-phase-stable than 2026. Promotion HOLD; established findings: 0.
 
+Formation corpus decode executed 2026-10-10, read:
+
+```text
+docs/CP8_CORPUS_DECODE_2026-10-10.md
+manifests/cp8-corpus-receipt-2026-10-10.json
+```
+
+Executed results recorded there: 7 Drive-recorded formation geometry JSONs (crabwood_face from 2289.png, milk_hill, watchfield, tesla, jellyfish, yin_yang, rings) - outline polar harmonic spectra all significant vs 2000-permutation nulls; shared top-6 folds are low-order only (h1-h5), i.e. generic shape components, not a message alphabet; distinctive folds are per-formation (crabwood_face h3, tesla h7-led, milk_hill even 2/4/6 family). 2289.png itself still unpublished - Pass 0-1 replay remains blocked on the image, not the measurement. Promotion HOLD; established findings: 0.
+
 ---
 
 ## One-line project description
