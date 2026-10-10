@@ -1,0 +1,26 @@
+{
+  "record_id": "ACE-20261010-ROUNDWAY-DEEPDIVE",
+  "generated_at": "2026-10-10T16:50:28-0500",
+  "status": "DEEP_DIVE_COMPLETE",
+  "promotion": "HOLD",
+  "established_findings": 0,
+  "seed": 20261010,
+  "hash_binding_verified": true,
+  "superformula_2023": {
+    "reproduced": true,
+    "rss_recomputed": 668.3,
+    "rss_recorded": 667.5937573083644
+  },
+  "superformula_2026": {
+    "reproduced": false,
+    "rss_best_grid": 902909.7,
+    "rss_recorded": 726.7321861855866,
+    "note": "standard Gielis forward model cannot regenerate scan; needs engine exact model"
+  },
+  "delta_mean_px": -15.41,
+  "delta_p": 0.010994502748625687,
+  "correction": "fullrun claim of byte-identical stub receipts retracted; receipts differ, are hash-bound, SIMULATED-provenance",
+  "report_sha256": "25571e3c94abd39ebd7a75e10d699d916231c594ab6700807d3f6bc0461b2c27",
+  "results_sha256": "7cf6cc4df7581606f18070aeac97e4b8a6e65d22c82eb7e08bbb967e1eebbf33",
+  "rule": "The index describes evidence; it does not promote evidence."
+}
