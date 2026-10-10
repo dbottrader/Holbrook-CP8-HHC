@@ -91,6 +91,15 @@ manifests/cp8-decode-receipt-2026-10-10.json
 
 Executed results recorded there: (A) Roundway 2023/2026 polar scans (360 samples each, hash-verified) - CC-H002 grammar test finds a genuine 12-fold sectoral alternation, identical symbol string 040404040404 in both years (LZ 0.772 vs null mean ~1.05, p ~0.005, Holm-significant); CC-H003-lite calendar mapping (h18=Aztec/Haab 18, h54~52 Calendar Round) does NOT beat chance (corrected p 0.84-1.0). (B) Buga peptide package independently re-verified: 6-bit lexicographic traversal + standard genetic code reproduces KNKNTTTTRSRSIIMIQHQHPPPP exactly (AUG at 15, zero stops mechanically forced); Gray-code traversal also generates strong modularity. The binary-to-genetic-code interface is real and reproducible; whether Buga glyph geometry independently encodes the 6-bit values is the untested layer. Promotion HOLD; established findings: 0.
 
+Roundway deep dive executed 2026-10-10, read:
+
+```text
+docs/CP8_ROUNDWAY_DEEPDIVE_2026-10-10.md
+manifests/cp8-roundway-deepdive-receipt-2026-10-10.json
+```
+
+Executed results recorded there: (1) CORRECTED the fullrun claim - the two measurement-receipt JSONs are NOT byte-identical stubs; they differ, each source_hash matches its CSV SHA-256 exactly (hash binding verified), and both carry SIMULATED-provenance model fits under governance hold. (2) 2023 superformula 18-fold fit independently re-verified (RSS 668.2 vs 667.6 recorded). (3) 2026 superformula parameter set NOT reproduced under the standard Gielis forward model (best grid RSS ~900k vs 726.7 recorded) - open discrepancy, needs the engine exact model. (4) 2023->2026: distributed ~8% shrink (mean delta -15.4px, p=0.011), no localized edit arcs; stable 18-family amplitudes, 2026 adds a 9-family, phases rotated 72-156 deg; 12 morph stages identical across years. (5) 12-fold alternation quantization-robust at aligned boundaries (identical cross-year strings at L3/L5/L7); 2023 more boundary-phase-stable than 2026. Promotion HOLD; established findings: 0.
+
 ---
 
 ## One-line project description
