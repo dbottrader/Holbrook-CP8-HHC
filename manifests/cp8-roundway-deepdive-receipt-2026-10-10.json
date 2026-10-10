@@ -9,18 +9,25 @@
   "superformula_2023": {
     "reproduced": true,
     "rss_recomputed": 668.3,
-    "rss_recorded": 667.5937573083644
+    "rss_recorded": 667.5937573083644,
+    "rss_engine_exact": 667.6
   },
   "superformula_2026": {
-    "reproduced": false,
-    "rss_best_grid": 902909.7,
-    "rss_recorded": 726.7321861855866,
-    "note": "standard Gielis forward model cannot regenerate scan; needs engine exact model"
+    "reproduced": true,
+    "rss_engine_exact": 726.7,
+    "rss_recorded": 726.7,
+    "note": "verified with engine exact forward model t=theta-rot (radians); earlier non-reproduction was analyst sign-convention error, corrected same day"
   },
   "delta_mean_px": -15.41,
   "delta_p": 0.010994502748625687,
   "correction": "fullrun claim of byte-identical stub receipts retracted; receipts differ, are hash-bound, SIMULATED-provenance",
-  "report_sha256": "25571e3c94abd39ebd7a75e10d699d916231c594ab6700807d3f6bc0461b2c27",
+  "report_sha256": "75151837c6c2a8f37ba5245a07dcd74506a44211b39e4c80468b2cf9a58e5209",
   "results_sha256": "7cf6cc4df7581606f18070aeac97e4b8a6e65d22c82eb7e08bbb967e1eebbf33",
-  "rule": "The index describes evidence; it does not promote evidence."
+  "rule": "The index describes evidence; it does not promote evidence.",
+  "invariant_scale": {
+    "2023": 99.88,
+    "2026": 100.09,
+    "note": "identical under scale-a degeneracy normalization; raw-mean shrink claim retracted"
+  },
+  "corrections": "2026-10-10 same-day: 2026 fit verified via engine HTML; shrink claim corrected to invariant-scale identity"
 }

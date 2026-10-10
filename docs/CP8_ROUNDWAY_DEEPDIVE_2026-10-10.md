@@ -18,31 +18,40 @@ files. Properly downloaded 2026-10-10:
 - Provenance field, both years: `"SIMULATED construction-derived parameters;
   replace with measured aerial geometry before any promotion"`.
 
-## D2. Superformula fits: 2023 verified, 2026 not reproduced
+## D2. Superformula fits: BOTH verified (correction)
 
 The receipts' winning model is a superformula with m ≈ 18.0 both years
 (BIC 269/300 vs null BIC 3289/3136).
 
 - **2023: independently re-verified.** Standard Gielis forward model with the
   receipt's parameters reproduces the scan with RSS 668.2 vs recorded 667.6
-  (0.1%). The 18-fold fit is real under the receipt's own model.
-- **2026: NOT reproduced.** Same forward model, best rotation/scale/offset
-  grid search: RSS ≈ 900k vs recorded 726.7. The 2026 parameter set
-  (n2 9.92→7.36, n3 9.93→12.86, a 0.84→1.00, n1 1.98→2.15) does not
-  regenerate the scan under any standard-form variant tried. Discrepancy
-  held open — needs the engine's exact forward model, not a new assumption.
-  Consistent with the receipt's own SIMULATED provenance flag.
+  (0.1%).
+- **2026: also verified — after recovering the engine's exact forward model.**
+  An initial "not reproduced" verdict was my own sign-convention error, not a
+  data discrepancy. The engine (`CP8_Measurement_Engine_v1.html`, Drive,
+  2026-09-08) uses `t = theta − rot` with rot in radians. With the exact
+  formula: RSS 726.7 vs recorded 726.7 — exact. Both 18-fold fits are real
+  under the receipt's own model.
+- The 2026 fit is the sharper test of the pipeline: it only verifies against
+  the engine's actual code, which is why the engine HTML is now pinned as a
+  required input for any future re-verification.
 
-## D3. What changed 2023 → 2026
+## D3. What changed 2023 → 2026 (corrected)
 
-- Global shrink: mean Δ = −15.4 px (p = 0.011 vs paired-flip nulls); no long
-  contiguous change arcs (longest 2σ arc 2°, p = 1.0) — the change is
-  distributed, not a localized edit.
+- Raw radii are smaller in 2026 (mean 173.4 vs 188.9 px; mean Δ = −15.4 px,
+  p = 0.011 vs paired-flip nulls; no long contiguous change arcs — longest
+  2σ arc 2°, p = 1.0, so the change is distributed, not a localized edit).
+- **But invariant scale is identical: 99.88 vs 100.09** (scale·a^(n2/n1),
+  a=b normalization — per the 2026-09-08 `delta_analysis_2023_vs_2026.json`,
+  independently re-derived here to the same numbers). The raw-mean difference
+  is absorbed by the superformula scale–a degeneracy; it is not established
+  as a physical shrink. The earlier "8% shrink" phrasing is retracted.
 - Harmonic amplitude family stable (18/36/54 both years); 2026 gains a
   9-family (h9/h27/h45, amps 15–27, ~0 in 2023). Phases rotated 72–156°
   between years.
 - The 12 morph-calibration stages are IDENTICAL across years; only the
-  top-level superformula parameters drifted.
+  top-level superformula parameters drifted (n2 9.92→7.36, n3 9.93→12.86,
+  rot 0→4.0°).
 
 ## D4. The 12-fold alternation, stress-tested
 
@@ -59,9 +68,13 @@ The receipts' winning model is a superformula with m ≈ 18.0 both years
 
 - R7 VERIFIED: receipt↔CSV hash binding, both years.
 - R8 VERIFIED: 2023 superformula 18-fold fit (RSS match 0.1%).
-- R9 NOT REPRODUCED: 2026 superformula parameter set under standard forward
-  model — open discrepancy.
-- R10 OBSERVED: distributed ~8% shrink 2023→2026, no localized edit arcs.
+- R9 VERIFIED (corrected): 2026 superformula fit reproduces exactly (RSS
+  726.7 = 726.7) under the engine's exact forward model (t = θ − rot,
+  rot in radians; engine HTML pinned as required re-verification input).
+  The earlier "not reproduced" was my sign-convention error.
+- R10 CORRECTED: raw 2026 radii smaller (mean Δ −15.4 px, distributed, no
+  edit arcs) but invariant scale identical (99.88 vs 100.09) — the "8% shrink"
+  phrasing retracted; raw-mean difference is scale–a degeneracy.
 - R11 OBSERVED: stable 18-family amplitudes; 2026 adds 9-family; phases rotated.
 - R12 OBSERVED: 12-fold alternation quantization-robust; 2023 more
   phase-stable than 2026.
