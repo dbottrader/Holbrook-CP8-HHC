@@ -1,0 +1,53 @@
+{
+  "record_id": "ACE-20261010-DECODE",
+  "generated_at": "2026-10-10T16:41:40-0500",
+  "status": "DECODE_ATTEMPT_COMPLETE",
+  "promotion": "HOLD",
+  "established_findings": 0,
+  "strands": {
+    "A_roundway": {
+      "hypotheses": [
+        "CC-H002",
+        "CC-H003"
+      ],
+      "seed": 20261010,
+      "inputs": {
+        "2023": {
+          "file": "roundway_2023_geometry.csv",
+          "sha256": "344b53bfc289d45be7001a485b87ab59b1298142634cbbec2fa0aa1d83170482",
+          "n": 360
+        },
+        "2026": {
+          "file": "roundway_2026_geometry.csv",
+          "sha256": "9e83700d8a075ad7e9cfc87ea7386755ad2509292441560291bc046e50e894bf",
+          "n": 360
+        }
+      },
+      "grammar_K12_symbols": {
+        "2023": "040404040404",
+        "2026": "040404040404"
+      },
+      "holm_rejected": [
+        "2026/K12",
+        "2023/K12",
+        "2026/K16"
+      ],
+      "mapping_p_corrected": {
+        "2023": 1.0,
+        "2026": 0.83558
+      }
+    },
+    "B_buga_peptide": {
+      "claim": "peptide from Buga glyph decode",
+      "reproduced_mechanically": true,
+      "sequence": "KNKNTTTTRSRSIIMIQHQHPPPP",
+      "aug_position": 15,
+      "stops_in_24": 0,
+      "glyph_to_number_causality": "NOT_TESTED",
+      "package_receipt": "ACE-20260913-PEPTIDE-CONTROLS"
+    }
+  },
+  "report_sha256": "8efaaa9a3a3bb0d0187d4062daf7f78835cc831dfc226f4137a16b1fc65b30a5",
+  "results_sha256": "8b9bb65a435e3b41723c94445abc48ced7755996f2e1fe405c4f6294b4773d15",
+  "rule": "The index describes evidence; it does not promote evidence."
+}
