@@ -1,0 +1,66 @@
+{
+  "artifact_id": "CP8-FULLRUN-SPECIMEN-2026-10-10",
+  "schema": "cp8.receipt.v1",
+  "executed_at_utc": "2026-10-10T19:02:33.351674+00:00",
+  "executor": "Ace (Muse), on Dennis Christie's workspace",
+  "environment": {
+    "python": "3.12.3",
+    "opencv": "5.0.0",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "scikit-image": "0.26.0",
+    "pillow": "12.3.0",
+    "pytest": "9.1.1"
+  },
+  "inputs": {
+    "fixed_package": {
+      "path": "workspace/your_files/cp8-morphology-import-fix/fixed/cp8_morphology",
+      "description": "cp8-morphology v1.0.0 with wiring-only import fix (3 edits, no algorithm changes)",
+      "module_sha256": {
+        "__init__.py": "d8d6016816762a12f6d6dbae4c4734837d5db89ebd7eaf8b1c7bf704c24de193",
+        "binary.py": "8a2d3544cf816c52b838bc64d9b14bc80d354c0d31d083991108bef3e379d17c",
+        "cli.py": "70e1fd962f395da4636e865c7a6bc75e828432701762bbcbca60d7ee2428f993",
+        "fingerprint.py": "d1ea9b25ef9c9cbd7210a9c0d8b3ef11a39c6547eb716f0bde8fea87ed424c8c",
+        "geometry.py": "02cce2506e4be1d1659bfb7a7c7d753981f4ccc6bc2f97fb7ca86dbf9aabd368",
+        "graph.py": "b75d6c6ce86a3c7a5e39a508e00d670b71a50de995da3f052b2325beb7a345c0",
+        "pipeline.py": "b8a243aa8872dadbbef818c16027543ad04afde54eef0acc8c7806d372ab75e7",
+        "synthetic.py": "3c28dc5d80edebbb1ca4540a82eee3dc3a5f91cdf6a11713bd3dc89f77d9dccf"
+      }
+    },
+    "roundway_2023_geometry.csv": {
+      "source": "Google Drive (read-only download)",
+      "sha256": "344b53bfc289d45be7001a485b87ab59b1298142634cbbec2fa0aa1d83170482"
+    },
+    "roundway_2026_geometry.csv": {
+      "source": "Google Drive (read-only download)",
+      "sha256": "9e83700d8a075ad7e9cfc87ea7386755ad2509292441560291bc046e50e894bf"
+    },
+    "crabwood_recorded_genome": {
+      "source": "fixed/examples/crabwood_face_genome.json",
+      "sha256": "1522c474f1d1b0449b385c3d516fd340f8ed7b88280cd2e3c845ad68f707cdef"
+    }
+  },
+  "results_summary": {
+    "phaseA_controls_run": 12,
+    "phaseA_binary_triggered": 9,
+    "phaseA_binary_trigger_rule": "filled_empty_grid",
+    "phaseB_crabwood_exact_rederivation": true,
+    "phaseC_roundway_top_harmonic_both_years": 18,
+    "phaseC_roundway_pearson_r": 0.1628593218786545,
+    "phaseD_gate_validator_pytest_returncode": 0
+  },
+  "outputs": {
+    "CP8_FULLRUN_RESULTS_2026-10-10.json": {
+      "sha256": "e49e350a9608beffd507a4e1eebf135a2fe64b36acc46ef89b22c51d39860257",
+      "bytes": 10172
+    },
+    "CP8_FULLRUN_REPORT_2026-10-10.md": {
+      "sha256": null,
+      "bytes": null
+    }
+  },
+  "promotion_state": "HOLD",
+  "established_findings": 0,
+  "note": "This receipt describes evidence; it does not promote evidence.",
+  "receipt_sha256": "53f3c3fb96eba44e3eb1e14f2dcddff8aee3b4ba1584b4ce976ee9fba1f1f144"
+}
