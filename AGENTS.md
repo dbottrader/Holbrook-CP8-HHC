@@ -73,6 +73,15 @@ manifests/cp8-replay-receipt-2026-10-07.json
 
 Executed results recorded there: the Drive morphology zip's Pass 2/3/5 recompute the recorded Crabwood genome exactly from recorded measurements; the 5/6 synthetic-control Pass 3 binary trigger reproduces; Holbrook Merkle/gate verification runs green. The morphology package does not import as shipped (stale module names in `pipeline.py`/`__init__.py`); individual modules execute when wired directly. Original CCD-9 and Pass 0-1 image replay remain blocked until code/input bytes are hash-bound and published.
 
+Full-run executed 2026-10-10, read:
+
+```text
+docs/CP8_FULLRUN_SPECIMEN_2026-10-10.md
+manifests/cp8-fullrun-receipt-2026-10-10.json
+```
+
+Executed results recorded there: full Pass 0-6 pipeline on 14 synthetic controls — 9 of 14 trigger Pass 3 binary detection via `filled_empty_grid`, strengthening the negative control (encoding claims remain barred); evidence scores reproduce the recorded table exactly. Roundway 2023/2026 recorded polar scans both show a dominant 18-fold spectral component (permutation p at floor), but the raw scans correlate weakly (Pearson r = 0.16) and both measurement-receipt JSONs are byte-identical stubs, so this is OBSERVED, not established. Crabwood Pass 2/3/5 re-derivation exact again; DAR-P gate suite 8 passed. Promoted (ESTABLISHED) findings: still none.
+
 ---
 
 ## One-line project description
