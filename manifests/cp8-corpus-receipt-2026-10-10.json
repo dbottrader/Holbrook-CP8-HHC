@@ -1,0 +1,141 @@
+{
+  "record_id": "ACE-20261010-CORPUS",
+  "generated_at": "2026-10-10T17:24:28-0500",
+  "status": "CORPUS_DECODE_COMPLETE",
+  "promotion": "HOLD",
+  "established_findings": 0,
+  "seed": 20261010,
+  "n_formations": 7,
+  "shared_top6_folds": [
+    [
+      1,
+      5
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      6,
+      2
+    ],
+    [
+      9,
+      2
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      8,
+      1
+    ]
+  ],
+  "per_formation_top": {
+    "crabwood_face": [
+      [
+        1,
+        141.341
+      ],
+      [
+        3,
+        96.024
+      ],
+      [
+        2,
+        77.08
+      ]
+    ],
+    "milk_hill": [
+      [
+        2,
+        112.513
+      ],
+      [
+        4,
+        40.583
+      ],
+      [
+        3,
+        24.354
+      ]
+    ],
+    "watchfield": [],
+    "tesla": [
+      [
+        7,
+        6.143
+      ],
+      [
+        1,
+        5.995
+      ],
+      [
+        5,
+        4.915
+      ]
+    ],
+    "jellyfish": [
+      [
+        2,
+        52.588
+      ],
+      [
+        1,
+        48.638
+      ],
+      [
+        7,
+        18.019
+      ]
+    ],
+    "yin_yang": [
+      [
+        2,
+        43.527
+      ],
+      [
+        1,
+        20.424
+      ],
+      [
+        3,
+        16.98
+      ]
+    ],
+    "rings": [
+      [
+        1,
+        36.612
+      ],
+      [
+        2,
+        15.719
+      ],
+      [
+        3,
+        15.243
+      ]
+    ]
+  },
+  "report_sha256": "9cdfa137e451d5f0e02fc09d14de5b9bcbe998d37af1fd5e1a0a1a5b0e627223",
+  "results_sha256": "0bd570cee77b693a8e8fe1e1e35aae2ea666e3780b4df88d500e0c482798f467",
+  "rule": "The index describes evidence; it does not promote evidence."
+}
