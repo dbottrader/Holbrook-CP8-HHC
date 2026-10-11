@@ -14,4 +14,6 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - run: pip install pytest
+      - name: Install DAR-P dependencies
+        run: pip install -r requirements-dar-p.txt
       - run: pytest -q
