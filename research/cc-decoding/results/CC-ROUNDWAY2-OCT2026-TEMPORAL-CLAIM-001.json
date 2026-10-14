@@ -1,0 +1,57 @@
+{
+  "schema": "CP8-CC-OS-TEMPORAL-CLAIM-v1",
+  "node_id": "CC-ROUNDWAY2-OCT2026-TEMPORAL-CLAIM-001",
+  "status": "CANDIDATE_TEST_NODE__CLAIM_UNVALIDATED",
+  "created_at_utc": "2026-10-14",
+  "topic": "Roundway Hill (2), Wiltshire, reported 2026-07-18",
+  "question": "Does the formation's proposed 13-sector / 11th-boundary interpretation make a specific, time-bounded prediction that performs better than a post-hoc selection baseline?",
+  "sources": [
+    {
+      "url": "https://www.cropcircleconnector.com/2026/roundway2/comments.html",
+      "source_date": "2026-07-18",
+      "source_type": "formation discussion and interpretation",
+      "observed_claim": "The commentary counts 13 diamonds/sectors, identifies the 11th clockwise boundary as the point where a light Earth-like circle touches the border, and associates this with the 11th full moon of 2026. It names a Carrington-magnitude solar storm as the author's best guess but also lists other possible outcomes."
+    },
+    {
+      "url": "https://science.nasa.gov/moon/daily-moon-guide/",
+      "source_date": "accessed 2026-10-14",
+      "source_type": "astronomical reference",
+      "observed_claim": "NASA's lunar calendar lists the October 2026 full moon on October 26 in UTC."
+    },
+    {
+      "url": "https://www.almanac.com/astronomy/moon/full",
+      "source_date": "accessed 2026-10-14",
+      "source_type": "astronomical reference",
+      "observed_claim": "The 2026 calendar lists 13 full moons and the Hunter's Moon on October 26 Eastern Time."
+    }
+  ],
+  "observations": [
+    {
+      "state": "OBSERVED",
+      "detail": "The July 18 interpretation is publicly posted and names October 25, 2026, as a target date; it identifies a Carrington-magnitude solar storm as its best guess while allowing other possible outcomes."
+    },
+    {
+      "state": "OBSERVED",
+      "detail": "Astronomical sources place the October full moon at October 26 UTC / U.S. Eastern time; date labeling can differ by timezone. The full-moon sequence supports October as the 11th full moon in the 2026 list."
+    },
+    {
+      "state": "NOT_OBSERVED",
+      "detail": "No evidence in the inspected material establishes that the formation's geometry encodes this date, or that the claimed prediction was specified before the interpretation was made."
+    }
+  ],
+  "inference": "This is a time-bounded interpretive claim, not yet a well-formed unique prediction. Listing multiple possible events creates substantial post-hoc flexibility.",
+  "test_plan": [
+    "Freeze this receipt before the target date; do not alter the prediction after outcomes are known.",
+    "Primary named outcome: a Carrington-magnitude geomagnetic storm during 2026-10-25 through 2026-10-26, with operational threshold and time zone fixed before evaluation.",
+    "Use a predeclared authoritative space-weather index/source and retain dated records.",
+    "Record the alternative outcomes named in the original post separately; do not count any unrelated event as confirmation unless its category and threshold were defined before the window.",
+    "Compare the specificity of this prediction with the base rate and with a control set of similarly flexible retrospective interpretations.",
+    "After the window closes, mark outcome OBSERVED / NOT OBSERVED / INCONCLUSIVE, preserving the original text and this receipt."
+  ],
+  "limitations": [
+    "The cited commentary is interpretive and not an independent technical analysis.",
+    "The exact full-moon date is timezone-sensitive; the source's October 25 label should not be treated as a universal UTC date.",
+    "A failure of the narrowly defined solar-storm outcome would test that specific guess, not every symbolic interpretation of the formation."
+  ],
+  "promotion": "HOLD"
+}
