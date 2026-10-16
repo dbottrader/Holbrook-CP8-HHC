@@ -1,0 +1,203 @@
+{
+  "schema": "DTR-EXTERNAL-SOURCE-REGISTRY-v1",
+  "generated_at": "2026-08-19",
+  "supabase_project_ref": "ecenvlwyenpakrxfuqup",
+  "sources": [
+    {
+      "source_id": "DTR-SRC-THALESIAN-CUNEIFORMBASE-400M",
+      "name": "Thalesian cuneiformBase-400m",
+      "type": "MODEL",
+      "canonical_url": "https://huggingface.co/Thalesian/cuneiformBase-400m",
+      "license_terms": "Apache-2.0",
+      "last_observed_update": "2026-02-20",
+      "status": "ACTIVE",
+      "mirror_policy": "MIRROR_ALLOWED",
+      "provenance_strength": "GENERAL_SECONDARY",
+      "cp8_rule": "Hypothesis generator; verify promoted results against primary corpora."
+    },
+    {
+      "source_id": "DTR-SRC-FOLKMOTIF-270",
+      "name": "FolkMotif-270",
+      "type": "DATASET",
+      "canonical_url": "https://huggingface.co/datasets/Aragoner/folkmotif",
+      "license_terms": "CC BY 4.0",
+      "last_observed_update": "2026-08-08",
+      "status": "ACTIVE",
+      "mirror_policy": "MIRROR_ALLOWED",
+      "provenance_strength": "SCHOLARLY_SECONDARY",
+      "cp8_rule": "Control and cultural-readout-bias benchmark, not a common-origin truth table."
+    },
+    {
+      "source_id": "DTR-SRC-CCRA",
+      "name": "Crop Circle Research Archive",
+      "type": "ARCHIVE",
+      "canonical_url": "https://circleresearcharchive.com/mast/the-database/",
+      "status": "ACTIVE",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "dedupe_key_hint": "CCRA Reference",
+      "cp8_rule": "Preserve underlying copyright and contributor attribution per asset."
+    },
+    {
+      "source_id": "DTR-SRC-CROP-CIRCLE-CENTER",
+      "name": "Crop Circle Center",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.cropcirclecenter.com/",
+      "status": "ACTIVE",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Ingest sighting metadata separately from image rights and origin inference."
+    },
+    {
+      "source_id": "DTR-SRC-CROPDECODER",
+      "name": "Decoding the Codes / CropDecoder",
+      "type": "DATABASE",
+      "canonical_url": "https://cropdecoder.com/database",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Treat node/anomaly labels as source claims until independently validated."
+    },
+    {
+      "source_id": "DTR-SRC-ICCRA-USA",
+      "name": "ICCRA USA Formation Reports",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.iccra.org/byyear/usaformations-byyear.htm",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Historical regional provenance source; preserve report attribution."
+    },
+    {
+      "source_id": "DTR-SRC-CROP-CIRCLE-CONNECTOR",
+      "name": "Crop Circle Connector",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.cropcircleconnector.com/2026/reportacropcircle2026.html",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Never bypass or mirror member-only picture archives; ingest public metadata only."
+    },
+    {
+      "source_id": "DTR-SRC-ZENODO-20979174",
+      "name": "Zenodo 20979174 — Crop Circles & Geometry",
+      "type": "TECHNICAL_NOTE",
+      "canonical_url": "https://zenodo.org/records/20979174",
+      "last_observed_update": "2026-06-27",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "GENERAL_SECONDARY",
+      "cp8_rule": "External hypothesis/test artifact; replication required; no origin promotion from author conclusions alone."
+    },
+    {
+      "source_id": "DTR-SRC-CROP-CIRCLE-ARCHIVES",
+      "name": "Crop Circle Archives",
+      "type": "ARCHIVE",
+      "canonical_url": "https://www.cropcirclearchives.co.uk/",
+      "last_observed_update": "2026-08-19",
+      "status": "ACTIVE",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Use as historical report/formation source; preserve attribution and source-specific rights."
+    },
+    {
+      "source_id": "DTR-SRC-CIRCLEMAKERS",
+      "name": "Circlemakers",
+      "type": "PRIMARY_MAKER_ARCHIVE",
+      "canonical_url": "https://www.circlemakers.org/",
+      "last_observed_update": "2026-08-19",
+      "status": "ACTIVE",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "PRIMARY",
+      "cp8_rule": "Use maker admissions and commission records as known-human control provenance."
+    },
+    {
+      "source_id": "DTR-SRC-LUCY-PRINGLE",
+      "name": "Lucy Pringle Crop Circle Photograph Library",
+      "type": "PHOTO_ARCHIVE",
+      "canonical_url": "https://cropcircles.lucypringle.co.uk/",
+      "last_observed_update": "2026-08-19",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "COMMUNITY_ARCHIVE",
+      "cp8_rule": "Use for date/location/photo corroboration; do not mirror copyrighted photographs without permission."
+    },
+    {
+      "source_id": "DTR-SRC-ZEF-DAMEN",
+      "name": "Zef Damen Crop Circle Reconstructions",
+      "type": "GEOMETRY_RECONSTRUCTION_ARCHIVE",
+      "canonical_url": "https://zefdamen.nl/CropCircles/en/Crop_circles_en.htm",
+      "license_terms": "Personal use only; commercial use prohibited",
+      "last_observed_update": "2026-07-27",
+      "status": "REFERENCE_ONLY",
+      "mirror_policy": "LINK_ONLY",
+      "provenance_strength": "GENERAL_SECONDARY",
+      "cp8_rule": "Prior-art reconstruction benchmark; retain perspective-distortion caveat and do not substitute reconstruction for raw survey measurements."
+    }
+  ],
+  "seed_records": [
+    "DTR-REC-MODEL-CUNEIFORMBASE-400M-20260220",
+    "DTR-REC-FOLKMOTIF-270-20260808",
+    "DTR-REC-CCC-UK20260804-A",
+    "DTR-REC-ZENODO-20979174-V3",
+    "DTR-REC-CCA-WINTON-19980307",
+    "DTR-REC-CM-HTV-200107",
+    "DTR-REC-CCA-BBC-MILKHILL-19980726",
+    "DTR-REC-CCA-WINDMILL-19960729",
+    "DTR-REC-LP-MILKHILL-20010814",
+    "DTR-REC-CCA-CRABWOOD-20020815",
+    "DTR-REC-LP-HTV-20010728",
+    "DTR-REC-ZEF-RECON-METHOD-20260727"
+  ],
+  "seed_formations": [
+    {
+      "formation_id": "DTR-CC-20260804-WILTSHIRE-001",
+      "evidence_classification": "SOURCE_REPORTED",
+      "origin_classification": "ORIGIN_UNRESOLVED"
+    },
+    {
+      "formation_id": "DTR-CC-19980307-WINTON-001",
+      "origin_classification": "HUMAN_MADE_CONFIRMED",
+      "role": "known-human control"
+    },
+    {
+      "formation_id": "DTR-CC-20010728-BECKHAMPTON-HTV-001",
+      "origin_classification": "HUMAN_MADE_CONFIRMED",
+      "role": "known-human control"
+    },
+    {
+      "formation_id": "DTR-CC-19980726-MILKHILL-BBC-001",
+      "origin_classification": "HUMAN_MADE_CONFIRMED",
+      "role": "known-human calibration control"
+    },
+    {
+      "formation_id": "DTR-CC-19960729-WINDMILLHILL-001",
+      "origin_classification": "ORIGIN_UNRESOLVED",
+      "role": "unresolved comparison"
+    },
+    {
+      "formation_id": "DTR-CC-20010814-MILKHILL-409-001",
+      "origin_classification": "ORIGIN_UNRESOLVED",
+      "role": "unresolved comparison"
+    },
+    {
+      "formation_id": "DTR-CC-20020815-CRABWOOD-001",
+      "origin_classification": "ORIGIN_UNRESOLVED",
+      "role": "encoding audit"
+    }
+  ],
+  "analysis_runs": [
+    "DTR-AN-CC-GEOM-V1-WINTON",
+    "DTR-AN-CC-GEOM-V1-HTV",
+    "DTR-AN-CC-GEOM-V1-WINDMILL",
+    "DTR-AN-CC-GEOM-V1-MILKHILL",
+    "DTR-AN-CC-CRABWOOD-ASCII-V1"
+  ],
+  "pilot_results": {
+    "geometry_group_result_hash": "a2ec1914c7b2a2a6eaf47f204f933c7c5d06e28632a036c0fe6d23680d9ac13a",
+    "geometry_outcome": "INCONCLUSIVE_NO_RELIABLE_ORIGIN_SEPARATION",
+    "crabwood_ascii_result_hash": "f599d9a958ff012758352c46864911aef4291f5314c0c5c3da3e05c84d451f8e",
+    "crabwood_ascii_outcome": "PASS_INTERNAL_TRANSCRIPTION_WITH_ANOMALY",
+    "authority": "Neither result promotes an origin claim."
+  }
+}
