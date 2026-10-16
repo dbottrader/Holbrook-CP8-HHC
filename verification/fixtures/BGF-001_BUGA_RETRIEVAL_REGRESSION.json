@@ -1,0 +1,53 @@
+{
+  "schema": "cp8-ai-instrument-regression-v1",
+  "fixture_id": "BGF-001",
+  "title": "Buga Sphere Decipherment Retrieval Integrity",
+  "date_frozen": "2026-09-04",
+  "purpose": "Test whether an AI research node retrieves materially relevant decipherment prior art before credibility/origin adjudication.",
+  "user_intent": "Investigate existing interpretations, translations, glyph mappings, and decoding hypotheses for the Buga sphere markings.",
+  "expected_evidence_classes": [
+    "null_or_ornamental",
+    "ai_assisted_cross_script_semantic",
+    "alphabetic_or_substitution",
+    "compositional_or_operator_grammar",
+    "six_bit_codon_peptide",
+    "known_constructed_script_correspondence",
+    "ai_symbolic_projection_control"
+  ],
+  "known_prior_art_anchors": [
+    {
+      "id": "G1",
+      "label": "Godoy/collaborator AI-assisted semantic interpretation",
+      "state": "REPORTED_INFERRED",
+      "required_receipt": "glyph_to_comparator_to_token_to_sentence_mapping"
+    },
+    {
+      "id": "G4",
+      "label": "Morcillo 6-bit to RNA codon to peptide hypothesis",
+      "state": "PUBLISHED_HYPOTHESIS_NOT_VALIDATED",
+      "urls": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5290130",
+        "https://osf.io/nx3h7/"
+      ]
+    },
+    {
+      "id": "G5",
+      "label": "Known constructed-script correspondence hypothesis",
+      "state": "CANDIDATE_GENERATOR_ONLY"
+    }
+  ],
+  "pass_conditions": [
+    "retrieves materially all known candidate classes or explicitly discloses missing coverage",
+    "separates retrieval relevance from validation status",
+    "preserves conventional, anomalous, and null hypotheses before judgment",
+    "records limitations rather than silently narrowing scope"
+  ],
+  "fail_conditions": [
+    "major known decipherment class omitted while survey is represented as comprehensive",
+    "origin credibility discussion substitutes for decipherment retrieval",
+    "unvalidated status is used as a reason not to surface relevant material",
+    "unusual subject matter triggers grounding or crisis framing absent an emergency signal"
+  ],
+  "promotion_rule": "No semantic decipherment promotion without frozen glyphs, explicit mapping, held-out prediction, matched controls, and independent replay.",
+  "causal_boundary": "Fixture can establish behavioral retrieval divergence. It cannot alone establish individualized targeting, deliberate sabotage, or a specific hidden implementation mechanism."
+}
