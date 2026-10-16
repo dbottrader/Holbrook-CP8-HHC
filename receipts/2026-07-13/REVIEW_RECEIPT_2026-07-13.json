@@ -1,0 +1,207 @@
+{
+  "receipt_version": "WEAVER_REVIEW_RECEIPT_v1.0",
+  "reviewer": "Dennis Christie (via Kimi AI agent)",
+  "reviewer_agent": "agent:ed25519:kid:655a6571238cd65f",
+  "repository": "Weaver Node Intake \u2014 2026-07-13 Batch",
+  "branch": "N/A (file upload)",
+  "commit": "N/A (file upload)",
+  "date": "2026-07-14T00:00:31.636133+00:00",
+  "scope_reviewed": [
+    "build_master_manifest_v2.py \u2014 syntax, CLI, fail-closed behavior, determinism",
+    "ACTION_2A_REPORT.md \u2014 structure, claims, evidence levels",
+    "ACTION_3_REPORT.md \u2014 structure, claims, evidence levels",
+    "WEAVER-CATHEDRAL-PORTFOLIO-CATALOG-AND-REPORTS-v1.0.md \u2014 structure, methodology",
+    "cautious-planner-america.md \u2014 content classification"
+  ],
+  "verified": [
+    {
+      "item": "build_master_manifest_v2.py syntax",
+      "method": "py_compile.compile() in temp directory",
+      "result": "PASS",
+      "detail": "No syntax errors. Python 3.12 compatible."
+    },
+    {
+      "item": "build_master_manifest_v2.py CLI --help",
+      "method": "subprocess.run([python, script, '--help'])",
+      "result": "PASS",
+      "detail": "Exit code 0. All required arguments documented."
+    },
+    {
+      "item": "build_master_manifest_v2.py valid registry path",
+      "method": "subprocess.run with matching identity registry and source directory",
+      "result": "PASS",
+      "detail": "1 file indexed, chain_root computed, authority_earned=False, production_allowed=False."
+    },
+    {
+      "item": "build_master_manifest_v2.py determinism",
+      "method": "Two consecutive runs with identical inputs",
+      "result": "PASS",
+      "detail": "chain_root_sha256 and deterministic_core_sha256 identical across runs."
+    },
+    {
+      "item": "build_master_manifest_v2.py hash mismatch fail-closed",
+      "method": "subprocess.run with wrong expected_sha256",
+      "result": "PASS",
+      "detail": "Exit code 2. MANIFEST_BUILD_FAILED with hash mismatch details."
+    },
+    {
+      "item": "build_master_manifest_v2.py missing file fail-closed",
+      "method": "subprocess.run with expected file not present in source dir",
+      "result": "PASS",
+      "detail": "Exit code 2. MANIFEST_BUILD_FAILED with missing file listed."
+    },
+    {
+      "item": "ACTION_2A_REPORT.md claims match file content",
+      "method": "Text inspection",
+      "result": "PASS",
+      "detail": "Reported chain_root, deterministic_core, file counts, and builder repairs all present in document. Evidence level E2 claimed and consistent with content."
+    },
+    {
+      "item": "ACTION_3_REPORT.md claims match file content",
+      "method": "Text inspection",
+      "result": "PASS",
+      "detail": "242 manifest paths, 110 byte-exact recoveries, 132 unverified \u2014 all stated explicitly. Classification as E1_DOCUMENT_SPECIFICATION and E1_SOURCE_CORPUS consistent."
+    }
+  ],
+  "observed": [
+    {
+      "item": "WEAVER-CATHEDRAL-PORTFOLIO-CATALOG methodology",
+      "method": "Text inspection",
+      "result": "OBSERVED",
+      "detail": "Catalog explicitly states it was built from mobile screenshot thumbnails only. ~17 fields requested, only 4-5 observable. Remaining fields held as UNVERIFIED. This is the correct methodological stance \u2014 no fabricated auditability."
+    },
+    {
+      "item": "WEAVER-CATHEDRAL-PORTFOLIO-CATALOG duplicate analysis",
+      "method": "Text inspection",
+      "result": "OBSERVED",
+      "detail": "Three failure modes identified: scroll overlap, same-name-different-content, related-pairs. 83 rows deduped estimate provided with appropriate uncertainty language. Cannot independently verify from thumbnails."
+    },
+    {
+      "item": "ACTION_2A_REPORT.md chain_root and hashes",
+      "method": "Text inspection",
+      "result": "OBSERVED",
+      "detail": "Hashes present in document but not independently reproduced. Reported as observed claims, not verified facts."
+    },
+    {
+      "item": "ACTION_3_REPORT.md derived archive",
+      "method": "Text inspection",
+      "result": "OBSERVED",
+      "detail": "SENTINEL_HASH_VERIFIED_SUBSET_110_OF_242.zip mentioned but not present in this intake. Cannot verify its contents or hashes."
+    },
+    {
+      "item": "cautious-planner-america.md content classification",
+      "method": "Text inspection",
+      "result": "OBSERVED",
+      "detail": "Alternate history document with explicit methodological constraints (no hindsight cheating, [SPLIT] and [COST] markers, [EXOGENOUS] labels). Correctly classified as LOOM/research \u2014 non-authorizing, zero execution authority."
+    }
+  ],
+  "not_reviewed": [
+    {
+      "item": "build_master_manifest_v2.py at scale",
+      "reason": "Tested only with 1-file synthetic registry. Not tested with 111-file workspace or 242-file Sentinel corpus."
+    },
+    {
+      "item": "ACTION_2A_REPORT.md repeatability",
+      "reason": "Did not re-run the manifest builder against the reported workspace. Cannot confirm the reported chain_root or deterministic_core."
+    },
+    {
+      "item": "ACTION_3_REPORT.md Drive export verification",
+      "reason": "No access to Google Drive. Cannot verify the exported DOCX/raw text or their hashes."
+    },
+    {
+      "item": "WEAVER-CATHEDRAL-PORTFOLIO-CATALOG artifact contents",
+      "reason": "Catalog built from screenshots. Actual files not present in intake. Cannot verify any content hash, version, or canonical status."
+    },
+    {
+      "item": "cautious-planner-america.md empirical claims",
+      "reason": "Alternate history is counterfactual by definition. No empirical verification possible. Reviewed only for internal consistency and methodology."
+    },
+    {
+      "item": "ASIN-HHC-CP8-Architecture-E0-1.zip",
+      "reason": "File referenced in screenshot but not uploaded to this conversation. No access to Google Drive."
+    },
+    {
+      "item": "FPGA / RTL / hardware validation",
+      "reason": "No hardware in test environment. No RTL files in intake."
+    },
+    {
+      "item": "Lean / TLA+ / formal verification",
+      "reason": "No proof assistant files in intake. No formal specs to verify."
+    },
+    {
+      "item": "External integrations (CI, APIs, cloud)",
+      "reason": "No network access. No CI configs or integration tests in this batch."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "INFO",
+      "item": "build_master_manifest_v2.py is well-structured and fail-closed",
+      "detail": "The script correctly rejects hash mismatches, missing files, unregistered files, and wrong scope IDs. Deterministic core is stable across runs. Authority boundaries default to False."
+    },
+    {
+      "severity": "INFO",
+      "item": "ACTION_2A and ACTION_3 reports use correct evidence vocabulary",
+      "detail": "Both reports explicitly state E1/E2 levels, note that authority is not earned, and distinguish between verified and unverified claims. Consistent with controlling handoff."
+    },
+    {
+      "severity": "NOTE",
+      "item": "WEAVER-CATHEDRAL-PORTFOLIO-CATALOG is an evidence-gap map, not a control plane",
+      "detail": "The catalog itself acknowledges this. It should not be used as a source of canonical status for any artifact until the UNVERIFIED fields are populated with actual file access."
+    },
+    {
+      "severity": "WARNING",
+      "item": "ASIN-HHC-CP8-Architecture-E0-1.zip is referenced but not available for review",
+      "detail": "Screenshot shows upload to Drive in progress. File not present in intake. Cannot verify contents, hashes, or integration with Weaver portfolio."
+    },
+    {
+      "severity": "NOTE",
+      "item": "cautious-planner-america.md is correctly self-aware about its limitations",
+      "detail": "Explicit [SPLIT], [COST], [EXOGENOUS] markers. Does not claim certainty on counterfactual magnitudes. Correctly classified as LOOM/research."
+    }
+  ],
+  "questions": [
+    "Can the 110 byte-exact Sentinel files from ACTION_3 be made available for independent hash verification?",
+    "Can the ASIN-HHC-CP8-Architecture-E0-1.zip be uploaded directly for inspection?",
+    "Is there a plan to populate the UNVERIFIED fields in the portfolio catalog with actual file access?",
+    "Should cautious-planner-america.md be registered in the LOOM tier of the canonical registry?"
+  ],
+  "evidence_level": "E2_VERIFIED_LOCAL",
+  "recommendation": "PASS_WITH_NOTES",
+  "recommendation_detail": "The manifest builder is sound and fail-closed. The reports are methodologically honest. The portfolio catalog is correctly provisional. The missing ASIN-HHC-CP8 zip is the only blocking item for a clean intake.",
+  "commands_run": [
+    "python -m py_compile build_master_manifest_v2.py",
+    "python build_master_manifest_v2.py --help",
+    "python build_master_manifest_v2.py --source-dir <tmp> --identity-registry <tmp/registry.json> --output <tmp/manifest.json> --source-scope-id test-scope",
+    "python build_master_manifest_v2.py (with wrong hash -> exit 2)",
+    "python build_master_manifest_v2.py (with missing file -> exit 2)",
+    "sha256sum on all 5 uploaded files"
+  ],
+  "file_hashes": {
+    "WEAVER-CATHEDRAL-PORTFOLIO-CATALOG-AND-REPORTS-v1.0.md": {
+      "sha256": "fb68f9c2f2c565bc0df555c4593cc84b11a3bfd21923455c913f66082010fe4c",
+      "bytes": 9066,
+      "lines": 145
+    },
+    "cautious-planner-america.md": {
+      "sha256": "fb7e9b8a95f844341777d439665de3a40856e87a5d8c3089b7d9715aeca734f5",
+      "bytes": 15260,
+      "lines": 141
+    },
+    "ACTION_3_REPORT.md": {
+      "sha256": "913722f4a78184e12f19eda11e41b64bfc8930cfaa8241c6b553d29663100cda",
+      "bytes": 2700,
+      "lines": 57
+    },
+    "ACTION_2A_REPORT.md": {
+      "sha256": "8728cdf0003694e5c262a5c026c4e439b5647d58d88347dbf02665345ba10293",
+      "bytes": 3314,
+      "lines": 62
+    },
+    "build_master_manifest_v2.py": {
+      "sha256": "6339395724d0197f6c0ba8ced8aead7877be9ac52533220f76a5d33371ae5e4d",
+      "bytes": 14139,
+      "lines": 380
+    }
+  }
+}
