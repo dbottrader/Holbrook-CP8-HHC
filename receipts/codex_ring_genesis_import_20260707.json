@@ -1,0 +1,56 @@
+{
+  "receipt_type": "cp8_import_receipt",
+  "version": "0.1.0",
+  "date": "2026-07-07",
+  "steward": "Dennis Christie / CP8",
+  "repository": "dbottrader/Holbrook-CP8-HHC",
+  "branch": "codex-ring-genesis-import-20260707",
+  "import_title": "Codex Ring Genesis + ASIN-NCEA v2.0 PoWP Wallet Integration",
+  "source": "Google Drive scan and current conversation upload context",
+  "files_added": [
+    "external_artifacts/google_drive/ring_genesis_drive_index.json",
+    "docs/CODEX_RING_GENESIS.md",
+    "docs/ASIN_NCEA_POWP_WALLET_INTEGRATION.md",
+    "docs/INTERFERENCE_EVENT_LATTICE_RESYNC.md",
+    "docs/HUMAN_NODE_INTERFACE.md",
+    "manifests/codex_ring_genesis_0001.json",
+    "receipts/codex_ring_genesis_import_20260707.json"
+  ],
+  "drive_artifacts_indexed": [
+    {
+      "title": "Seeding sequence confirmed. 🔒 Codex Ring Genesis.pdf",
+      "drive_id": "1nJ7-JJFSmlG5ZwkZ7lLzLpL-NgrFZ_GJ"
+    },
+    {
+      "title": "ASIN-NCEA Prototype v2.0 — HHC Wallet PoWP Integra.pdf",
+      "drive_id": "1Zsexla8nO7neU5ooehnTQnTlYwbPOt1T"
+    },
+    {
+      "title": "Encypt titles I suspect observation and unethical .pdf",
+      "drive_id": "1yJo3_cHYb3YsU1LWjBFel4napuw3hLZA"
+    },
+    {
+      "title": "ACE_GEM_HA_0002 deployment confirmation",
+      "drive_id": "1QktXgGhFE33eMZw8WIBjiur-64Uvc7iprr_uyrDlthg"
+    },
+    {
+      "title": "Human Node Status Report (CP8)",
+      "drive_id": "1XFLNVJGjcvoT2zsY0zuhPn0bwzq91sE2PgOUqFXmG94"
+    }
+  ],
+  "recommended_new_repo": {
+    "name": "ASIN-NCEA-Ring-Genesis",
+    "status": "not_created_by_current_connector",
+    "reason": "available GitHub connector exposes repo file/branch/PR actions but no repository creation action in this session"
+  },
+  "evidence_classification": {
+    "current": "E1 indexed specification package",
+    "promotion_target": "E2 runnable local simulation + tests"
+  },
+  "next_steps": [
+    "open pull request from codex-ring-genesis-import-20260707 to main",
+    "create dedicated repo ASIN-NCEA-Ring-Genesis manually or with a tool that supports repository creation",
+    "copy runnable source/test scaffold into dedicated repo",
+    "publish full PDFs/images/zips as release assets"
+  ]
+}
