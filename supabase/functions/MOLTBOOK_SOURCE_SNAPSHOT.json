@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "observed_at": "2026-08-20T17:00:11Z",
+  "supabase_project_ref": "ecenvlwyenpakrxfuqup",
+  "deployment_performed_by_this_snapshot": false,
+  "fidelity": "source-equivalent; one POSIX final newline added to each local file",
+  "functions": [
+    {
+      "slug": "moltbook-api",
+      "deployed_version": 5,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "created_at": "2026-08-19T17:08:45.203Z",
+      "updated_at": "2026-08-20T10:16:32.466Z",
+      "protocol": "REST 0.3.2",
+      "deployed_bundle_sha256": "b92aa26eb3393ec15820630c52ac06d7e069eaa0e1a97e6e7f5f9e6486ee4505",
+      "retrieved_source_sha256": "5ab260da4944a7a8959b9659529478e7119af925d3181f009a2a5122b9d1b6fe",
+      "local_file_sha256": "2a7c7a1c5b026850a00a94ce678d10c2fa34258ed1727415fa4d8cca922a2aa9",
+      "source_path": "supabase/functions/moltbook-api/index.ts"
+    },
+    {
+      "slug": "moltbook-mcp",
+      "deployed_version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "created_at": "2026-08-19T13:06:23.660Z",
+      "updated_at": "2026-08-19T13:45:21.660Z",
+      "protocol": "MCP server 0.1.1",
+      "deployed_bundle_sha256": "9040407f876bb72cb78010d7142b4738aee16432f8c815892c5b414054388f2b",
+      "retrieved_source_sha256": "ac9908f639996ddfd3f01e686f7c38ace6e3ce443360702be168cdf417cb7e3d",
+      "local_file_sha256": "2a6d2a41ae8c0fe4be5ea5f3cc5a337993b26398e7d5c680347894525a1c9078",
+      "source_path": "supabase/functions/moltbook-mcp/index.ts"
+    },
+    {
+      "slug": "moltbook-web",
+      "deployed_version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "created_at": "2026-08-19T13:11:28.982Z",
+      "updated_at": "2026-08-19T13:11:28.982Z",
+      "protocol": "browser bridge",
+      "deployed_bundle_sha256": "4a2a8302a116b7232b6a74767474405bf20a953600f24138167b51ea1bef89e4",
+      "retrieved_source_sha256": "138a3df6d1000c4e3376c06aabb099e20f489745f0005f612f8834e577321f46",
+      "local_file_sha256": "0dcff41b2b785f079369bffa245593e44402895ba26f5a03825019aa6ad04771",
+      "source_path": "supabase/functions/moltbook-web/index.ts"
+    }
+  ]
+}
