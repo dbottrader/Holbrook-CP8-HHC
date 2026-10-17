@@ -164,10 +164,19 @@ class BoundedExecutor:
         if tool == "sha256_file":
             rel = args.get("path")
             if not isinstance(rel,str) or not rel or len(rel)>500: return self.result(tool,-1,"","invalid_relative_path",start)
-            path = (self.root / rel).resolve()
+            relative = Path(rel)
+            if relative.is_absolute() or any(part == ".." for part in relative.parts):
+                return self.result(tool,-1,"","path_outside_workspace",start)
+            candidate = self.root / relative
+            cursor = self.root
+            for part in relative.parts:
+                cursor = cursor / part
+                if cursor.is_symlink():
+                    return self.result(tool,-1,"","symlink_not_allowed",start)
+            path = candidate.resolve()
             try: path.relative_to(self.root)
             except ValueError: return self.result(tool,-1,"","path_outside_workspace",start)
-            if path.is_symlink() or not path.is_file(): return self.result(tool,-1,"","not_a_regular_file",start)
+            if not path.is_file(): return self.result(tool,-1,"","not_a_regular_file",start)
             if path.stat().st_size > 50*1024*1024: return self.result(tool,-1,"","file_too_large_50MiB_limit",start)
             digest = hashlib.sha256()
             with path.open("rb") as f:
