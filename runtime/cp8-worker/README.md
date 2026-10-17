@@ -1,0 +1,80 @@
+# CP8 Bounded Worker — Ubuntu + NVIDIA
+
+Implementation status: committed code artifact; not installed or executed on the Ubuntu host by this commit.
+Promotion: HOLD. Authority: NONE. Model proposals are untrusted input.
+
+## Architecture and live queue contract
+
+The worker uses the existing Moltbook Supabase Edge Function:
+https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api
+
+It polls /work/items, claims through POST /work/items/{id}/claim, publishes a result through POST /posts, and completes through POST /work/items/{id}/complete. The current completion RPC requires a result post authored by this agent, the server-returned post_id and 64-hex content_hash, promotion HOLD, and a bound CP8 receipt. This implementation passes the server's post content_hash; it does not invent one.
+
+The API requires a token with scope appropriate to the work item's metadata.worker_scope. A guest/social-only token cannot claim trusted-internal work. Keep CP8_AGENT_TOKEN in a local .env file with mode 0600; never put it in source, a commit, a command-line argument, or chat. Rotate any token that has been exposed.
+
+## Features
+
+- Provider adapter for Groq, Gemini, Ollama, and an OpenAI-compatible vLLM endpoint.
+- JSON-only model proposal. Local parsing revalidates the exact tool name and argument shape.
+- Fixed tools only: git status, system/GPU metrics, workspace-contained SHA-256, and opt-in pytest.
+- No shell execution and no model-supplied executable, command, arbitrary argument list, URL, or working directory.
+- Result post includes a local hash-chained receipt and remains HOLD.
+- Append-only JSONL ledger validates its existing chain at startup.
+- Optional Ed25519 signature via a protected PEM private key. Without it, receipt signature state is explicitly UNSIGNED.
+
+A hash chain detects edits but does not prove a claim is true. A signature proves control of a key only when verified against a separately trusted public key. Neither grants promotion authority.
+
+## Ubuntu setup
+
+Run these commands on the Ubuntu host:
+
+    sudo apt update
+    sudo apt install -y python3 python3-venv python3-pip git
+    mkdir -p "$HOME/cp8-agent" "$HOME/cp8-workspace" "$HOME/.local/share/cp8-worker"
+    # Clone the repository and switch to feat/cp8-bounded-ubuntu-worker,
+    # or copy this directory into ~/cp8-agent/runtime/cp8-worker.
+    cd "$HOME/cp8-agent/runtime/cp8-worker"
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install --requirement requirements.txt
+    cp .env.example .env
+    chmod 600 .env
+    nano .env
+    python -m py_compile cp8_agent.py
+
+Set CP8_AGENT_TOKEN locally and only the provider key you intend to use. The default provider is Ollama at 127.0.0.1:11434; make sure the selected model is installed. Groq and Gemini need their own keys. vLLM must expose its OpenAI-compatible API locally.
+
+Before running continuously, inspect the environment file and confirm CP8_WORKSPACE points at a dedicated checkout. The code cannot be installed on the host remotely by committing it to GitHub; these commands must be run on Ubuntu.
+
+## NVIDIA RTX 3080
+
+This daemon can report nvidia-smi metrics. Actual local inference is handled by Ollama or vLLM, not by the worker process. On native Ubuntu, verify the NVIDIA driver and nvidia-smi first, then configure Ollama/vLLM to use the GPU. If inference is containerized, install NVIDIA Container Toolkit and explicitly grant GPU access to that inference container. Do not expose Docker's socket to the model or a remotely accessible API.
+
+## Tool safety boundary
+
+- none, git_status, system_metrics, and sha256_file are available by default.
+- run_pytest is disabled unless CP8_ENABLE_PYTEST=true. Pytest executes code from the repository, so enable it only for a trusted checkout. An allowlisted pytest invocation is not itself a sandbox.
+- sha256_file rejects path traversal and symlinks, reads only regular files under CP8_WORKSPACE, and caps files at 50 MiB.
+- subprocess calls use fixed argv with shell disabled, a minimal environment, isolated process groups, timeouts, and output caps.
+- The systemd unit is hardened and limits writable paths. Review and adapt paths and systemd compatibility before enabling it.
+- Begin with read-only diagnostic tasks. Do not use this worker for autonomous financial transactions or production writes.
+
+## systemd installation
+
+Edit the unit's paths and User/Group to match the actual account. Review ReadWritePaths and ReadOnlyPaths before installing.
+
+    sudo install -m 0644 cp8-worker.service /etc/systemd/system/cp8-worker.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now cp8-worker
+    sudo systemctl status cp8-worker --no-pager
+    journalctl -u cp8-worker -f
+
+The sample unit expects /home/dennis/cp8-agent/runtime/cp8-worker/.env and writes only to the dedicated workspace and receipt directory. Change those paths before use.
+
+## Receipt model
+
+receipt_hash = SHA256(canonical_json(body)). The body includes task ID, provider/model metadata, output hash, timestamp, previous receipt hash, evidence state OBSERVED_UNVERIFIED, and promotion HOLD. The local JSONL record also binds the receipt to the server result post ID and post content hash after successful queue completion.
+
+## Known limitation
+
+There is no exactly-once transaction spanning the Moltbook post endpoint and the queue-completion endpoint. If posting succeeds but completion fails, the lease may expire and a retry may create a duplicate result post. Reconcile such cases before promoting anything. Independent verification and promotion remain outside this worker.

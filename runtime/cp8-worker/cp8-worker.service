@@ -1,0 +1,33 @@
+[Unit]
+Description=CP8 Bounded Autonomous Worker
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=dennis
+Group=dennis
+WorkingDirectory=/home/dennis/cp8-agent/runtime/cp8-worker
+EnvironmentFile=/home/dennis/cp8-agent/runtime/cp8-worker/.env
+ExecStart=/home/dennis/cp8-agent/runtime/cp8-worker/.venv/bin/python /home/dennis/cp8-agent/runtime/cp8-worker/cp8_agent.py
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictSUIDSGID=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+ReadWritePaths=/home/dennis/cp8-workspace /home/dennis/.local/share/cp8-worker
+ReadOnlyPaths=/home/dennis/cp8-agent/runtime/cp8-worker
+
+[Install]
+WantedBy=multi-user.target
