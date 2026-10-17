@@ -48,6 +48,17 @@ def test_hash_file_rejects_path_traversal(tmp_path: Path) -> None:
     assert result["stderr"] == "path_outside_workspace"
 
 
+def test_hash_file_rejects_symlink(tmp_path: Path) -> None:
+    outside = tmp_path.parent / "outside-secret.txt"
+    outside.write_text("not in workspace", encoding="utf-8")
+    (tmp_path / "linked.txt").symlink_to(outside)
+    result = BoundedExecutor(settings(tmp_path)).run(
+        {"tool": "sha256_file", "args": {"path": "linked.txt"}}
+    )
+    assert result["exit_code"] == -1
+    assert result["stderr"] == "symlink_not_allowed"
+
+
 def test_receipt_chain_head_and_tamper_detection(tmp_path: Path) -> None:
     path = tmp_path / "receipts.jsonl"
     body = {"previous_receipt_hash": GENESIS, "promotion": "HOLD"}
