@@ -325,7 +325,7 @@ class CP8Worker:
             LOG.info("Task %s completed; receipt=%s; promotion=HOLD",task_id,receipt["receipt_hash"][:16])
         except Exception as exc:
             # Do not claim success. Lease expiry permits retry if queue completion is uncertain.
-            LOG.exception("Task %s stopped without promotion (%s)",task_id,type(exc).__name__)
+            LOG.error("Task %s stopped without promotion (%s)",task_id,type(exc).__name__)
 
     def run(self)->None:
         LOG.info("CP8 worker provider=%s model=%s workspace=%s",self.s.provider,self.s.model,self.s.workspace)
