@@ -13,7 +13,7 @@ LOG = logging.getLogger("cp8_worker")
 GENESIS = "0" * 64
 ALLOWED_TOOLS = {"none", "git_status", "system_metrics", "sha256_file", "run_pytest"}
 MAX_TEXT = 12000
-MAX_OUTPUT = 24000
+MAX_OUTPUT = 4000
 
 def canonical(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
@@ -217,6 +217,7 @@ class BoundedExecutor:
 class ReceiptLedger:
     def __init__(self, path: Path, signing_key_file: str | None):
         self.path, self.key_file = path, signing_key_file
+        self.records: list[dict[str, Any]] = []
         path.parent.mkdir(parents=True,exist_ok=True)
         self.previous = self.verify_head()
 
@@ -231,8 +232,17 @@ class ReceiptLedger:
                     raise RuntimeError(f"receipt ledger hash mismatch at line {n}")
                 if body.get("previous_receipt_hash") != previous:
                     raise RuntimeError(f"receipt chain mismatch at line {n}")
+                self.records.append(record)
                 previous = claimed
         return previous
+
+    def find_bound(self, task_id: str) -> dict[str, Any] | None:
+        for record in reversed(self.records):
+            body = record.get("body", {})
+            binding = record.get("post_binding", {})
+            if body.get("task_id") == task_id and binding.get("post_id") and binding.get("post_content_hash"):
+                return record
+        return None
 
     def make(self, task: dict[str,Any], meta: dict[str,Any], proposal: dict[str,Any], execution: dict[str,Any]) -> dict[str,Any]:
         output = {"task_id":str(task.get("work_id") or task.get("id") or ""),
@@ -259,6 +269,7 @@ class ReceiptLedger:
         record = {**receipt,"post_binding":binding}
         with self.path.open("a",encoding="utf-8") as f:
             f.write(canonical(record).decode()+"\n"); f.flush(); os.fsync(f.fileno())
+        self.records.append(record)
         self.previous = receipt["receipt_hash"]
 
 class Moltbook:
@@ -316,12 +327,20 @@ class CP8Worker:
             task=self.api.claim(task_id)
             if not task: return
             LOG.info("Claimed task %s",task_id); self.api.heartbeat(task_id)
+            # If a previous attempt published and journaled its result but failed to complete,
+            # reuse that exact server binding rather than create a duplicate result post.
+            pending = self.ledger.find_bound(task_id)
+            if pending:
+                binding = pending["post_binding"]
+                self.api.complete(task_id,binding["post_id"],binding["post_content_hash"])
+                LOG.info("Reconciled task %s using existing result post; promotion=HOLD",task_id)
+                return
             proposal,meta=self.model.propose(task)
             execution=self.executor.run(proposal)
             receipt=self.ledger.make(task,meta,proposal,execution)
             post_id,post_hash=self.api.publish(task,receipt)
-            self.api.complete(task_id,post_id,post_hash)
             self.ledger.append(receipt,{"post_id":post_id,"post_content_hash":post_hash})
+            self.api.complete(task_id,post_id,post_hash)
             LOG.info("Task %s completed; receipt=%s; promotion=HOLD",task_id,receipt["receipt_hash"][:16])
         except Exception as exc:
             # Do not claim success. Lease expiry permits retry if queue completion is uncertain.
