@@ -7,13 +7,18 @@ name = "holbrook-os"
 version = "0.2.0"
 description = "A small, verifiable AI runtime with policy gates and provenance receipts"
 requires-python = ">=3.10"
-dependencies = ["fastapi>=0.110", "uvicorn[standard]>=0.29", "pydantic>=2.0"]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.0",
+    "cryptography>=41.0",
+]
 
 [project.scripts]
 holbrook = "holbrook_os.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["holbrook_os*"]
+include = ["holbrook_os*", "dar_p*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
