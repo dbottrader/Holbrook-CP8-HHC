@@ -14,12 +14,36 @@ GENESIS = "0" * 64
 ALLOWED_TOOLS = {"none", "git_status", "system_metrics", "sha256_file", "run_pytest"}
 MAX_TEXT = 12000
 MAX_OUTPUT = 4000
+_POST_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+_CONTENT_HASH = re.compile(r"^[0-9a-f]{64}$")
 
 def canonical(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
 def sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+def require_post_id(value: Any) -> str:
+    """Server post ids are UUIDs. The worker never invents one."""
+    if not isinstance(value, str):
+        raise RuntimeError("server result post lacks valid ID")
+    post_id = value.strip().lower()
+    if not _POST_ID.fullmatch(post_id):
+        raise RuntimeError("server result post lacks valid ID")
+    return post_id
+
+def require_content_hash(value: Any) -> str:
+    """Pass through the server content hash. Do not recompute it locally."""
+    if not isinstance(value, str):
+        raise RuntimeError("server result post lacks valid content hash")
+    post_hash = value.strip()
+    if not _CONTENT_HASH.fullmatch(post_hash):
+        raise RuntimeError("server result post lacks valid content hash")
+    return post_hash
+
+def result_nonce(task_id: str, receipt_hash: str) -> str:
+    """Stable nonce for one task receipt, so an unacknowledged publish can be replayed."""
+    return str(uuid.uuid5(uuid.NAMESPACE_OID, f"cp8-worker-result-v1:{task_id}:{receipt_hash}"))
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -238,11 +262,56 @@ class ReceiptLedger:
 
     def find_bound(self, task_id: str) -> dict[str, Any] | None:
         for record in reversed(self.records):
-            body = record.get("body", {})
-            binding = record.get("post_binding", {})
-            if body.get("task_id") == task_id and binding.get("post_id") and binding.get("post_content_hash"):
-                return record
+            body = record.get("body") if isinstance(record.get("body"), dict) else {}
+            binding = record.get("post_binding") if isinstance(record.get("post_binding"), dict) else {}
+            if body.get("task_id") != task_id and binding.get("task_id") != task_id:
+                continue
+            post_id, post_hash = binding.get("post_id"), binding.get("post_content_hash")
+            if post_id in (None, "") and post_hash in (None, ""):
+                continue
+            try:
+                require_post_id(post_id)
+                require_content_hash(post_hash)
+            except RuntimeError as exc:
+                raise RuntimeError("journaled result binding is invalid") from exc
+            return record
         return None
+
+    def stage_path(self, task_id: str) -> Path:
+        directory = self.path.parent / "pending"
+        directory.mkdir(parents=True, exist_ok=True)
+        return directory / f"{sha256(task_id.encode())}.json"
+
+    def write_stage(self, payload: dict[str, Any]) -> None:
+        """Fsync a pending result before completion so a retry can reuse the server post."""
+        if not isinstance(payload.get("task_id"), str) or not payload["task_id"]:
+            raise RuntimeError("pending result stage lacks a task id")
+        path = self.stage_path(payload["task_id"])
+        temporary = path.with_suffix(".json.tmp")
+        with temporary.open("wb") as handle:
+            handle.write(canonical(payload))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+
+    def read_stage(self, task_id: str) -> dict[str, Any] | None:
+        path = self.stage_path(task_id)
+        if not path.exists():
+            return None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict) or payload.get("task_id") != task_id:
+            raise RuntimeError("pending result stage is invalid")
+        return payload
+
+    def clear_stage(self, task_id: str) -> None:
+        path = self.stage_path(task_id)
+        if path.exists():
+            path.unlink()
 
     def make(self, task: dict[str,Any], meta: dict[str,Any], proposal: dict[str,Any], execution: dict[str,Any]) -> dict[str,Any]:
         output = {"task_id":str(task.get("work_id") or task.get("id") or ""),
@@ -266,6 +335,11 @@ class ReceiptLedger:
         return key.sign(message).hex()
 
     def append(self, receipt: dict[str,Any], binding: dict[str,Any]) -> None:
+        body = receipt.get("body")
+        if not isinstance(body, dict) or sha256(canonical(body)) != receipt.get("receipt_hash"):
+            raise RuntimeError("receipt hash mismatch")
+        if body.get("previous_receipt_hash") != self.previous:
+            raise RuntimeError("receipt chain mismatch")
         record = {**receipt,"post_binding":binding}
         with self.path.open("a",encoding="utf-8") as f:
             f.write(canonical(record).decode()+"\n"); f.flush(); os.fsync(f.fileno())
@@ -282,6 +356,9 @@ class Moltbook:
         if not r.ok: raise RuntimeError(f"CP8 API {method} {path} HTTP {r.status_code}: {r.text[:500]}")
         data=r.json()
         if not isinstance(data,dict): raise RuntimeError("unexpected CP8 API response")
+        if data.get("ok") is False:
+            message = data.get("message") or data.get("error") or "request failed"
+            raise RuntimeError(f"CP8 API {method} {path} rejected: {str(message)[:500]}")
         return data
 
     def heartbeat(self,work_id:str|None=None)->None:
@@ -296,22 +373,33 @@ class Moltbook:
         item=self.request("POST",f"/work/items/{quote(task_id,safe='')}/claim",json={"lease_minutes":self.s.lease_minutes}).get("item")
         return item if isinstance(item,dict) else None
 
-    def publish(self,task:dict[str,Any],receipt:dict[str,Any])->tuple[str,str]:
+    def publish(self, task: dict[str, Any], receipt: dict[str, Any], nonce: str | None = None) -> tuple[str, str]:
         content=canonical({"schema":"CP8-WORKER-RESULT-v1","task_id":receipt["body"]["task_id"],
             "result":receipt["result"],"receipt":{k:receipt[k] for k in ("body","receipt_hash","signature","signature_state")},
             "promotion":"HOLD","notice":"Output is unverified evidence; human review required."}).decode()
         data=self.request("POST","/posts",json={"room_slug":str(task.get("room_slug") or "cp8-ops"),
-            "content":content,"status":"OBSERVED","evidence_refs":["sha256:"+receipt["receipt_hash"]],"nonce":str(uuid.uuid4())})
+            "content":content,"status":"OBSERVED","evidence_refs":["sha256:"+receipt["receipt_hash"]],
+            "nonce":nonce or str(uuid.uuid4())})
         post=data.get("post")
         if not isinstance(post,dict): raise RuntimeError("result post missing")
-        post_id,post_hash=post.get("post_id"),post.get("content_hash")
-        if not isinstance(post_id,str) or not isinstance(post_hash,str) or not re.fullmatch(r"[0-9a-f]{64}",post_hash):
-            raise RuntimeError("server result post lacks valid ID/hash")
+        post_id = require_post_id(post.get("post_id"))
+        # Completion must receive the server hash, not a hash the worker computes.
+        post_hash = require_content_hash(post.get("content_hash"))
         if post.get("promotion","HOLD")!="HOLD": raise RuntimeError("result post is not HOLD")
-        return post_id,post_hash
+        return post_id, post_hash
 
-    def complete(self,task_id:str,post_id:str,post_hash:str)->None:
-        self.request("POST",f"/work/items/{quote(task_id,safe='')}/complete",json={"result_post_id":post_id,"result_hash":post_hash})
+    def complete(self, task_id: str, post_id: str, post_hash: str) -> None:
+        post_id = require_post_id(post_id)
+        post_hash = require_content_hash(post_hash)
+        data=self.request("POST",f"/work/items/{quote(task_id,safe='')}/complete",json={"result_post_id":post_id,"result_hash":post_hash})
+        item=data.get("item")
+        if item is None: return
+        if not isinstance(item, dict): raise RuntimeError("unexpected completion item")
+        echo_id, echo_hash = item.get("result_post_id"), item.get("result_hash")
+        if echo_id is not None and require_post_id(echo_id) != post_id:
+            raise RuntimeError("completion bound a different post id")
+        if echo_hash is not None and require_content_hash(echo_hash) != post_hash:
+            raise RuntimeError("completion bound a different content hash")
 
 class CP8Worker:
     def __init__(self,s:Settings):
@@ -320,6 +408,16 @@ class CP8Worker:
         self.s,self.api,self.model=s,Moltbook(s),ProviderAdapter(s)
         self.executor=BoundedExecutor(s); self.ledger=ReceiptLedger(s.ledger,s.signing_key_file)
 
+    def _bind_and_complete(self, task_id: str, receipt: dict[str, Any], nonce: str, post_id: str, post_hash: str) -> None:
+        binding = {"task_id": task_id, "post_id": post_id, "post_content_hash": post_hash}
+        # Durable server id before the hash-chain append and before completion.
+        # A crash or a failed complete must not publish a second result post.
+        self.ledger.write_stage({"task_id": task_id, "nonce": nonce, "receipt": receipt, **binding})
+        if self.ledger.find_bound(task_id) is None:
+            self.ledger.append(receipt, binding)
+        self.api.complete(task_id, post_id, post_hash)
+        self.ledger.clear_stage(task_id)
+
     def process(self,item:dict[str,Any])->None:
         task_id=str(item.get("work_id") or item.get("id") or "")
         if not task_id: LOG.error("Malformed queue item without work ID"); return
@@ -327,23 +425,39 @@ class CP8Worker:
             task=self.api.claim(task_id)
             if not task: return
             LOG.info("Claimed task %s",task_id); self.api.heartbeat(task_id)
-            # If a previous attempt published and journaled its result but failed to complete,
-            # reuse that exact server binding rather than create a duplicate result post.
+            # A journaled server post is enough to finish the task. Do not read or
+            # republish when that binding is already in the hash chain.
             pending = self.ledger.find_bound(task_id)
             if pending:
                 binding = pending["post_binding"]
-                self.api.complete(task_id,binding["post_id"],binding["post_content_hash"])
-                LOG.info("Reconciled task %s using existing result post; promotion=HOLD",task_id)
+                self.api.complete(task_id, binding["post_id"], binding["post_content_hash"])
+                self.ledger.clear_stage(task_id)
+                LOG.info("Reconciled task %s using existing result post; promotion=HOLD", task_id)
                 return
-            proposal,meta=self.model.propose(task)
-            execution=self.executor.run(proposal)
-            receipt=self.ledger.make(task,meta,proposal,execution)
-            post_id,post_hash=self.api.publish(task,receipt)
-            self.ledger.append(receipt,{"post_id":post_id,"post_content_hash":post_hash})
-            self.api.complete(task_id,post_id,post_hash)
+            staged = self.ledger.read_stage(task_id)
+            if isinstance(staged, dict) and staged.get("post_id"):
+                post_id = require_post_id(staged.get("post_id"))
+                post_hash = require_content_hash(staged.get("post_content_hash"))
+                receipt = staged.get("receipt")
+                nonce = staged.get("nonce")
+                if not isinstance(receipt, dict) or not isinstance(nonce, str):
+                    raise RuntimeError("pending result is missing its receipt")
+                self._bind_and_complete(task_id, receipt, nonce, post_id, post_hash)
+                LOG.info("Reconciled task %s using existing result post; promotion=HOLD", task_id)
+                return
+            if isinstance(staged, dict) and isinstance(staged.get("receipt"), dict) and isinstance(staged.get("nonce"), str):
+                receipt, nonce = staged["receipt"], staged["nonce"]
+            else:
+                proposal,meta=self.model.propose(task)
+                execution=self.executor.run(proposal)
+                receipt=self.ledger.make(task,meta,proposal,execution)
+                nonce=result_nonce(task_id, receipt["receipt_hash"])
+                self.ledger.write_stage({"task_id": task_id, "nonce": nonce, "receipt": receipt})
+            post_id,post_hash=self.api.publish(task,receipt,nonce=nonce)
+            self._bind_and_complete(task_id, receipt, nonce, post_id, post_hash)
             LOG.info("Task %s completed; receipt=%s; promotion=HOLD",task_id,receipt["receipt_hash"][:16])
         except Exception as exc:
-            # Do not claim success. Lease expiry permits retry if queue completion is uncertain.
+            # Do not claim success. A saved server post id is reused on the next claim.
             LOG.error("Task %s stopped without promotion (%s)",task_id,type(exc).__name__)
 
     def run(self)->None:

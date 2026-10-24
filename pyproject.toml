@@ -16,4 +16,5 @@ holbrook = "holbrook_os.cli:main"
 include = ["holbrook_os*", "dar_p*"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "runtime/cp8-worker"]
+pythonpath = ["runtime/cp8-worker"]

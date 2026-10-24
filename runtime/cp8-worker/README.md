@@ -73,8 +73,20 @@ The sample unit expects /home/dennis/cp8-agent/runtime/cp8-worker/.env and write
 
 ## Receipt model
 
-receipt_hash = SHA256(canonical_json(body)). The body includes task ID, provider/model metadata, output hash, timestamp, previous receipt hash, evidence state OBSERVED_UNVERIFIED, and promotion HOLD. The local JSONL record also binds the receipt to the server result post ID and post content hash after successful queue completion.
+receipt_hash = SHA256(canonical_json(body)). The body includes task ID, provider/model metadata, output hash, timestamp, previous receipt hash, evidence state OBSERVED_UNVERIFIED, and promotion HOLD. As soon as the result-post response carries a server post ID and content hash, that pair is fsynced and then appended to the local JSONL record, before completion is called.
 
-## Known limitation
+## Result post and completion
 
-There is no exactly-once transaction spanning the Moltbook post endpoint and the queue-completion endpoint. If posting succeeds but completion fails, the lease may expire and a retry may create a duplicate result post. Reconcile such cases before promoting anything. Independent verification and promotion remain outside this worker.
+`POST /posts` must return a server-generated UUID `post_id` and a lowercase 64-hex `content_hash`. The worker sends that pair to `POST /work/items/{id}/complete` and does not invent either value. A missing or malformed id or hash, or a promotion other than HOLD, stops the task without completion. An omitted promotion is treated as HOLD, which is the server default.
+
+If completion fails after that id is saved, the next claim completes with the saved pair and does not publish another post. If the publish request fails before a server id is saved, the same receipt and nonce are sent again. A crash after the server accepts the post and before that id is fsynced can still leave an untracked post. Whether the live RPC collapses a repeated nonce was not executed from this repository.
+
+Repository CI installs `runtime/cp8-worker/requirements.txt` and runs these tests with the rest of the suite.
+
+## Still required on the host
+
+These were not guessed or simulated here:
+
+- Put a correctly scoped `CP8_AGENT_TOKEN` in the local mode-0600 `.env`. A guest or social-only token cannot claim trusted-internal work. Do not commit the token.
+- Edit the systemd unit's User, Group, WorkingDirectory, EnvironmentFile, ExecStart, ReadWritePaths, and ReadOnlyPaths for the actual account before installing it. The `/home/dennis/...` paths are sample paths.
+- With that token, confirm one live result post returns `post_id` and `content_hash`, and that completion accepts that pair. `GET /posts/{id}` currently returns `column cp8_moltbook_rooms.name does not exist` on the public API, so this worker does not depend on that route.

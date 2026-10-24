@@ -8,12 +8,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -e .
       - run: pip install pytest
       - name: Install DAR-P dependencies
         run: pip install -r requirements-dar-p.txt
+      - name: Install CP8 worker dependencies
+        run: pip install -r runtime/cp8-worker/requirements.txt
+      - run: python -m py_compile runtime/cp8-worker/cp8_agent.py
       - run: pytest -q
