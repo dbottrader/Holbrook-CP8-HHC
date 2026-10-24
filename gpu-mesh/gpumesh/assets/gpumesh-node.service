@@ -1,0 +1,22 @@
+[Unit]
+Description=GPU Mesh volunteer inference node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gpumesh
+Group=gpumesh
+EnvironmentFile=/etc/gpumesh/node.env
+WorkingDirectory=/opt/gpumesh
+ExecStart=/opt/gpumesh/venv/bin/python -m gpumesh_node
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/gpumesh
+
+[Install]
+WantedBy=multi-user.target

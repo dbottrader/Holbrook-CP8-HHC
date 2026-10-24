@@ -1,0 +1,89 @@
+# Local mesh: one coordinator and one CPU-fallback node.
+# The fallback is deterministic and is not a neural model.
+# Add a second node (so spot-checks can run) with: docker compose --profile verify up --build
+services:
+  coordinator:
+    build: .
+    ports:
+      - "8741:8741"
+    environment:
+      GPU_MESH_DATABASE_URL: sqlite:////data/gpumesh.db
+      GPU_MESH_DATA_DIR: /data
+      GPU_MESH_ADMIN_TOKEN: ${GPU_MESH_ADMIN_TOKEN:-dev-admin-change-me}
+      GPU_MESH_PUBLIC_BASE_URL: ${GPU_MESH_PUBLIC_BASE_URL:-http://localhost:8741}
+      GPU_MESH_CANARY_INTERVAL_SEC: "20"
+      GPU_MESH_VERIFY_SAMPLE_RATE: "1"
+    volumes:
+      - gpumesh-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8741/health')",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 8s
+
+  node:
+    build:
+      context: .
+      dockerfile: node/Dockerfile
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 0.50
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    environment:
+      HOME: /tmp
+      GPU_MESH_STATE: /tmp/node.json
+      GPU_MESH_COORDINATOR: http://coordinator:8741
+      GPU_MESH_NAME: compose-cpu-0
+      GPU_MESH_BACKEND: cpu
+      GPU_MESH_ALLOW_CPU: "1"
+      GPU_MESH_MODELS: mock-tiny
+    depends_on:
+      coordinator:
+        condition: service_healthy
+    restart: unless-stopped
+
+  node-b:
+    profiles: ["verify"]
+    build:
+      context: .
+      dockerfile: node/Dockerfile
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 0.50
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    environment:
+      HOME: /tmp
+      GPU_MESH_STATE: /tmp/node.json
+      GPU_MESH_COORDINATOR: http://coordinator:8741
+      GPU_MESH_NAME: compose-cpu-1
+      GPU_MESH_BACKEND: cpu
+      GPU_MESH_ALLOW_CPU: "1"
+      GPU_MESH_MODELS: mock-tiny
+    depends_on:
+      coordinator:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  gpumesh-data:
