@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "bytes": 3864,
+      "path": "replay.json",
+      "sha256": "8fc8334c4ea98d62f48365b7514120b2764b80e1c41877afdb02e50db8bd1fbe"
+    },
+    {
+      "bytes": 12288,
+      "path": "receipts.json",
+      "sha256": "0de5d8288faa7c1015a209b5d83d7123a410e7367359c29aaea0654c2d6b4e12"
+    }
+  ],
+  "note": "SHA-256 of the exact file bytes published beside this manifest.",
+  "promotion": "HOLD",
+  "schema": "powc-artifact-manifest-v1"
+}

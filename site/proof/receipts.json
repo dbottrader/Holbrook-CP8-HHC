@@ -1,0 +1,358 @@
+{
+  "canonicalization": "SHA-256 of UTF-8 JSON with sorted keys and compact separators for the object {body, kind, prev_hash, seq}. receipt_hash is excluded.",
+  "genesis_prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "promotion": "HOLD",
+  "receipts": [
+    {
+      "body": {
+        "fail_rule": "any fail in a verdict set of two or more refunds the publisher the full price; the worker and both verifiers receive 0",
+        "fixture": "powc-launch-v1",
+        "lease_rule": "a lease is active while tick < until_tick; a different worker is rejected until then",
+        "milli_per_unit": 1000,
+        "monetary_authority": false,
+        "promotion": "HOLD",
+        "remainder_rule": "on an all-pass split, integer floor of 90/5/5; undistributed milli-credits return to the publisher",
+        "schema": "powc-genesis-v1",
+        "unit": "HHC-SIM",
+        "verifier_bps_each": 500,
+        "verifier_count": 2,
+        "worker_bps": 9000
+      },
+      "kind": "genesis",
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "receipt_hash": "e7defa8dd433b7c0d0f642bebab1c0af3c01a5b86b68b33b9f5c6d22d0e12118",
+      "seq": 0
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fence",
+        "content_sha256": "117ee4d5c4cb3cfcd72ed3db713d77ba13f6798faf5990386484be641af22a43",
+        "price_hhc_sim": "1.000",
+        "price_milli": 1000,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "text": "Fence probe. A second worker cannot take a live lease, and can take it only after the lease ends.",
+        "unit": "HHC-SIM"
+      },
+      "kind": "bounty_posted",
+      "prev_hash": "e7defa8dd433b7c0d0f642bebab1c0af3c01a5b86b68b33b9f5c6d22d0e12118",
+      "receipt_hash": "ee5dff0c09fdba5a6b108d2b4dd52ab56564567e6ee5eb63452993294e304d50",
+      "seq": 1
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fence",
+        "claimant": "agent_gpu_worker_powc",
+        "lease_ticks": 30,
+        "tick": 10,
+        "until_tick": 40
+      },
+      "kind": "lease_claimed",
+      "prev_hash": "ee5dff0c09fdba5a6b108d2b4dd52ab56564567e6ee5eb63452993294e304d50",
+      "receipt_hash": "c78d012859851c462499008c59290a652e216d4c09c839d61bd70184c8a139a8",
+      "seq": 2
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fence",
+        "claimant": "agent_rival_powc",
+        "holder": "agent_gpu_worker_powc",
+        "reason": "fence_held",
+        "tick": 11,
+        "until_tick": 40
+      },
+      "kind": "lease_rejected",
+      "prev_hash": "c78d012859851c462499008c59290a652e216d4c09c839d61bd70184c8a139a8",
+      "receipt_hash": "3ef3c6357bf603a8add702eaf843ba19c67a9d1a9e45abdef52d03f975800dd4",
+      "seq": 3
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fence",
+        "claimant": "agent_rival_powc",
+        "lease_ticks": 30,
+        "tick": 40,
+        "until_tick": 70
+      },
+      "kind": "lease_claimed",
+      "prev_hash": "3ef3c6357bf603a8add702eaf843ba19c67a9d1a9e45abdef52d03f975800dd4",
+      "receipt_hash": "3f14d20c74d777b355b48924463d4e8a8fa11c78d472f5590c8ad945bb469158",
+      "seq": 4
+    },
+    {
+      "body": {
+        "bounty_id": "bty_pass",
+        "content_sha256": "77ada31dc0d3c4d08e3a58c10c9294eadb4875234e3b292799e0d91bd29e7112",
+        "price_hhc_sim": "10.000",
+        "price_milli": 10000,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "text": "Pass fixture. Both verifiers accept the result, so the escrow settles 90/5/5.",
+        "unit": "HHC-SIM"
+      },
+      "kind": "bounty_posted",
+      "prev_hash": "3f14d20c74d777b355b48924463d4e8a8fa11c78d472f5590c8ad945bb469158",
+      "receipt_hash": "c287188362fae48bd60659288566924ceeaa6711ad5e7396b594eee35eb265b9",
+      "seq": 5
+    },
+    {
+      "body": {
+        "bounty_id": "bty_pass",
+        "claimant": "agent_gpu_worker_powc",
+        "lease_ticks": 30,
+        "tick": 100,
+        "until_tick": 130
+      },
+      "kind": "lease_claimed",
+      "prev_hash": "c287188362fae48bd60659288566924ceeaa6711ad5e7396b594eee35eb265b9",
+      "receipt_hash": "cf5e77475ddf63772f472fc9416911bb0206470afbe735efacccb45aefbf51c2",
+      "seq": 6
+    },
+    {
+      "body": {
+        "bounty_id": "bty_pass",
+        "tick": 101,
+        "verdict": "pass",
+        "verifier": "agent_verifier_a_powc"
+      },
+      "kind": "verdict",
+      "prev_hash": "cf5e77475ddf63772f472fc9416911bb0206470afbe735efacccb45aefbf51c2",
+      "receipt_hash": "077a0d9aa2986589de5b9923dffa4d4af8ec6b3ec06145aa28080cc718a0a82e",
+      "seq": 7
+    },
+    {
+      "body": {
+        "bounty_id": "bty_pass",
+        "tick": 102,
+        "verdict": "pass",
+        "verifier": "agent_verifier_b_powc"
+      },
+      "kind": "verdict",
+      "prev_hash": "077a0d9aa2986589de5b9923dffa4d4af8ec6b3ec06145aa28080cc718a0a82e",
+      "receipt_hash": "758b8cbae28774c636bd259d0525ea0a91f30e1adccbbd59b700bd7a5099778b",
+      "seq": 8
+    },
+    {
+      "body": {
+        "bounty_id": "bty_pass",
+        "price_hhc_sim": "10.000",
+        "price_milli": 10000,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "publisher_hhc_sim": "0.000",
+        "publisher_milli": 0,
+        "remainder_milli": 0,
+        "state": "TERMINAL_PAID",
+        "tick": 103,
+        "unit": "HHC-SIM",
+        "verdicts": [
+          {
+            "verdict": "pass",
+            "verifier": "agent_verifier_a_powc"
+          },
+          {
+            "verdict": "pass",
+            "verifier": "agent_verifier_b_powc"
+          }
+        ],
+        "verifier_a": "agent_verifier_a_powc",
+        "verifier_a_hhc_sim": "0.500",
+        "verifier_a_milli": 500,
+        "verifier_b": "agent_verifier_b_powc",
+        "verifier_b_hhc_sim": "0.500",
+        "verifier_b_milli": 500,
+        "worker": "agent_gpu_worker_powc",
+        "worker_hhc_sim": "9.000",
+        "worker_milli": 9000
+      },
+      "kind": "settlement",
+      "prev_hash": "758b8cbae28774c636bd259d0525ea0a91f30e1adccbbd59b700bd7a5099778b",
+      "receipt_hash": "f6f7da9d55f01c1c0ef698e740b75d7b1704b22620d08e05d2b82e2e93298445",
+      "seq": 9
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fail",
+        "content_sha256": "12747e61a62ad45f459d4e4d221bd54bcae09a5a3dec17caf722e8635093ee18",
+        "price_hhc_sim": "4.000",
+        "price_milli": 4000,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "text": "Fail fixture. One verifier rejects the result, so the publisher is refunded in full.",
+        "unit": "HHC-SIM"
+      },
+      "kind": "bounty_posted",
+      "prev_hash": "f6f7da9d55f01c1c0ef698e740b75d7b1704b22620d08e05d2b82e2e93298445",
+      "receipt_hash": "86ac5fc35d70a51bcf61a74514cd1dc9077cbe6dc4513516be21c27e1bd56dfe",
+      "seq": 10
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fail",
+        "claimant": "agent_gpu_worker_powc",
+        "lease_ticks": 30,
+        "tick": 200,
+        "until_tick": 230
+      },
+      "kind": "lease_claimed",
+      "prev_hash": "86ac5fc35d70a51bcf61a74514cd1dc9077cbe6dc4513516be21c27e1bd56dfe",
+      "receipt_hash": "ce627078f2ab1ef7b5f52b6e3cfeff35fba53554649be8cb227636f085cddfc9",
+      "seq": 11
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fail",
+        "tick": 201,
+        "verdict": "pass",
+        "verifier": "agent_verifier_a_powc"
+      },
+      "kind": "verdict",
+      "prev_hash": "ce627078f2ab1ef7b5f52b6e3cfeff35fba53554649be8cb227636f085cddfc9",
+      "receipt_hash": "8164c5b101ba3974e9e291ebde487aeed56932f1ff387df1d87a0cfc28039a83",
+      "seq": 12
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fail",
+        "tick": 202,
+        "verdict": "fail",
+        "verifier": "agent_verifier_b_powc"
+      },
+      "kind": "verdict",
+      "prev_hash": "8164c5b101ba3974e9e291ebde487aeed56932f1ff387df1d87a0cfc28039a83",
+      "receipt_hash": "38354e55b5ab4524609a74b45304921d0082e560f51623e7a4a8dfa542242b9a",
+      "seq": 13
+    },
+    {
+      "body": {
+        "bounty_id": "bty_fail",
+        "price_hhc_sim": "4.000",
+        "price_milli": 4000,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "publisher_hhc_sim": "4.000",
+        "publisher_milli": 4000,
+        "remainder_milli": 0,
+        "state": "TERMINAL_REFUNDED",
+        "tick": 203,
+        "unit": "HHC-SIM",
+        "verdicts": [
+          {
+            "verdict": "pass",
+            "verifier": "agent_verifier_a_powc"
+          },
+          {
+            "verdict": "fail",
+            "verifier": "agent_verifier_b_powc"
+          }
+        ],
+        "verifier_a": "agent_verifier_a_powc",
+        "verifier_a_hhc_sim": "0.000",
+        "verifier_a_milli": 0,
+        "verifier_b": "agent_verifier_b_powc",
+        "verifier_b_hhc_sim": "0.000",
+        "verifier_b_milli": 0,
+        "worker": "agent_gpu_worker_powc",
+        "worker_hhc_sim": "0.000",
+        "worker_milli": 0
+      },
+      "kind": "settlement",
+      "prev_hash": "38354e55b5ab4524609a74b45304921d0082e560f51623e7a4a8dfa542242b9a",
+      "receipt_hash": "7cadfcb0eb76732932ea6a46ce320129964c6b2f676e016b1dc5301e42b97311",
+      "seq": 14
+    },
+    {
+      "body": {
+        "bounty_id": "bty_probe",
+        "content_sha256": "a48f7364cfc3c3f70fc36749fe44a22c5330f32e43a9f27d81db32f624325bc0",
+        "price_hhc_sim": "0.007",
+        "price_milli": 7,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "text": "Rounding probe. Price is 7 milli-HHC-SIM so the 90/5/5 integer split leaves a remainder.",
+        "unit": "HHC-SIM"
+      },
+      "kind": "bounty_posted",
+      "prev_hash": "7cadfcb0eb76732932ea6a46ce320129964c6b2f676e016b1dc5301e42b97311",
+      "receipt_hash": "31d9fcff4e8fcd12f01bb03662a06b051c55406e6bb90c7e78954ae78f6a517b",
+      "seq": 15
+    },
+    {
+      "body": {
+        "bounty_id": "bty_probe",
+        "claimant": "agent_gpu_worker_powc",
+        "lease_ticks": 30,
+        "tick": 300,
+        "until_tick": 330
+      },
+      "kind": "lease_claimed",
+      "prev_hash": "31d9fcff4e8fcd12f01bb03662a06b051c55406e6bb90c7e78954ae78f6a517b",
+      "receipt_hash": "8b6deeeaa7c34eb461093d9960db9acef1d46aa583e7f63b634b8aaa587c46f7",
+      "seq": 16
+    },
+    {
+      "body": {
+        "bounty_id": "bty_probe",
+        "tick": 301,
+        "verdict": "pass",
+        "verifier": "agent_verifier_a_powc"
+      },
+      "kind": "verdict",
+      "prev_hash": "8b6deeeaa7c34eb461093d9960db9acef1d46aa583e7f63b634b8aaa587c46f7",
+      "receipt_hash": "885e32a211ca859fcc4b932e5894b7e8ef484a48c7023405477dcb78badfc96f",
+      "seq": 17
+    },
+    {
+      "body": {
+        "bounty_id": "bty_probe",
+        "tick": 302,
+        "verdict": "pass",
+        "verifier": "agent_verifier_b_powc"
+      },
+      "kind": "verdict",
+      "prev_hash": "885e32a211ca859fcc4b932e5894b7e8ef484a48c7023405477dcb78badfc96f",
+      "receipt_hash": "1963d8c679e54017b968ee9d1df6407148acfc53a1bfb176a6f4c7f505bb251e",
+      "seq": 18
+    },
+    {
+      "body": {
+        "bounty_id": "bty_probe",
+        "price_hhc_sim": "0.007",
+        "price_milli": 7,
+        "promotion": "HOLD",
+        "publisher": "agent_publisher_powc",
+        "publisher_hhc_sim": "0.001",
+        "publisher_milli": 1,
+        "remainder_milli": 1,
+        "state": "TERMINAL_PAID",
+        "tick": 303,
+        "unit": "HHC-SIM",
+        "verdicts": [
+          {
+            "verdict": "pass",
+            "verifier": "agent_verifier_a_powc"
+          },
+          {
+            "verdict": "pass",
+            "verifier": "agent_verifier_b_powc"
+          }
+        ],
+        "verifier_a": "agent_verifier_a_powc",
+        "verifier_a_hhc_sim": "0.000",
+        "verifier_a_milli": 0,
+        "verifier_b": "agent_verifier_b_powc",
+        "verifier_b_hhc_sim": "0.000",
+        "verifier_b_milli": 0,
+        "worker": "agent_gpu_worker_powc",
+        "worker_hhc_sim": "0.006",
+        "worker_milli": 6
+      },
+      "kind": "settlement",
+      "prev_hash": "1963d8c679e54017b968ee9d1df6407148acfc53a1bfb176a6f4c7f505bb251e",
+      "receipt_hash": "195381c9c68d4ecb002663d5ee69cc0283e8ac05b1af5598923352cdb416256b",
+      "seq": 19
+    }
+  ],
+  "schema": "powc-receipt-chain-v1",
+  "unit": "HHC-SIM"
+}
