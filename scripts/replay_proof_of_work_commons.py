@@ -7,6 +7,8 @@ From a clean checkout, with MOLTBOOK_TEST_DSN pointing at a disposable server:
 
 The script creates and drops database moltbook_pow_commons. It does not talk
 to project ecenvlwyenpakrxfuqup, and it does not mint or call a chain.
+The public-key verifier reads an exported JSON file and does not open this
+database.
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import uuid
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
@@ -30,7 +33,9 @@ from moltbook.ledger.backend import merkle_root, verify_envelope
 FIXTURE = ROOT / "supabase/tests/fixtures/00_pre_human_baseline.sql"
 HUMAN = ROOT / "supabase/migrations/20261024143000_moltbook_human_actors.sql"
 BOUNTY = ROOT / "supabase/migrations/20261024160000_moltbook_bounty_escrow.sql"
+HARDENING = ROOT / "supabase/migrations/20261024173000_moltbook_pow_hardening.sql"
 MANIFEST = ROOT / "manifests/proof-of-work-commons.json"
+VERIFIER = ROOT / "scripts/verify_proof_of_work_receipts.py"
 TOKEN = "hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 DB_NAME = "moltbook_pow_commons"
 
@@ -97,6 +102,106 @@ def create_human(conn, email):
     return uid
 
 
+def claim_and_submit(conn, work_id, content):
+    posted = conn.execute(
+        """
+        select * from public.cp8_moltbook_agent_post(
+          %s, 'cp8-ops', %s, 'post', null, null, null, 'OBSERVED', null
+        )
+        """,
+        (TOKEN, content),
+    ).fetchone()
+    claim = conn.execute(
+        "select * from public.cp8_moltbook_worker_claim(%s, %s, 15)",
+        (TOKEN, work_id),
+    ).fetchone()
+    require(claim["claim_generation"] and claim["lease_token"], "claim did not return a fence")
+    conn.execute(
+        """
+        select * from public.cp8_moltbook_worker_complete(
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """,
+        (
+            TOKEN,
+            work_id,
+            posted["post_id"],
+            posted["content_hash"],
+            claim["claim_generation"],
+            claim["lease_token"],
+            claim["model_digest"],
+            claim["tokenizer_digest"],
+            claim["quantization_digest"],
+            claim["engine_version"],
+            claim["verification_tier"],
+        ),
+    )
+    return posted, claim
+
+
+def _secret_key(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            lowered = str(key).lower()
+            if "seed" in lowered or lowered.endswith("secret") or lowered == "private_key":
+                return True
+            if _secret_key(item):
+                return True
+    elif isinstance(value, list):
+        return any(_secret_key(item) for item in value)
+    return False
+
+
+def verify_public_bundle(conn):
+    keys = conn.execute(
+        """
+        select key_id, scheme, encode(public_key, 'hex') as public_key_hex,
+               simulated_label, rotated_at, revoked_at
+        from public.cp8_moltbook_receipt_keys
+        where scheme = 'ed25519'
+        order by created_at, key_id
+        """
+    ).fetchall()
+    receipts = conn.execute(
+        """
+        select receipt_hash, prev_receipt_hash, kind, hmac_mode, statement_json,
+               envelope_json, attribution_key_id, attribution_envelope, attribution_payload
+        from public.cp8_moltbook_receipt_chain
+        order by created_at, receipt_hash
+        """
+    ).fetchall()
+    bundle = {
+        "public_keys": [
+            {
+                "key_id": row["key_id"],
+                "scheme": row["scheme"],
+                "public_key_hex": row["public_key_hex"],
+                "simulated_label": row["simulated_label"],
+                "rotated_at": row["rotated_at"].isoformat() if row["rotated_at"] else None,
+                "revoked_at": row["revoked_at"].isoformat() if row["revoked_at"] else None,
+            }
+            for row in keys
+        ],
+        "receipts": [dict(row) for row in receipts],
+    }
+    encoded = json.dumps(bundle)
+    require(not _secret_key(bundle), "export included a secret field")
+    handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    handle.write(encoded)
+    handle.close()
+    try:
+        checked = subprocess.run(
+            [sys.executable, str(VERIFIER), handle.name],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    finally:
+        os.unlink(handle.name)
+    require(checked.returncode == 0, checked.stderr or checked.stdout)
+    return json.loads(checked.stdout)
+
+
 def run_cycle(conn):
     poster = create_human(conn, "poster@example.com")
     left = create_human(conn, "verifier-left@example.com")
@@ -114,20 +219,9 @@ def run_cycle(conn):
     require(opened["worker_minor"] == 2700 and opened["pool_minor"] == 300, opened)
 
     as_service(conn)
-    posted = conn.execute(
-        """
-        select * from public.cp8_moltbook_agent_post(
-          %s, 'cp8-ops', 'commons result', 'post', null, null, null, 'OBSERVED', null
-        )
-        """,
-        (TOKEN,),
-    ).fetchone()
+    posted, claim = claim_and_submit(conn, opened["work_id"], "commons result")
     require(posted["promotion"] == "HOLD", "agent execution must stay HOLD")
-    conn.execute("select * from public.cp8_moltbook_worker_claim(%s, %s, 15)", (TOKEN, opened["work_id"]))
-    conn.execute(
-        "select * from public.cp8_moltbook_worker_complete(%s, %s, %s, %s)",
-        (TOKEN, opened["work_id"], posted["post_id"], posted["content_hash"]),
-    )
+    require(claim["verification_tier"] == "toploc-stub", claim["verification_tier"])
 
     as_human(conn, left)
     first = conn.execute(
@@ -209,6 +303,32 @@ def run_cycle(conn):
     as_service(conn)
     root = conn.execute("select public.cp8_moltbook_ledger_anchor() as root").fetchone()["root"]
     require(root == merkle_root([row["receipt_hash"] for row in chain]), "merkle root drifted")
+    reset(conn)
+    operators = conn.execute(
+        """
+        select count(distinct e.operator_id) as n
+        from public.cp8_moltbook_bounty_verdicts v
+        join public.cp8_moltbook_verifier_eligibility e
+          on e.revoked_at is null
+         and e.verifier_human_id = v.verifier_human_id
+        where v.bounty_id = %s and v.passed
+        """,
+        (opened["bounty_id"],),
+    ).fetchone()["n"]
+    require(operators == 2, f"expected two operators, saw {operators}")
+    public_check = verify_public_bundle(conn)
+    require(public_check["ok"] is True, public_check)
+    conn.execute("savepoint stale")
+    try:
+        conn.execute(
+            "select public.cp8_moltbook_worker_heartbeat(%s, %s, %s, %s)",
+            (TOKEN, opened["work_id"], 4, "stale-token"),
+        )
+    except psycopg.Error as exc:
+        conn.execute("rollback to savepoint stale")
+        require("stale_lease" in str(exc), str(exc))
+    else:
+        raise ReplayFailure("stale lease was accepted")
 
     # A failing verdict voids the pending transfer. No second settlement receipt.
     as_human(conn, poster)
@@ -220,19 +340,7 @@ def run_cycle(conn):
         """
     ).fetchone()["bounty"]
     as_service(conn)
-    bad = conn.execute(
-        """
-        select * from public.cp8_moltbook_agent_post(
-          %s, 'cp8-ops', 'bad result', 'post', null, null, null, 'OBSERVED', null
-        )
-        """,
-        (TOKEN,),
-    ).fetchone()
-    conn.execute("select * from public.cp8_moltbook_worker_claim(%s, %s, 15)", (TOKEN, failed_open["work_id"]))
-    conn.execute(
-        "select * from public.cp8_moltbook_worker_complete(%s, %s, %s, %s)",
-        (TOKEN, failed_open["work_id"], bad["post_id"], bad["content_hash"]),
-    )
+    bad, _bad_claim = claim_and_submit(conn, failed_open["work_id"], "bad result")
     as_human(conn, left)
     rejected = conn.execute(
         "select public.cp8_moltbook_bounty_file_verdict(%s, false, 'no') as verdict",
@@ -286,8 +394,17 @@ def check_manifest(conn):
     require(manifest["ledger_backend"] == "simulated", manifest["ledger_backend"])
     require(manifest["onchain_enabled"] is False, "manifest says the chain is on")
     require(manifest["simulated_vs_deployed"], "missing simulated vs deployed table")
+    require([gate["gate"] for gate in manifest["launch_gates"]] == list(range(1, 14)), "launch gates")
+    require(manifest["receipt"]["hmac_mode"] == "SIMULATED", "HMAC mode")
+    require(manifest["receipt"]["attribution_scheme"] == "ed25519", "attribution scheme")
+    require(manifest["verifier_script"] == "scripts/verify_proof_of_work_receipts.py", "verifier script")
+    require((ROOT / manifest["verifier_script"]).is_file(), "verifier script missing")
+    require(manifest["verifier_independence"]["failure"] == "verifier_independence_failed", "independence")
+    require(manifest["lease_fence"]["stale_error"] == "stale_lease", "fence")
+    require(manifest["job_manifest"]["toploc_executed"] is False, "TOPLOC stub")
+    require(manifest["exactly_once"]["idempotency_scope"] == "bounty_settle", "idempotency")
     licenses = " ".join(json.dumps(item) for item in manifest["sources"])
-    for name in ("TigerBeetle", "Apache-2.0", "Algora", "AGPL-3.0", "in-toto", "DSSE", "Supabase"):
+    for name in ("TigerBeetle", "Apache-2.0", "Algora", "AGPL-3.0", "in-toto", "DSSE", "Supabase", "RFC 8032", "2501.16007"):
         require(name in licenses or name in json.dumps(manifest["sources"]), f"source citation missing {name}")
     backend = conn.execute(
         "select backend from public.cp8_moltbook_ledger_backends where active"
@@ -306,7 +423,7 @@ def main():
     admin.close()
     url = database_url(dsn, DB_NAME)
     try:
-        for path in (FIXTURE, HUMAN, BOUNTY):
+        for path in (FIXTURE, HUMAN, BOUNTY, HARDENING):
             psql(url, path)
         with psycopg.connect(url, row_factory=dict_row) as conn:
             manifest = check_manifest(conn)

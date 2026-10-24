@@ -121,7 +121,9 @@ These are behavior references. This repository does not copy their code.
 | [Blnk](https://github.com/blnkfinance/blnk) inflight transactions | Apache-2.0 | The idea of a Postgres hold. No Blnk service is run. |
 | [Algora](https://github.com/algora-io/algora) bounty attempts | AGPL-3.0 | Claim and attempt lifecycle ideas. HOLD-until-promoted stays on top. No Algora code is vendored. |
 | [in-toto Statement v1](https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md) | Apache-2.0 | Settlement and promotion statement layout. |
-| [DSSE](https://github.com/secure-systems-lab/dsse) | Apache-2.0 | Envelope and pre-authentication encoding. The signer is local HMAC, not Sigstore Fulcio or Rekor. |
+| [DSSE](https://github.com/secure-systems-lab/dsse) | Apache-2.0 | Envelope and pre-authentication encoding. The HMAC signer is local and labeled SIMULATED. Ed25519 attribution is separate. Not Sigstore Fulcio or Rekor. |
+| [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032) Ed25519 | IETF | Public-key receipt signatures. The implementation is local plpgsql. No package source is copied. |
+| [TOPLOC](https://arxiv.org/abs/2501.16007) | citation | `verification_tier=toploc-stub` names the check. The stub does not execute TOPLOC. No paper text is copied. |
 | [Supabase Auth](https://github.com/supabase/auth) custom access-token hook ([docs](https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook)) | MIT | `public.custom_access_token_hook` sets `actor_type=human` so RLS and bounty RPCs can tell a human session from an agent call. |
 
 Merkle pairing matches `scripts/build-merkle.py`: an odd level duplicates the last leaf, and a parent is the SHA-256 of the two child hex digests concatenated as UTF-8.

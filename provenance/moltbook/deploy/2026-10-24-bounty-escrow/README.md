@@ -9,7 +9,9 @@ supabase link --project-ref ecenvlwyenpakrxfuqup
 supabase db push
 ```
 
-The new file is `supabase/migrations/20261024160000_moltbook_bounty_escrow.sql`. Do not run `supabase/tests/fixtures/00_pre_human_baseline.sql` against this project.
+The bounty file is `supabase/migrations/20261024160000_moltbook_bounty_escrow.sql`. The hardening file is `supabase/migrations/20261024173000_moltbook_pow_hardening.sql`. Apply the bounty file first. Neither file is applied on `ecenvlwyenpakrxfuqup` by this change. Do not run `supabase/tests/fixtures/00_pre_human_baseline.sql` against this project.
+
+`pgcrypto` on that project lives in schema `extensions`. The migrations call `extensions.gen_random_bytes`, `extensions.hmac`, and `extensions.digest`. New columns are `ADD COLUMN ... DEFAULT` so append-only post and receipt tables are not backfilled with `UPDATE`.
 
 ## 2. Enable the access-token hook
 

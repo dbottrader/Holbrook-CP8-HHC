@@ -1,8 +1,9 @@
 """Ledger backends for a settled Moltbook bounty.
 
 The simulated backend is the default. It signs an in-toto Statement v1 inside a
-DSSE envelope (the Sigstore payload layout) with HMAC-SHA256. It does not call
-Fulcio, Rekor, or any chain, and it does not mint a token.
+DSSE envelope (the Sigstore payload layout) with HMAC-SHA256. That HMAC mode is
+labeled SIMULATED. Ed25519 attribution is checked with public keys only. This
+module does not call Fulcio, Rekor, or any chain, and it does not mint a token.
 
 The on-chain backend is a locked adapter. Constructing it is allowed so callers
 can see the interface; every method refuses before any network call.
@@ -26,6 +27,8 @@ from typing import Protocol
 PAYLOAD_TYPE = "application/vnd.in-toto+json"
 KEY_ID = "moltbook-simulated-receipt"
 SIGNATURE_SCHEME = "dsse-simulated-hmac-sha256"
+HMAC_MODE = "SIMULATED"
+ATTRIBUTION_SCHEME = "ed25519"
 PREDICATE_SETTLEMENT = (
     "https://github.com/dbottrader/Holbrook-CP8-HHC/moltbook/ledger/bounty-settlement/v1"
 )
@@ -230,6 +233,51 @@ def sign_envelope(statement_json: str, key: bytes) -> str:
         ],
     }
     return canonical_json(envelope)
+
+
+class ReceiptVerificationError(ValueError):
+    """An attributable receipt failed a public-key check."""
+
+
+def verify_ed25519_envelope(
+    envelope_json: str,
+    public_keys: dict[str, bytes],
+    revoked_key_ids: set[str] | None = None,
+) -> str:
+    """Verify one DSSE envelope with Ed25519 public keys. Return the key id.
+
+    Rotated keys verify when their public key is still in ``public_keys`` and
+    the id is not in ``revoked_key_ids``. A revoked id fails closed.
+    """
+
+    from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+    envelope = json.loads(envelope_json)
+    if envelope.get("payloadType") != PAYLOAD_TYPE:
+        raise ReceiptVerificationError("payload type")
+    signatures = envelope.get("signatures") or []
+    if len(signatures) != 1:
+        raise ReceiptVerificationError("signature count")
+    key_id = signatures[0].get("keyid")
+    if not isinstance(key_id, str) or not key_id:
+        raise ReceiptVerificationError("missing key id")
+    if revoked_key_ids and key_id in revoked_key_ids:
+        raise ReceiptVerificationError(f"revoked key {key_id}")
+    public = public_keys.get(key_id)
+    if public is None:
+        raise ReceiptVerificationError(f"unknown key {key_id}")
+    if len(public) != 32:
+        raise ReceiptVerificationError(f"public key length {key_id}")
+    payload = base64.b64decode(envelope["payload"])
+    signature = base64.b64decode(signatures[0]["sig"])
+    if len(signature) != 64:
+        raise ReceiptVerificationError("signature length")
+    try:
+        Ed25519PublicKey.from_public_bytes(public).verify(signature, pae(PAYLOAD_TYPE, payload))
+    except InvalidSignature as exc:
+        raise ReceiptVerificationError("ed25519 signature mismatch") from exc
+    return key_id
 
 
 def verify_envelope(envelope_json: str, key: bytes) -> bool:

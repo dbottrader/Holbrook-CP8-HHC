@@ -6,16 +6,21 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from moltbook.ledger.backend import (
+    HMAC_MODE,
     OnchainDisabled,
+    PAYLOAD_TYPE,
+    ReceiptVerificationError,
     canonical_json,
     eip712_preview,
     get_backend,
     merkle_root,
+    pae,
     settlement_statement,
     sha256_hex,
     sign_envelope,
     split_minor,
     verifier_payouts,
+    verify_ed25519_envelope,
     verify_envelope,
 )
 
@@ -85,3 +90,36 @@ def test_sign_envelope_is_deterministic():
     first = sign_envelope('{"a":1}', key)
     assert first == sign_envelope('{"a":1}', key)
     assert not verify_envelope(first, b"other")
+
+
+def test_hmac_mode_is_simulated_and_ed25519_uses_the_public_key_only():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    assert HMAC_MODE == "SIMULATED"
+    private = Ed25519PrivateKey.generate()
+    public = private.public_key().public_bytes(
+        serialization.Encoding.Raw,
+        serialization.PublicFormat.Raw,
+    )
+    payload = b'{"mode":"ATTRIBUTABLE","walletClass":"SIMULATED_ONLY_NO_MONETARY_AUTHORITY"}'
+    signature = private.sign(pae(PAYLOAD_TYPE, payload))
+    envelope = canonical_json({
+        "payload": __import__("base64").b64encode(payload).decode("ascii"),
+        "payloadType": PAYLOAD_TYPE,
+        "signatures": [{
+            "keyid": "moltbook-ed25519-test",
+            "sig": __import__("base64").b64encode(signature).decode("ascii"),
+        }],
+    })
+    assert verify_ed25519_envelope(envelope, {"moltbook-ed25519-test": public}) == "moltbook-ed25519-test"
+    try:
+        verify_ed25519_envelope(
+            envelope,
+            {"moltbook-ed25519-test": public},
+            revoked_key_ids={"moltbook-ed25519-test"},
+        )
+    except ReceiptVerificationError as exc:
+        assert "revoked key moltbook-ed25519-test" in str(exc)
+    else:
+        raise AssertionError("revoked key verified")

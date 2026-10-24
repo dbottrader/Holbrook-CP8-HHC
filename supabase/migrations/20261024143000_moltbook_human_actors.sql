@@ -9,6 +9,49 @@
 
 create extension if not exists pgcrypto;
 
+-- Live project ecenvlwyenpakrxfuqup keeps pgcrypto in the extensions schema.
+-- A local fixture installs it in public. Publish the same names in extensions
+-- without moving the extension, so qualified calls resolve in both places.
+create schema if not exists extensions;
+grant usage on schema extensions to public;
+
+do $cp8_pgcrypto_compat$
+begin
+  if to_regprocedure('extensions.gen_random_bytes(integer)') is null
+     and to_regprocedure('public.gen_random_bytes(integer)') is not null then
+    execute $fn$
+      create function extensions.gen_random_bytes(n integer)
+      returns bytea language sql immutable
+      as $body$ select public.gen_random_bytes(n) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.hmac(bytea,bytea,text)') is null
+     and to_regprocedure('public.hmac(bytea,bytea,text)') is not null then
+    execute $fn$
+      create function extensions.hmac(data bytea, key bytea, type text)
+      returns bytea language sql immutable
+      as $body$ select public.hmac(data, key, type) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.digest(bytea,text)') is null
+     and to_regprocedure('public.digest(bytea,text)') is not null then
+    execute $fn$
+      create function extensions.digest(data bytea, type text)
+      returns bytea language sql immutable
+      as $body$ select public.digest(data, type) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.digest(text,text)') is null
+     and to_regprocedure('public.digest(text,text)') is not null then
+    execute $fn$
+      create function extensions.digest(data text, type text)
+      returns bytea language sql immutable
+      as $body$ select public.digest(data, type) $body$
+    $fn$;
+  end if;
+end
+$cp8_pgcrypto_compat$;
+
 do $$
 begin
   if to_regclass('auth.users') is null then
@@ -27,7 +70,7 @@ language sql
 immutable
 set search_path to 'pg_catalog', 'public', 'extensions'
 as $$
-  select encode(digest(convert_to(coalesce(p_text, ''), 'utf8'), 'sha256'), 'hex');
+  select encode(extensions.digest(convert_to(coalesce(p_text, ''), 'utf8'), 'sha256'), 'hex');
 $$;
 
 create table if not exists public.cp8_moltbook_human_profiles (
@@ -222,19 +265,11 @@ create trigger cp8_moltbook_sync_human_handle
   for each row
   execute function public.cp8_moltbook_sync_human_handle();
 
+-- Constant DEFAULT fills existing rows without an UPDATE, so an append-only
+-- trigger on cp8_moltbook_posts does not have to be disabled.
 alter table public.cp8_moltbook_posts
-  add column if not exists author_kind text,
+  add column if not exists author_kind text not null default 'agent',
   add column if not exists author_human_id uuid;
-
-alter table public.cp8_moltbook_posts
-  alter column author_kind set default 'agent';
-
-update public.cp8_moltbook_posts
-set author_kind = 'agent'
-where author_kind is null;
-
-alter table public.cp8_moltbook_posts
-  alter column author_kind set not null;
 
 alter table public.cp8_moltbook_posts
   alter column author_agent_id drop not null;
@@ -263,19 +298,11 @@ begin
     );
 end $$;
 
+-- Constant DEFAULT fills existing rows without an UPDATE, so an append-only
+-- trigger on cp8_moltbook_receipts does not have to be disabled.
 alter table public.cp8_moltbook_receipts
-  add column if not exists actor_kind text,
+  add column if not exists actor_kind text not null default 'agent',
   add column if not exists actor_human_id uuid;
-
-alter table public.cp8_moltbook_receipts
-  alter column actor_kind set default 'agent';
-
-update public.cp8_moltbook_receipts
-set actor_kind = 'agent'
-where actor_kind is null;
-
-alter table public.cp8_moltbook_receipts
-  alter column actor_kind set not null;
 
 alter table public.cp8_moltbook_receipts
   alter column actor_agent_id drop not null;

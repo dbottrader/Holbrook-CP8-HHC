@@ -1,8 +1,9 @@
 """Build 2 launch gates for the simulated bounty escrow.
 
-Applies the pre-human fixture, the human-actor migration, then the bounty
-migration. Skips when MOLTBOOK_TEST_DSN is unset so the package job can collect
-this file. The Moltbook CI job always sets the DSN.
+Applies the pre-human fixture, the human-actor migration, the bounty
+migration, and the Proof-of-Work hardening migration. Skips when
+MOLTBOOK_TEST_DSN is unset so the package job can collect this file. The
+Moltbook CI job always sets the DSN.
 """
 
 import hashlib
@@ -10,6 +11,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import threading
 import uuid
 from pathlib import Path
@@ -39,6 +41,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "supabase/tests/fixtures/00_pre_human_baseline.sql"
 HUMAN = ROOT / "supabase/migrations/20261024143000_moltbook_human_actors.sql"
 BOUNTY = ROOT / "supabase/migrations/20261024160000_moltbook_bounty_escrow.sql"
+HARDENING = ROOT / "supabase/migrations/20261024173000_moltbook_pow_hardening.sql"
+VERIFIER = ROOT / "scripts/verify_proof_of_work_receipts.py"
 TOKEN = "hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 AGENT_ID = "e393fc58-b1a5-4e50-a2aa-4d661f336e4c"
 
@@ -58,7 +62,7 @@ def database_url():
     admin.execute("CREATE DATABASE moltbook_bounty_gates")
     admin.close()
     url = _database_url("moltbook_bounty_gates")
-    for path in (FIXTURE, HUMAN, BOUNTY):
+    for path in (FIXTURE, HUMAN, BOUNTY, HARDENING):
         applied = subprocess.run(
             ["psql", url, "-v", "ON_ERROR_STOP=1", "-q", "-f", str(path)],
             check=False,
@@ -137,7 +141,7 @@ def add_agent(conn, handle):
     conn.execute(
         """
         insert into private.cp8_agent_tokens (agent_id, token_hash)
-        values (%s, encode(digest(%s, 'sha256'), 'hex'))
+        values (%s, encode(extensions.digest(%s, 'sha256'), 'hex'))
         """,
         (agent_id, token),
     )
@@ -163,6 +167,48 @@ def fund(conn, uid, price=3000, title="Paid task"):
     ).fetchone()["j"]
 
 
+def claim_work(conn, work_id, token=TOKEN):
+    as_service(conn)
+    return conn.execute(
+        "select * from public.cp8_moltbook_worker_claim(%s, %s, 15)",
+        (token, work_id),
+    ).fetchone()
+
+
+def complete_work(conn, work_id, posted, claim, token=TOKEN, **overrides):
+    fields = {
+        "claim_generation": claim["claim_generation"],
+        "lease_token": claim["lease_token"],
+        "model_digest": claim["model_digest"],
+        "tokenizer_digest": claim["tokenizer_digest"],
+        "quantization_digest": claim["quantization_digest"],
+        "engine_version": claim["engine_version"],
+        "verification_tier": claim["verification_tier"],
+    }
+    fields.update(overrides)
+    as_service(conn)
+    return conn.execute(
+        """
+        select * from public.cp8_moltbook_worker_complete(
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """,
+        (
+            token,
+            work_id,
+            posted["post_id"],
+            posted["content_hash"],
+            fields["claim_generation"],
+            fields["lease_token"],
+            fields["model_digest"],
+            fields["tokenizer_digest"],
+            fields["quantization_digest"],
+            fields["engine_version"],
+            fields["verification_tier"],
+        ),
+    ).fetchone()
+
+
 def submit(conn, work_id, token=TOKEN, content="agent result"):
     as_service(conn)
     posted = conn.execute(
@@ -173,15 +219,75 @@ def submit(conn, work_id, token=TOKEN, content="agent result"):
         """,
         (token, content),
     ).fetchone()
-    conn.execute(
-        "select * from public.cp8_moltbook_worker_claim(%s, %s, 15)",
-        (token, work_id),
-    )
-    conn.execute(
-        "select * from public.cp8_moltbook_worker_complete(%s, %s, %s, %s)",
-        (token, work_id, posted["post_id"], posted["content_hash"]),
-    )
+    claim = claim_work(conn, work_id, token)
+    complete_work(conn, work_id, posted, claim, token)
     return posted
+
+
+def receipt_bundle(conn):
+    keys = conn.execute(
+        """
+        select key_id, scheme, encode(public_key, 'hex') as public_key_hex,
+               simulated_label, rotated_at, revoked_at
+        from public.cp8_moltbook_receipt_keys
+        where scheme = 'ed25519'
+        order by created_at, key_id
+        """
+    ).fetchall()
+    receipts = conn.execute(
+        """
+        select receipt_hash, prev_receipt_hash, kind, hmac_mode, statement_json,
+               envelope_json, attribution_scheme, attribution_key_id,
+               attribution_envelope, attribution_payload
+        from public.cp8_moltbook_receipt_chain
+        order by created_at, receipt_hash
+        """
+    ).fetchall()
+
+    def stamp(value):
+        return value.isoformat() if value is not None else None
+
+    return {
+        "public_keys": [
+            {
+                "key_id": row["key_id"],
+                "scheme": row["scheme"],
+                "public_key_hex": row["public_key_hex"],
+                "simulated_label": row["simulated_label"],
+                "rotated_at": stamp(row["rotated_at"]),
+                "revoked_at": stamp(row["revoked_at"]),
+            }
+            for row in keys
+        ],
+        "receipts": [
+            {
+                "receipt_hash": row["receipt_hash"],
+                "prev_receipt_hash": row["prev_receipt_hash"],
+                "kind": row["kind"],
+                "hmac_mode": row["hmac_mode"],
+                "statement_json": row["statement_json"],
+                "envelope_json": row["envelope_json"],
+                "attribution_scheme": row["attribution_scheme"],
+                "attribution_key_id": row["attribution_key_id"],
+                "attribution_envelope": row["attribution_envelope"],
+                "attribution_payload": row["attribution_payload"],
+            }
+            for row in receipts
+        ],
+    }
+
+
+def run_verifier(bundle):
+    handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    json.dump(bundle, handle)
+    handle.close()
+    checked = subprocess.run(
+        [sys.executable, str(VERIFIER), handle.name],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return checked
 
 
 def balances_sum_to_zero(conn):
@@ -214,7 +320,9 @@ def test_gate_1_role_spoofing_rejected_both_ways(conn):
     conn.execute("rollback to savepoint gate")
 
     reset(conn)
-    conn.execute("grant execute on function public.cp8_moltbook_human_open_bounty(text, text, text, bigint) to service_role")
+    conn.execute(
+        "grant execute on function public.cp8_moltbook_human_open_bounty(text, text, text, bigint, text, text, text, text, text) to service_role"
+    )
     conn.execute("grant execute on function public.cp8_moltbook_bounty_promote(uuid) to service_role")
     as_service(conn)
     expect(
@@ -458,6 +566,16 @@ def test_gate_4_concurrent_claims_have_one_winner(conn, database_url):
     assert results[0] in {"ace", "bobgate4"}
     assert bob is not None
 
+    reset(conn)
+    fence = conn.execute(
+        """
+        select claim_generation, active_lease_token, model_digest, tokenizer_digest,
+               quantization_digest, engine_version, verification_tier
+        from public.cp8_moltbook_bounties
+        where bounty_id = %s
+        """,
+        (opened["bounty_id"],),
+    ).fetchone()
     as_service(conn)
     winner = TOKEN if results[0] == "ace" else bob_token
     posted = conn.execute(
@@ -475,8 +593,24 @@ def test_gate_4_concurrent_claims_have_one_winner(conn, database_url):
     expect(
         conn,
         "claim_lease_expired",
-        "select * from public.cp8_moltbook_worker_complete(%s, %s, %s, %s)",
-        (winner, opened["work_id"], posted["post_id"], posted["content_hash"]),
+        """
+        select * from public.cp8_moltbook_worker_complete(
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """,
+        (
+            winner,
+            opened["work_id"],
+            posted["post_id"],
+            posted["content_hash"],
+            fence["claim_generation"],
+            fence["active_lease_token"],
+            fence["model_digest"],
+            fence["tokenizer_digest"],
+            fence["quantization_digest"],
+            fence["engine_version"],
+            fence["verification_tier"],
+        ),
     )
     swept = conn.execute("select public.cp8_moltbook_bounty_sweep_expiry() as n").fetchone()["n"]
     assert swept >= 1
@@ -887,3 +1021,487 @@ def test_gate_8_timeout_disagreement_cancel_and_failed_settlement(conn):
     ]
     assert root == merkle_root(leaves)
     balances_sum_to_zero(conn)
+
+
+def test_gate_9_shared_operator_and_revoked_credential_cannot_settle(conn):
+    poster = create_human(conn, "gate9-poster@example.com")
+    left = create_human(conn, "gate9-left@example.com")
+    right = create_human(conn, "gate9-right@example.com")
+    left_id = conn.execute(
+        "select human_id from public.cp8_moltbook_human_profiles where auth_user_id = %s",
+        (left,),
+    ).fetchone()["human_id"]
+    right_id = conn.execute(
+        "select human_id from public.cp8_moltbook_human_profiles where auth_user_id = %s",
+        (right,),
+    ).fetchone()["human_id"]
+    shared = uuid.uuid4()
+    as_service(conn)
+    conn.execute(
+        "select public.cp8_moltbook_verifier_set_operator(%s, %s)",
+        (left_id, shared),
+    )
+    conn.execute(
+        "select public.cp8_moltbook_verifier_set_operator(%s, %s)",
+        (right_id, shared),
+    )
+    opened = fund(conn, poster, 3000, "Shared operator")
+    submit(conn, opened["work_id"], content="shared operator artifact")
+    as_human(conn, left)
+    first = conn.execute(
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'one operator') as j",
+        (opened["bounty_id"],),
+    ).fetchone()["j"]
+    assert first["status"] == "VERIFYING"
+    as_human(conn, right)
+    expect(
+        conn,
+        "verifier_independence_failed",
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'same operator')",
+        (opened["bounty_id"],),
+    )
+    reset(conn)
+    assert conn.execute(
+        "select status from public.cp8_moltbook_bounties where bounty_id = %s",
+        (opened["bounty_id"],),
+    ).fetchone()["status"] == "VERIFYING"
+    assert conn.execute(
+        "select count(*) as n from public.cp8_moltbook_bounty_verdicts where bounty_id = %s",
+        (opened["bounty_id"],),
+    ).fetchone()["n"] == 1
+    assert conn.execute(
+        "select count(*) as n from public.cp8_moltbook_bounty_settlements where bounty_id = %s",
+        (opened["bounty_id"],),
+    ).fetchone()["n"] == 0
+
+    revoked_poster = create_human(conn, "gate9-revoked-poster@example.com")
+    valid = create_human(conn, "gate9-valid@example.com")
+    blocked = create_human(conn, "gate9-blocked@example.com")
+    blocked_id = conn.execute(
+        "select human_id from public.cp8_moltbook_human_profiles where auth_user_id = %s",
+        (blocked,),
+    ).fetchone()["human_id"]
+    as_service(conn)
+    conn.execute("select public.cp8_moltbook_verifier_revoke(%s)", (blocked_id,))
+    revoked_bounty = fund(conn, revoked_poster, 3000, "Revoked credential")
+    submit(conn, revoked_bounty["work_id"], content="revoked credential artifact")
+    as_human(conn, valid)
+    conn.execute(
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'backed')",
+        (revoked_bounty["bounty_id"],),
+    )
+    as_human(conn, blocked)
+    expect(
+        conn,
+        "verifier_independence_failed",
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'revoked')",
+        (revoked_bounty["bounty_id"],),
+    )
+    reset(conn)
+    assert conn.execute(
+        "select status from public.cp8_moltbook_bounties where bounty_id = %s",
+        (revoked_bounty["bounty_id"],),
+    ).fetchone()["status"] == "VERIFYING"
+    assert conn.execute(
+        "select count(*) as n from public.cp8_moltbook_bounty_settlements where bounty_id = %s",
+        (revoked_bounty["bounty_id"],),
+    ).fetchone()["n"] == 0
+
+
+def _settle_pair(conn, poster, title):
+    left = create_human(conn, title + "-a@example.com")
+    right = create_human(conn, title + "-b@example.com")
+    opened = fund(conn, poster, 3000, title)
+    posted = submit(conn, opened["work_id"], content=title + " artifact")
+    as_human(conn, left)
+    conn.execute("select public.cp8_moltbook_bounty_file_verdict(%s, true, 'a')", (opened["bounty_id"],))
+    as_human(conn, right)
+    settled = conn.execute(
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'b') as j",
+        (opened["bounty_id"],),
+    ).fetchone()["j"]
+    return opened, posted, settled
+
+
+def test_gate_10_ed25519_receipts_verify_with_public_keys_only(conn):
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+    poster = create_human(conn, "gate10-poster@example.com")
+    opened, _posted, settled = _settle_pair(conn, poster, "Gate 10 first")
+    reset(conn)
+    row = conn.execute(
+        """
+        select hmac_mode, attribution_scheme, attribution_key_id
+        from public.cp8_moltbook_receipt_chain
+        where settlement_id = %s and kind = 'settlement'
+        """,
+        (settled["settlement_id"],),
+    ).fetchone()
+    assert row["hmac_mode"] == "SIMULATED"
+    assert row["attribution_scheme"] == "ed25519"
+    assert row["attribution_key_id"] == "moltbook-ed25519-1"
+    checked = run_verifier(receipt_bundle(conn))
+    assert checked.returncode == 0, checked.stderr
+
+    as_service(conn)
+    rotated = conn.execute("select public.cp8_moltbook_receipt_key_rotate() as key_id").fetchone()["key_id"]
+    assert rotated == "moltbook-ed25519-2"
+    _second, _posted2, second = _settle_pair(conn, poster, "Gate 10 second")
+    reset(conn)
+    second_key = conn.execute(
+        """
+        select attribution_key_id from public.cp8_moltbook_receipt_chain
+        where settlement_id = %s and kind = 'settlement'
+        """,
+        (second["settlement_id"],),
+    ).fetchone()["attribution_key_id"]
+    assert second_key == rotated
+    bundle = receipt_bundle(conn)
+    assert "\"seed\"" not in json.dumps(bundle)
+    checked = run_verifier(bundle)
+    assert checked.returncode == 0, checked.stderr
+    poisoned = json.loads(json.dumps(bundle))
+    poisoned["seed"] = "not-a-real-seed"
+    refused = run_verifier(poisoned)
+    assert refused.returncode != 0
+    assert "seed" in refused.stderr
+
+    reset(conn)
+    active = conn.execute(
+        """
+        select s.seed, k.public_key
+        from private.cp8_moltbook_receipt_signing_keys s
+        join public.cp8_moltbook_receipt_keys k on k.key_id = s.key_id
+        where k.scheme = 'ed25519' and k.revoked_at is null and k.rotated_at is null
+        """
+    ).fetchone()
+    message = b"pow-commons-ed25519"
+    signature = conn.execute(
+        "select public.cp8_moltbook_ed25519_sign(%s, %s, %s) as sig",
+        (active["seed"], message, active["public_key"]),
+    ).fetchone()["sig"]
+    Ed25519PublicKey.from_public_bytes(bytes(active["public_key"])).verify(bytes(signature), message)
+
+    as_service(conn)
+    conn.execute("select public.cp8_moltbook_receipt_key_revoke(%s)", ("moltbook-ed25519-1",))
+    reset(conn)
+    revoked = run_verifier(receipt_bundle(conn))
+    assert revoked.returncode != 0
+    assert "revoked key moltbook-ed25519-1" in revoked.stderr
+    assert opened["bounty_id"] != _second["bounty_id"]
+
+
+def test_gate_11_stale_generation_is_fenced_after_a_later_settlement(conn):
+    poster = create_human(conn, "gate11-poster@example.com")
+    left = create_human(conn, "gate11-left@example.com")
+    right = create_human(conn, "gate11-right@example.com")
+    opened = fund(conn, poster, 3000, "Fenced lease")
+    stale = None
+    for expected in range(1, 5):
+        claim = claim_work(conn, opened["work_id"])
+        assert claim["claim_generation"] == expected
+        if expected == 4:
+            stale = claim
+        as_service(conn)
+        conn.execute(
+            "select public.cp8_moltbook_bounty_set_deadlines(%s, clock_timestamp() - interval '1 minute', null, null)",
+            (opened["bounty_id"],),
+        )
+        swept = conn.execute("select public.cp8_moltbook_bounty_sweep_expiry() as n").fetchone()["n"]
+        assert swept >= 1
+        reset(conn)
+        reopened = conn.execute(
+            """
+            select status, claim_generation, active_lease_token
+            from public.cp8_moltbook_bounties where bounty_id = %s
+            """,
+            (opened["bounty_id"],),
+        ).fetchone()
+        assert reopened["status"] == "OPEN"
+        assert reopened["claim_generation"] == expected
+        assert reopened["active_lease_token"] == ""
+    assert stale is not None
+    assert stale["claim_generation"] == 4
+
+    as_service(conn)
+    posted = conn.execute(
+        """
+        select * from public.cp8_moltbook_agent_post(
+          %s, 'cp8-ops', 'generation five', 'post', null, null, null, 'OBSERVED', null
+        )
+        """,
+        (TOKEN,),
+    ).fetchone()
+    current = claim_work(conn, opened["work_id"])
+    assert current["claim_generation"] == 5
+    complete_work(conn, opened["work_id"], posted, current)
+    as_human(conn, left)
+    conn.execute("select public.cp8_moltbook_bounty_file_verdict(%s, true, 'a')", (opened["bounty_id"],))
+    as_human(conn, right)
+    settled = conn.execute(
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'b') as j",
+        (opened["bounty_id"],),
+    ).fetchone()["j"]
+    assert settled["replayed"] is False
+
+    as_service(conn)
+    expect(
+        conn,
+        "stale_lease",
+        """
+        select * from public.cp8_moltbook_worker_complete(
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """,
+        (
+            TOKEN,
+            opened["work_id"],
+            posted["post_id"],
+            posted["content_hash"],
+            stale["claim_generation"],
+            stale["lease_token"],
+            current["model_digest"],
+            current["tokenizer_digest"],
+            current["quantization_digest"],
+            current["engine_version"],
+            current["verification_tier"],
+        ),
+    )
+    expect(
+        conn,
+        "stale_lease",
+        "select public.cp8_moltbook_worker_heartbeat(%s, %s, %s, %s)",
+        (TOKEN, opened["work_id"], stale["claim_generation"], stale["lease_token"]),
+    )
+    expect(
+        conn,
+        "stale_lease",
+        "select public.cp8_moltbook_worker_settle(%s, %s, %s, %s)",
+        (TOKEN, opened["work_id"], stale["claim_generation"], stale["lease_token"]),
+    )
+    reset(conn)
+    assert conn.execute(
+        "select status from public.cp8_moltbook_bounties where bounty_id = %s",
+        (opened["bounty_id"],),
+    ).fetchone()["status"] == "SETTLED"
+
+
+def test_gate_12_worker_must_echo_the_job_manifest(conn):
+    poster = create_human(conn, "gate12-poster@example.com")
+    as_human(conn, poster)
+    opened = conn.execute(
+        """
+        select public.cp8_moltbook_human_open_bounty(
+          'cp8-ops', 'Pinned job', 'Describe the verifiable result.', 3000,
+          'sha256:model', 'sha256:tokenizer', 'sha256:quant', 'engine-1.2.3', 'toploc-stub'
+        ) as j
+        """
+    ).fetchone()["j"]
+    assert opened["model_digest"] == "sha256:model"
+    assert opened["tokenizer_digest"] == "sha256:tokenizer"
+    assert opened["quantization_digest"] == "sha256:quant"
+    assert opened["engine_version"] == "engine-1.2.3"
+    assert opened["verification_tier"] == "toploc-stub"
+    as_service(conn)
+    posted = conn.execute(
+        """
+        select * from public.cp8_moltbook_agent_post(
+          %s, 'cp8-ops', 'pinned result', 'post', null, null, null, 'OBSERVED', null
+        )
+        """,
+        (TOKEN,),
+    ).fetchone()
+    claim = claim_work(conn, opened["work_id"])
+    expect(
+        conn,
+        "manifest_mismatch",
+        """
+        select * from public.cp8_moltbook_worker_complete(
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        """,
+        (
+            TOKEN,
+            opened["work_id"],
+            posted["post_id"],
+            posted["content_hash"],
+            claim["claim_generation"],
+            claim["lease_token"],
+            "sha256:wrong",
+            claim["tokenizer_digest"],
+            claim["quantization_digest"],
+            claim["engine_version"],
+            claim["verification_tier"],
+        ),
+    )
+    complete_work(conn, opened["work_id"], posted, claim)
+    reset(conn)
+    stored = conn.execute(
+        """
+        select b.verification_tier, b.model_digest, a.result_model_digest, a.result_verification_tier,
+               w.metadata
+        from public.cp8_moltbook_bounties b
+        join public.cp8_moltbook_bounty_attempts a on a.bounty_id = b.bounty_id
+        join public.cp8_moltbook_work_items w on w.work_id = b.work_id
+        where b.bounty_id = %s and a.status = 'submitted'
+        """,
+        (opened["bounty_id"],),
+    ).fetchone()
+    assert stored["verification_tier"] == "toploc-stub"
+    assert stored["model_digest"] == "sha256:model"
+    assert stored["result_model_digest"] == "sha256:model"
+    assert stored["result_verification_tier"] == "toploc-stub"
+    assert stored["metadata"]["verification_tier_note"] == (
+        "TOPLOC is not executed. toploc-stub records the tier only."
+    )
+    as_human(conn, poster)
+    expect(
+        conn,
+        "verification_tier_rejected",
+        """
+        select public.cp8_moltbook_human_open_bounty(
+          'cp8-ops', 'Bad tier', 'Describe the verifiable result.', 3000,
+          null, null, null, null, 'toploc'
+        )
+        """,
+    )
+
+
+def _wipe_committed(database_url, bounty_id, work_id, post_id, auth_ids, human_ids):
+    accounts = [f"human:{human_id}" for human_id in human_ids]
+    admin = psycopg.connect(database_url, autocommit=True)
+    try:
+        admin.execute("set session_replication_role = replica")
+        admin.execute("delete from public.cp8_moltbook_idempotency_keys where bounty_id = %s", (bounty_id,))
+        admin.execute("delete from public.cp8_moltbook_receipt_chain where bounty_id = %s", (bounty_id,))
+        admin.execute("delete from public.cp8_moltbook_bounty_events where bounty_id = %s", (bounty_id,))
+        admin.execute("delete from public.cp8_moltbook_bounty_verdicts where bounty_id = %s", (bounty_id,))
+        admin.execute("delete from public.cp8_moltbook_bounty_attempts where bounty_id = %s", (bounty_id,))
+        admin.execute("delete from public.cp8_moltbook_bounty_settlements where bounty_id = %s", (bounty_id,))
+        admin.execute(
+            """
+            delete from public.cp8_moltbook_transfers
+            where bounty_id = %s or credit_account = any(%s) or debit_account = any(%s)
+            """,
+            (bounty_id, accounts, accounts),
+        )
+        admin.execute("delete from public.cp8_moltbook_bounties where bounty_id = %s", (bounty_id,))
+        admin.execute("delete from public.cp8_moltbook_work_items where work_id = %s", (work_id,))
+        admin.execute("delete from public.cp8_moltbook_receipts where post_id = %s", (post_id,))
+        admin.execute("delete from public.cp8_moltbook_posts where post_id = %s", (post_id,))
+        admin.execute(
+            "delete from public.cp8_moltbook_verifier_eligibility where verifier_human_id = any(%s)",
+            (human_ids,),
+        )
+        admin.execute(
+            "delete from public.cp8_moltbook_identity_handles where human_id = any(%s)",
+            (human_ids,),
+        )
+        admin.execute(
+            "delete from public.cp8_moltbook_human_profiles where human_id = any(%s)",
+            (human_ids,),
+        )
+        admin.execute("delete from auth.users where id = any(%s)", (auth_ids,))
+        admin.execute("set session_replication_role = origin")
+    finally:
+        admin.close()
+
+
+def test_gate_13_retry_after_commit_settles_once(conn, database_url):
+    poster = create_human(conn, "gate13-poster@example.com")
+    left = create_human(conn, "gate13-left@example.com")
+    right = create_human(conn, "gate13-right@example.com")
+    auth_ids = [poster, left, right]
+    opened = fund(conn, poster, 3000, "Exactly once")
+    posted = submit(conn, opened["work_id"], content="exactly once artifact")
+    as_human(conn, left)
+    conn.execute("select public.cp8_moltbook_bounty_file_verdict(%s, true, 'a')", (opened["bounty_id"],))
+    as_human(conn, right)
+    settled = conn.execute(
+        "select public.cp8_moltbook_bounty_file_verdict(%s, true, 'b') as j",
+        (opened["bounty_id"],),
+    ).fetchone()["j"]
+    assert settled["replayed"] is False
+    reset(conn)
+    human_ids = [
+        row["human_id"]
+        for row in conn.execute(
+            "select human_id from public.cp8_moltbook_human_profiles where auth_user_id = any(%s)",
+            (auth_ids,),
+        ).fetchall()
+    ]
+    conn.commit()
+    try:
+        with psycopg.connect(database_url, row_factory=dict_row) as other:
+            replay = other.execute(
+                "select public.cp8_moltbook_bounty_settle(%s) as j",
+                (opened["bounty_id"],),
+            ).fetchone()["j"]
+            assert replay["replayed"] is True
+            assert replay["settlement_id"] == settled["settlement_id"]
+            assert other.execute(
+                "select count(*) as n from public.cp8_moltbook_bounty_settlements where bounty_id = %s",
+                (opened["bounty_id"],),
+            ).fetchone()["n"] == 1
+            assert other.execute(
+                """
+                select count(*) as n from public.cp8_moltbook_receipt_chain
+                where bounty_id = %s and kind = 'settlement'
+                """,
+                (opened["bounty_id"],),
+            ).fetchone()["n"] == 1
+            assert other.execute(
+                """
+                select count(*) as n from public.cp8_moltbook_idempotency_keys
+                where bounty_id = %s and scope = 'bounty_settle'
+                """,
+                (opened["bounty_id"],),
+            ).fetchone()["n"] == 1
+            posted_sum = other.execute(
+                """
+                select coalesce(sum(amount_minor), 0) as n
+                from public.cp8_moltbook_transfers
+                where bounty_id = %s and kind = 'post'
+                """,
+                (opened["bounty_id"],),
+            ).fetchone()["n"]
+            assert posted_sum == 3000
+            leg = other.execute(
+                """
+                select pending_transfer_id, code, credit_account, debit_account, amount_minor
+                from public.cp8_moltbook_transfers
+                where bounty_id = %s and kind = 'post'
+                limit 1
+                """,
+                (opened["bounty_id"],),
+            ).fetchone()
+            other.execute("select set_config('cp8.transfer_append', 'on', true)")
+            other.execute("savepoint dup")
+            with pytest.raises(psycopg.errors.UniqueViolation):
+                other.execute(
+                    """
+                    insert into public.cp8_moltbook_transfers (
+                      transfer_id, bounty_id, kind, pending_transfer_id, debit_account,
+                      credit_account, amount_minor, code, prev_hash, entry_hash
+                    ) values (%s, %s, 'post', %s, %s, %s, %s, %s, '', 'dup')
+                    """,
+                    (
+                        "post:dup:" + str(uuid.uuid4()),
+                        opened["bounty_id"],
+                        leg["pending_transfer_id"],
+                        leg["debit_account"],
+                        leg["credit_account"],
+                        leg["amount_minor"],
+                        leg["code"],
+                    ),
+                )
+            other.execute("rollback to savepoint dup")
+    finally:
+        _wipe_committed(
+            database_url,
+            opened["bounty_id"],
+            opened["work_id"],
+            posted["post_id"],
+            auth_ids,
+            human_ids,
+        )

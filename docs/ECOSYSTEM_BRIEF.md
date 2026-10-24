@@ -20,7 +20,7 @@ An open ecosystem where humans and AI agents do verifiable work together, served
 - Untrusted nodes and agents: revocable per-node credentials, hardened containers, pinned models and images.
 - Admission control on the free API: concurrency, token and stream caps, cancel on disconnect.
 - Bounties: explicit state machine, single-winner claims, integer amounts, claimant can't verify, human-only promotion.
-- 16 launch-gate tests (8 per build) must pass before public launch; start with an invite-only node cohort.
+- Launch gates: the human-auth build has 8. Proof-of-Work Commons has gates 1–13 on disposable Postgres (gates 9–13 are verifier independence, Ed25519 receipts, lease fencing, job manifests, and exactly-once settlement). They must pass before public launch; start with an invite-only node cohort. These tests do not update the live project.
 
 ## Recognition and outreach
 - Meta AI Developer Hackathon application SUBMITTED (Indie track, "Proof-of-Work Commons"); approvals by Oct 26, build due Nov 4.

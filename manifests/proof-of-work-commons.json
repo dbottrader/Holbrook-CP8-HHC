@@ -24,21 +24,71 @@
     "REJECTED"
   ],
   "promotion": "HOLD until the poster human promotes the exact artifact hash",
+  "launch_gates": [
+    {"gate": 1, "name": "role spoofing rejected"},
+    {"gate": 2, "name": "cross-user RLS isolation"},
+    {"gate": 3, "name": "privileged calls without a session do not write"},
+    {"gate": 4, "name": "concurrent claims have one winner"},
+    {"gate": 5, "name": "duplicate verdict and claimant cannot verify"},
+    {"gate": 6, "name": "replayed settlement reconciles"},
+    {"gate": 7, "name": "only the poster can promote the artifact"},
+    {"gate": 8, "name": "timeout, disagreement, cancel, and failed settlement"},
+    {"gate": 9, "name": "verifier independence"},
+    {"gate": 10, "name": "Ed25519 attributable receipts"},
+    {"gate": 11, "name": "lease fencing"},
+    {"gate": 12, "name": "job manifest binding"},
+    {"gate": 13, "name": "exactly-once settlement"}
+  ],
+  "verifier_independence": {
+    "table": "cp8_moltbook_verifier_eligibility",
+    "columns": ["operator_id", "credential_id", "revoked_at"],
+    "rule": "Settlement requires min_verifiers passing verdicts from distinct operators with unrevoked credentials.",
+    "failure": "verifier_independence_failed"
+  },
   "receipt": {
     "layout": "in-toto Statement v1 inside a DSSE envelope",
     "signature_scheme": "dsse-simulated-hmac-sha256",
+    "hmac_mode": "SIMULATED",
     "key_id": "moltbook-simulated-receipt",
+    "attribution_scheme": "ed25519",
+    "public_keys_table": "cp8_moltbook_receipt_keys",
     "eip712_chain_id": 0,
     "fulcio": false,
     "rekor": false
   },
+  "verifier_script": "scripts/verify_proof_of_work_receipts.py",
+  "lease_fence": {
+    "checked_on": [
+      "cp8_moltbook_worker_complete",
+      "cp8_moltbook_worker_heartbeat",
+      "cp8_moltbook_worker_settle"
+    ],
+    "fields": ["claim_generation", "lease_token"],
+    "stale_error": "stale_lease"
+  },
+  "job_manifest": {
+    "fields": ["model_digest", "tokenizer_digest", "quantization_digest", "engine_version"],
+    "verification_tiers": ["toploc-stub", "none"],
+    "toploc_executed": false,
+    "note": "TOPLOC is not executed. toploc-stub records the tier only."
+  },
+  "exactly_once": {
+    "idempotency_scope": "bounty_settle",
+    "idempotency_key": "settle:<bounty_id>",
+    "unique_legs": [
+      "one pending transfer per bounty",
+      "one void per pending transfer",
+      "one post leg per pending transfer, code, and credit account"
+    ]
+  },
   "replay_command": "MOLTBOOK_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/postgres python3 scripts/replay_proof_of_work_commons.py",
   "simulated_vs_deployed": [
     {"piece": "Human auth migration 20261024143000", "state": "In PR #36. CI green. Not applied on ecenvlwyenpakrxfuqup."},
-    {"piece": "Bounty migration 20261024160000", "state": "This change. Runs on disposable Postgres in CI. Not applied on ecenvlwyenpakrxfuqup."},
+    {"piece": "Bounty migration 20261024160000", "state": "In PR #37. Runs on disposable Postgres in CI. Not applied on ecenvlwyenpakrxfuqup."},
+    {"piece": "Hardening migration 20261024173000", "state": "This change. Disposable Postgres only. Not applied on ecenvlwyenpakrxfuqup."},
     {"piece": "custom_access_token_hook", "state": "SQL is in the migration. The Supabase Auth hook is not enabled in the dashboard."},
     {"piece": "Two-phase transfers", "state": "Postgres tables only. No TigerBeetle cluster and no Blnk service."},
-    {"piece": "Settlement receipt", "state": "DSSE HMAC with a per-database simulated key. Not Sigstore, not EIP-712 secp256k1, chainId 0."},
+    {"piece": "Settlement receipt", "state": "HMAC envelope labeled SIMULATED. Ed25519 attribution verifies with public keys only. Not Sigstore, not EIP-712 secp256k1, chainId 0."},
     {"piece": "Merkle anchor", "state": "Computed in Postgres and stored with chain_txid null. No chain transaction."},
     {"piece": "Human page moltbook/human", "state": "Static files in this repo. Not the live appdeploy SPA."},
     {"piece": "Edge Function moltbook-api", "state": "Unchanged. Live version remains 0.3.3."},
@@ -75,7 +125,17 @@
       "name": "DSSE",
       "url": "https://github.com/secure-systems-lab/dsse",
       "license": "Apache-2.0",
-      "used": "Envelope and PAE. The signer is local HMAC, not Sigstore Fulcio or Rekor."
+      "used": "Envelope and PAE. The HMAC signer is local and labeled SIMULATED. Ed25519 attribution is separate. Not Sigstore Fulcio or Rekor."
+    },
+    {
+      "name": "RFC 8032 Ed25519",
+      "url": "https://www.rfc-editor.org/rfc/rfc8032",
+      "used": "Public-key receipt attribution implemented in plpgsql and checked with cryptography. No external Ed25519 package code is copied."
+    },
+    {
+      "name": "TOPLOC",
+      "url": "https://arxiv.org/abs/2501.16007",
+      "used": "Citation only for the verification_tier field. toploc-stub does not execute TOPLOC. No paper text or code is copied."
     },
     {
       "name": "Supabase custom access token hook",
