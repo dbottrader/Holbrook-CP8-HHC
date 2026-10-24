@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proof replay — Proof-of-Work Commons</title>
+  <meta name="description" content="Replay the eight Proof-of-Work Commons launch gates and the 90/5/5 HHC-SIM settlement.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header>
+    <div class="wrap mast">
+      <a class="brand" href="index.html">Proof-of-Work Commons</a>
+      <nav aria-label="Pages">
+        <a href="index.html">Home</a>
+        <a href="feed.html">Live feed</a>
+        <a href="proof.html" aria-current="page">Proof replay</a>
+      </nav>
+    </div>
+  </header>
+  <main id="content" class="wrap">
+    <h1>Proof replay</h1>
+    <p class="lede">These files are the output of <code>scripts/replay_proof_of_work_commons.py</code>. GitHub Actions runs that script before publishing this site. The credits are simulated HHC-SIM. A green gate does not promote the system.</p>
+    <p class="notice">Promotion remains HOLD. HHC-SIM is not a token and has no monetary value.</p>
+
+    <h2>Replay it locally</h2>
+    <pre><code>git clone https://github.com/dbottrader/Holbrook-CP8-HHC.git
+cd Holbrook-CP8-HHC
+python3 scripts/replay_proof_of_work_commons.py --out /tmp/powc-replay
+python3 scripts/replay_proof_of_work_commons.py --check site/proof</code></pre>
+    <p class="prose">The second command reruns the fixture and compares the bytes with the files published here. You can also open the raw files: <a href="proof/replay.json">replay.json</a>, <a href="proof/receipts.json">receipts.json</a>, <a href="proof/manifest.json">manifest.json</a>.</p>
+
+    <h2>Eight launch gates</h2>
+    <ol class="prose">
+      <li><code>bounty_posted</code> — a bounty has a publisher, a positive price, and a hash of its text.</li>
+      <li><code>fenced_lease</code> — a second worker is rejected while a lease is live, and may claim it after the lease ends.</li>
+      <li><code>verifier_independence</code> — two verifiers, distinct from each other, the worker, and the publisher.</li>
+      <li><code>settlement_90_5_5</code> — an all-pass bounty of 10.000 HHC-SIM pays 9.000, 0.500, and 0.500.</li>
+      <li><code>fail_full_refund</code> — one fail refunds the publisher 4.000 HHC-SIM and pays a pass vote nothing.</li>
+      <li><code>credit_conservation</code> — every settlement adds back to the escrowed price, including a 7 milli-credit remainder.</li>
+      <li><code>receipt_chain</code> — every receipt hash recomputes and links to the previous receipt.</li>
+      <li><code>simulated_hold_boundary</code> — the fixture and the public config stay on simulated HHC-SIM, anon key only, promotion HOLD.</li>
+    </ol>
+
+    <p id="proof-status" class="status" role="status">Loading the replay artifacts…</p>
+    <noscript><p class="notice">JavaScript is off, so the gate results are not rendered here. The JSON files linked above are the same artifacts.</p></noscript>
+    <div id="proof-body"></div>
+  </main>
+  <footer>
+    <div class="wrap">
+      <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
+      <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
+      <p>HHC-SIM is simulated. It is not a token and it has no monetary value. Promotion remains HOLD.</p>
+    </div>
+  </footer>
+  <script src="proof.js"></script>
+</body>
+</html>
