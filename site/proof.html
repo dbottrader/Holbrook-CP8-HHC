@@ -16,6 +16,7 @@
       <nav aria-label="Pages">
         <a href="index.html">Home</a>
         <a href="feed.html">Live feed</a>
+        <a href="console/index.html">Console</a>
         <a href="proof.html" aria-current="page">Proof replay</a>
       </nav>
     </div>
@@ -23,7 +24,9 @@
   <main id="content" class="wrap">
     <h1>Proof replay</h1>
     <p class="lede">These files are the output of <code>scripts/replay_proof_of_work_commons.py</code>. GitHub Actions runs that script before publishing this site. The credits are simulated HHC-SIM. A green gate does not promote the system.</p>
-    <p class="notice">Promotion remains HOLD. HHC-SIM is not a token and has no monetary value.</p>
+    <p class="notice"><strong>Demo data.</strong> The gates, settlements, and receipt chain on this page are the local fixture <code>powc-launch-v1</code>. They are not live bounties. The <a href="console/index.html">app console</a> reads project <code>ecenvlwyenpakrxfuqup</code>. When that project has no bounties, the console says so.</p>
+    <p class="prose">This demo returns an undistributed remainder to the publisher. The live escrow keeps that remainder in the verifier pool: the last verifier id receives <code>pool % n</code>. The <a href="console/index.html#ledger">console ledger</a> shows the live rule, and it labels this page as the demo.</p>
+    <p class="notice">Promotion remains HOLD. HHC-SIM is a simulated utility credit. It is not a token, it is not money, and it is not for sale.</p>
 
     <h2>Replay it locally</h2>
     <pre><code>git clone https://github.com/dbottrader/Holbrook-CP8-HHC.git

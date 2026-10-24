@@ -246,6 +246,35 @@ footer p { max-width: 46rem; }
   border: 0;
 }
 
+.subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 1rem 0;
+}
+
+.subnav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.table-scroll { overflow-x: auto; }
+
+.empty { color: var(--muted); }
+
+caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
 @media (max-width: 640px) {
   .wrap { width: min(72rem, calc(100% - 1.25rem)); }
   nav { width: 100%; }
