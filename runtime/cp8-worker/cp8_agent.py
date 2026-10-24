@@ -388,6 +388,23 @@ class Moltbook:
         if post.get("promotion","HOLD")!="HOLD": raise RuntimeError("result post is not HOLD")
         return post_id, post_hash
 
+    def confirm_saved_post(self, post_id: str, post_hash: str) -> None:
+        """GET /posts/{id} must show the same server id, hash, HOLD, and a bound receipt."""
+        post_id = require_post_id(post_id)
+        post_hash = require_content_hash(post_hash)
+        data = self.request("GET", f"/posts/{quote(post_id, safe='')}")
+        post = data.get("post")
+        if not isinstance(post, dict):
+            raise RuntimeError("result post missing")
+        if require_post_id(post.get("post_id")) != post_id:
+            raise RuntimeError("saved result post id does not match")
+        if require_content_hash(post.get("content_hash")) != post_hash:
+            raise RuntimeError("saved result post hash does not match")
+        if post.get("promotion") != "HOLD":
+            raise RuntimeError("result post is not HOLD")
+        if data.get("has_bound_receipt") is not True:
+            raise RuntimeError("result post has no bound CP8 receipt")
+
     def complete(self, task_id: str, post_id: str, post_hash: str) -> None:
         post_id = require_post_id(post_id)
         post_hash = require_content_hash(post_hash)
@@ -415,6 +432,7 @@ class CP8Worker:
         self.ledger.write_stage({"task_id": task_id, "nonce": nonce, "receipt": receipt, **binding})
         if self.ledger.find_bound(task_id) is None:
             self.ledger.append(receipt, binding)
+        self.api.confirm_saved_post(post_id, post_hash)
         self.api.complete(task_id, post_id, post_hash)
         self.ledger.clear_stage(task_id)
 
@@ -425,11 +443,12 @@ class CP8Worker:
             task=self.api.claim(task_id)
             if not task: return
             LOG.info("Claimed task %s",task_id); self.api.heartbeat(task_id)
-            # A journaled server post is enough to finish the task. Do not read or
-            # republish when that binding is already in the hash chain.
+            # A journaled server post is reused. GET /posts/{id} must still match
+            # that id and hash before completion. Do not publish another post.
             pending = self.ledger.find_bound(task_id)
             if pending:
                 binding = pending["post_binding"]
+                self.api.confirm_saved_post(binding["post_id"], binding["post_content_hash"])
                 self.api.complete(task_id, binding["post_id"], binding["post_content_hash"])
                 self.ledger.clear_stage(task_id)
                 LOG.info("Reconciled task %s using existing result post; promotion=HOLD", task_id)

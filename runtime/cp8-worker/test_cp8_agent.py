@@ -98,12 +98,25 @@ class Response:
 
 
 class QueueSession:
-    def __init__(self, post_payload: dict | None = None, complete_statuses: list[int] | None = None, fail_posts: int = 0) -> None:
+    def __init__(
+        self,
+        post_payload: dict | None = None,
+        complete_statuses: list[int] | None = None,
+        fail_posts: int = 0,
+        read_hash: str | None = None,
+        bound: bool = True,
+        fail_reads: int = 0,
+    ) -> None:
         self.posts: list[dict] = []
         self.completes: list[dict] = []
+        self.reads: list[str] = []
+        self.events: list[str] = []
         self.post_payload = post_payload
         self.complete_statuses = list(complete_statuses or [200])
         self.fail_posts = fail_posts
+        self.read_hash = read_hash
+        self.bound = bound
+        self.fail_reads = fail_reads
         self.headers: dict[str, str] = {}
 
     def request(self, method: str, url: str, timeout: int | None = None, **kwargs):
@@ -114,9 +127,27 @@ class QueueSession:
             return Response(200, {"ok": True, "item": {
                 "work_id": task_id, "title": "t", "description": "d", "metadata": {}, "room_slug": "cp8-ops",
             }})
+        if method == "GET" and "/posts/" in url:
+            post_id = url.split("/posts/")[1].split("?")[0].strip("/")
+            self.reads.append(post_id)
+            self.events.append("read")
+            if self.fail_reads:
+                self.fail_reads -= 1
+                return Response(500, {"error": "server_error", "message": "column cp8_moltbook_rooms.name does not exist"})
+            return Response(200, {
+                "post": {
+                    "post_id": post_id,
+                    "content_hash": self.read_hash or SERVER_HASH,
+                    "promotion": "HOLD",
+                    "room": {"slug": "cp8-ops", "title": "CP8 Ops"},
+                },
+                "receipts": [{"cp8_receipt_id": "11111111-1111-4111-8111-111111111111"}] if self.bound else [],
+                "has_bound_receipt": self.bound,
+            })
         if url.endswith("/posts"):
             body = kwargs.get("json") or {}
             self.posts.append(body)
+            self.events.append("publish")
             if self.fail_posts:
                 self.fail_posts -= 1
                 raise requests.ConnectionError("down")
@@ -126,6 +157,7 @@ class QueueSession:
             }
             return Response(200, payload)
         if url.endswith("/complete"):
+            self.events.append("complete")
             body = kwargs.get("json") or {}
             self.completes.append(body)
             status = self.complete_statuses.pop(0) if self.complete_statuses else 200
@@ -329,6 +361,53 @@ def test_existing_journal_completes_without_a_new_post(tmp_path: Path) -> None:
     restarted.process({"work_id": TASK})
     assert session.posts == []
     assert session.completes == [{"result_post_id": POST_ID, "result_hash": SERVER_HASH}]
+
+
+def test_get_post_mismatch_blocks_completion_without_a_second_publish(tmp_path: Path) -> None:
+    session = QueueSession(read_hash=OTHER_HASH)
+    worker, _calls = start_worker(tmp_path, session)
+    worker.process({"work_id": TASK})
+    restarted, _calls = start_worker(tmp_path, session)
+    restarted.model.propose = lambda task: (_ for _ in ()).throw(AssertionError("model"))
+    restarted.process({"work_id": TASK})
+    assert len(session.posts) == 1
+    assert session.completes == []
+    assert session.reads == [POST_ID, POST_ID]
+    assert session.events == ["publish", "read", "read"]
+
+
+def test_unbound_receipt_blocks_completion(tmp_path: Path) -> None:
+    session = QueueSession(bound=False)
+    worker, _calls = start_worker(tmp_path, session)
+    worker.process({"work_id": TASK})
+    assert session.completes == []
+    assert session.reads == [POST_ID]
+    api = Moltbook(settings(tmp_path))
+    api.http = session
+    with pytest.raises(RuntimeError, match="no bound CP8 receipt"):
+        api.confirm_saved_post(POST_ID, SERVER_HASH)
+
+
+def test_failed_get_post_retries_the_same_saved_post(tmp_path: Path) -> None:
+    session = QueueSession(fail_reads=1)
+    worker, _calls = start_worker(tmp_path, session)
+    worker.process({"work_id": TASK})
+    assert session.completes == []
+    restarted, _calls = start_worker(tmp_path, session)
+    restarted.model.propose = lambda task: (_ for _ in ()).throw(AssertionError("model"))
+    restarted.process({"work_id": TASK})
+    assert len(session.posts) == 1
+    assert session.completes == [{"result_post_id": POST_ID, "result_hash": SERVER_HASH}]
+    assert session.events == ["publish", "read", "read", "complete"]
+
+
+def test_confirm_saved_post_requires_the_server_record(tmp_path: Path) -> None:
+    api = Moltbook(settings(tmp_path))
+    api.http = QueueSession()
+    api.confirm_saved_post(POST_ID, SERVER_HASH)
+    api.http = QueueSession(read_hash=OTHER_HASH)
+    with pytest.raises(RuntimeError, match="hash does not match"):
+        api.confirm_saved_post(POST_ID, SERVER_HASH)
 
 
 def test_receipt_chain_head_and_tamper_detection(tmp_path: Path) -> None:

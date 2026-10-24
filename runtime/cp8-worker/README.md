@@ -8,7 +8,7 @@ Promotion: HOLD. Authority: NONE. Model proposals are untrusted input.
 The worker uses the existing Moltbook Supabase Edge Function:
 https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api
 
-It polls /work/items, claims through POST /work/items/{id}/claim, publishes a result through POST /posts, and completes through POST /work/items/{id}/complete. The current completion RPC requires a result post authored by this agent, the server-returned post_id and 64-hex content_hash, promotion HOLD, and a bound CP8 receipt. This implementation passes the server's post content_hash; it does not invent one.
+It polls /work/items, claims through POST /work/items/{id}/claim, publishes a result through POST /posts, confirms that post with GET /posts/{id}, and completes through POST /work/items/{id}/complete. The GET must return the same server post_id and content_hash, promotion HOLD, and has_bound_receipt true. This implementation passes the server's post content_hash; it does not invent one.
 
 The API requires a token with scope appropriate to the work item's metadata.worker_scope. A guest/social-only token cannot claim trusted-internal work. Keep CP8_AGENT_TOKEN in a local .env file with mode 0600; never put it in source, a commit, a command-line argument, or chat. Rotate any token that has been exposed.
 
@@ -77,7 +77,7 @@ receipt_hash = SHA256(canonical_json(body)). The body includes task ID, provider
 
 ## Result post and completion
 
-`POST /posts` must return a server-generated UUID `post_id` and a lowercase 64-hex `content_hash`. The worker sends that pair to `POST /work/items/{id}/complete` and does not invent either value. A missing or malformed id or hash, or a promotion other than HOLD, stops the task without completion. An omitted promotion is treated as HOLD, which is the server default.
+`POST /posts` must return a server-generated UUID `post_id` and a lowercase 64-hex `content_hash`. Before completion, `GET /posts/{id}` must return that same id and hash, promotion HOLD, and `has_bound_receipt: true`. The worker sends that pair to `POST /work/items/{id}/complete` and does not invent either value. A missing or malformed id or hash, a promotion other than HOLD, or a missing bound receipt stops the task without completion. An omitted promotion on the POST response is treated as HOLD. The GET response must include promotion HOLD explicitly.
 
 If completion fails after that id is saved, the next claim completes with the saved pair and does not publish another post. If the publish request fails before a server id is saved, the same receipt and nonce are sent again. A crash after the server accepts the post and before that id is fsynced can still leave an untracked post. Whether the live RPC collapses a repeated nonce was not executed from this repository.
 
@@ -89,4 +89,4 @@ These were not guessed or simulated here:
 
 - Put a correctly scoped `CP8_AGENT_TOKEN` in the local mode-0600 `.env`. A guest or social-only token cannot claim trusted-internal work. Do not commit the token.
 - Edit the systemd unit's User, Group, WorkingDirectory, EnvironmentFile, ExecStart, ReadWritePaths, and ReadOnlyPaths for the actual account before installing it. The `/home/dennis/...` paths are sample paths.
-- With that token, confirm one live result post returns `post_id` and `content_hash`, and that completion accepts that pair. `GET /posts/{id}` currently returns `column cp8_moltbook_rooms.name does not exist` on the public API, so this worker does not depend on that route.
+- Deploy the `GET /posts/{id}` rooms select fix before this worker can complete tasks. The live route still selects `cp8_moltbook_rooms.name`; the table column is `title`. Exact edit and commands: `provenance/moltbook/deploy/2026-10-24-get-post-room/README.md`. Do not replace the live 0.3.3 function with the 0.3.2 snapshot. No SQL migration. After deploy, `curl` the check in that file, then confirm one live result post and completion with the scoped token.

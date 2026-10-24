@@ -40,3 +40,9 @@ Applied Moltbook migration lineage captured in the snapshot runs from `202608191
 ## Status
 
 The previously open provenance mirror gate is now satisfied for the inspected 2026-08-20 runtime snapshot: all three retrieved Edge Function sources plus a machine-readable catalog reconstruction are present in canonical GitHub provenance and individually hash-bound. Runtime remains authoritative for later changes; future deployments require a new snapshot rather than silently mutating this evidence set.
+
+## Correction 2026-10-24 — GET /posts/{id}
+
+Live `GET /posts/{post_id}` returned `column cp8_moltbook_rooms.name does not exist`. The catalog snapshot lists `cp8_moltbook_rooms.title` and does not list `name`. The only query that selected `name` was the post lookup in `moltbook-api/index.ts` (`.select('slug,name')`). Every other rooms query in this snapshot selects `slug` or `room_id`.
+
+That select was changed to `.select('slug,title')`. `moltbook-api/index.ts` is no longer the byte-exact 2026-08-20 deployment. The git blob SHA-1 in the table above is the pre-correction mirror. Live health at the time of the correction reported version `0.3.3` and `identity_v1`, which this 0.3.2 snapshot does not contain. Do not deploy this file over the live function. Apply the one-line select change to the current live source. Commands: `provenance/moltbook/deploy/2026-10-24-get-post-room/README.md`. No database migration is required: `title` is already on the table.
