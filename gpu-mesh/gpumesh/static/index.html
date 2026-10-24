@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPU Mesh</title>
+  <meta name="description" content="Volunteer GPU network for free open-weight model inference. Simulated compute credits, hash-chained receipts, no token.">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;520;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <script>
+    const path = location.pathname.replace(/\/$/, "") || "/";
+    const pages = { "/": "dashboard", "/nodes": "nodes", "/receipts": "receipts", "/contribute": "contribute" };
+    document.body.dataset.page = pages[path] || "dashboard";
+    const titles = { dashboard: "GPU Mesh", nodes: "Nodes · GPU Mesh", receipts: "Ledger · GPU Mesh", contribute: "Contribute a GPU · GPU Mesh" };
+    document.title = titles[document.body.dataset.page];
+  </script>
+  <header class="top wrap">
+    <a class="mark" href="/">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+        <rect x="1" y="1" width="26" height="26" rx="6" fill="#e7a23a"/>
+        <path d="M7 18.5 14 6l7 12.5H7z" fill="#12140e"/>
+      </svg>
+      GPU Mesh
+    </a>
+    <nav>
+      <a href="/" data-nav="dashboard">Board</a>
+      <a href="/nodes" data-nav="nodes">Nodes</a>
+      <a href="/receipts" data-nav="receipts">Ledger</a>
+      <a href="/contribute" data-nav="contribute">Contribute</a>
+    </nav>
+    <div class="live" id="live"><i></i><span id="live-label">connecting</span></div>
+  </header>
+  <script>
+    document.querySelectorAll("nav a").forEach((link) => {
+      if (link.dataset.nav === document.body.dataset.page) link.setAttribute("aria-current", "page");
+    });
+  </script>
+  <main class="wrap">
+    <div class="banner" id="banner" role="status"></div>
+
+    <section id="view-dashboard">
+      <div class="lede">
+        <h1>Open-weight inference, served by GPUs people lend.</h1>
+        <p>You contribute GPU time the way a miner contributes hashpower. The network serves free inference for models those machines already run. A verified job appends a signed, hash-chained receipt with an integer amount. That amount sits in escrow until the worker is trusted. The simulated ledger is on; nothing is minted.</p>
+      </div>
+      <div class="stats" id="stats">
+        <div class="stat"><span>Reading the ledger…</span><strong>—</strong></div>
+      </div>
+      <div class="layout">
+        <div>
+          <section class="panel">
+            <h2>Recent jobs</h2>
+            <div id="jobs"><div class="empty">Reading the queue…</div></div>
+          </section>
+          <section class="panel" style="margin-top:14px">
+            <h2>Try the public API</h2>
+            <pre class="terminal" id="try-api">curl -s /v1/chat/completions</pre>
+          </section>
+        </div>
+        <div>
+          <section class="panel">
+            <h2>Models online</h2>
+            <div id="models"><div class="empty">Reading models…</div></div>
+          </section>
+          <section class="panel" style="margin-top:14px">
+            <h2>Top contributors</h2>
+            <div id="contributors"><div class="empty">Waiting for the first receipt.</div></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-nodes">
+      <h1 class="page-title">Live nodes</h1>
+      <p class="prose">A node is a Linux process with an auth token. It heartbeats its GPU, VRAM, and the models it can run, then pulls jobs. Quarantine means canaries or spot-checks went bad often enough that the scheduler stopped offering it work.</p>
+      <section class="panel" id="node-table"><div class="empty">Reading nodes…</div></section>
+    </section>
+
+    <section id="view-receipts">
+      <h1 class="page-title">Receipt ledger</h1>
+      <p class="prose">Same shape as an ASIN-HHC receipt: <span class="mono">seq</span>, <span class="mono">ts</span>, <span class="mono">actor</span>, <span class="mono">kind</span>, canonical <span class="mono">payload</span>, <span class="mono">prev_hash</span>, SHA-256. Timestamps are Unix milliseconds so a replay is bit-stable. Credits inside a payload are accounting units only.</p>
+      <div class="row-actions">
+        <button id="replay" type="button">Replay the chain</button>
+        <a class="button ghost" href="/api/ledger">Download ledger.json</a>
+      </div>
+      <p id="replay-out" class="mono"></p>
+      <p id="tip" class="mono"></p>
+      <p class="prose">Click a receipt to read its signed claim. The row stays open while the board refreshes.</p>
+      <section class="panel" id="receipt-table"><div class="empty">Reading receipts…</div></section>
+    </section>
+
+    <section id="view-contribute">
+      <h1 class="page-title">Put a GPU on the mesh</h1>
+      <p class="prose">The installer creates a system user named <span class="mono">gpumesh</span> and a systemd service that drops privileges. The agent never opens an inbound port. It detects NVIDIA with <span class="mono">nvidia-smi</span>, talks to Ollama or vLLM on localhost, and pulls chat jobs from this coordinator.</p>
+      <p><strong id="online-count">…</strong> nodes online right now.</p>
+      <ol class="steps">
+        <li><div><strong>A Linux machine with an NVIDIA driver.</strong> Ollama or vLLM has to already be serving an open-weight model you pulled yourself. That GPU worker does not download weights. The CPU llama.cpp command below does download one pinned open GGUF. Closed models are not part of this mesh.</div></li>
+        <li><div><strong>Install the agent with one line.</strong> Root is used to create the user and the unit. The running process is <span class="mono">gpumesh</span>, with <span class="mono">NoNewPrivileges</span> and a read-only system.</div></li>
+        <li><div><strong>Watch this board.</strong> The node shows up after its first heartbeat. A finished job writes a receipt. Spot-checks re-run a sample on a second node; known-answer canaries run even if you are the only machine online.</div></li>
+      </ol>
+      <h2>Installer</h2>
+      <pre class="terminal" id="install-cmd"></pre>
+      <div class="row-actions"><button type="button" data-copy="#install-cmd">Copy</button></div>
+      <h2>Dry run without a GPU</h2>
+      <p class="prose">This serves <span class="mono">mock-tiny</span>, a deterministic fallback that is not a neural model. Use it to prove the path. Do not point real traffic at it.</p>
+      <pre class="terminal" id="cpu-cmd"></pre>
+      <div class="row-actions"><button type="button" data-copy="#cpu-cmd">Copy</button></div>
+      <h2>CPU open-weight worker</h2>
+      <p class="prose">This serves <span class="mono">SmolLM2-360M-Instruct</span> (Apache-2.0) through llama.cpp. The pinned GGUF is downloaded on first start and is not <span class="mono">mock-tiny</span>. HHC is a simulated utility credit. An amount is recorded only after a second worker spot-checks the same model id.</p>
+      <pre class="terminal" id="llamacpp-cmd"></pre>
+      <div class="row-actions"><button type="button" data-copy="#llamacpp-cmd">Copy</button></div>
+      <h2>What you are not signing up for</h2>
+      <p class="prose">There is no payout, no wallet, and no token. Credits cannot be transferred. A bad canary or a temperature-0 spot-check that disagrees costs credits and, after repeated failures, quarantine. Prompts are kept only long enough to re-run a spot-check, then deleted. The node executes chat messages through your local model server. It does not shell out with the prompt.</p>
+    </section>
+  </main>
+  <footer class="site">
+    <div class="wrap">Compute credits are simulated accounting. They are not money, not a token, and they cannot be traded or redeemed.</div>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>
