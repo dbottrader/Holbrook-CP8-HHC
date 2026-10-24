@@ -17,6 +17,17 @@ const composerTitle = document.querySelector("#composer-title");
 const publish = document.querySelector("#publish");
 const cancelReply = document.querySelector("#cancel-reply");
 const signOut = document.querySelector("#sign-out");
+const fundButton = document.querySelector("#fund-bounty");
+const bountyStatus = document.querySelector("#bounty-status");
+const bountyList = document.querySelector("#bounty-list");
+const balanceNode = document.querySelector("#sim-balance");
+const bountyReader = document.querySelector("#bounty-reader");
+const bountyReaderTitle = document.querySelector("#bounty-reader-title");
+const bountyReaderBody = document.querySelector("#bounty-reader-body");
+const bountyAttempts = document.querySelector("#bounty-attempts");
+const bountyVerdicts = document.querySelector("#bounty-verdicts");
+const bountyTransfers = document.querySelector("#bounty-transfers");
+const promoteButton = document.querySelector("#promote-bounty");
 
 const state = {
   client: null,
@@ -24,6 +35,7 @@ const state = {
   profile: null,
   room: null,
   parent: null,
+  bounty: null,
 };
 
 function say(node, text) {
@@ -147,10 +159,12 @@ async function refreshProfile() {
   if (userError) throw userError;
   state.user = userData.user;
   publish.disabled = !state.user;
+  fundButton.disabled = !state.user;
   signOut.hidden = !state.user;
   if (!state.user) {
     state.profile = null;
     sessionNode.innerHTML = "Not signed in";
+    balanceNode.textContent = "Sign in to see the simulated balance.";
     return;
   }
   const { data, error } = await client.rpc("cp8_moltbook_ensure_human_profile", {
@@ -160,6 +174,73 @@ async function refreshProfile() {
   if (error) throw error;
   state.profile = data;
   sessionNode.innerHTML = `${badge(data.actor_kind)} ${escapeHtml(data.display_name)} <span class="meta">${escapeHtml(data.handle)}</span>`;
+  await loadBalance();
+  await loadBounties();
+}
+
+function minorToDisplay(minor) {
+  return (Number(minor) / 1000).toFixed(3);
+}
+
+async function loadBalance() {
+  if (!state.user) {
+    balanceNode.textContent = "Sign in to see the simulated balance.";
+    return;
+  }
+  const { data, error } = await requireClient().rpc("cp8_moltbook_my_sim_balance");
+  if (error) throw error;
+  balanceNode.textContent = `Simulated balance ${minorToDisplay(data)} HHC-SIM (${data} minor). Wallet class SIMULATED_ONLY_NO_MONETARY_AUTHORITY.`;
+}
+
+async function loadBounties() {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("cp8_moltbook_public_bounties")
+    .select("bounty_id,title,status,promotion,price_minor,worker_minor,pool_minor,poster_handle,claimant_handle,room_slug")
+    .order("opened_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  bountyList.innerHTML = (data || []).map((bounty) => `
+    <li class="post">
+      <div><span class="hold">${escapeHtml(bounty.status)}</span><span class="hold">${escapeHtml(bounty.promotion)}</span></div>
+      <button class="link" type="button" data-bounty="${escapeHtml(bounty.bounty_id)}">${escapeHtml(bounty.title)}</button>
+      <p class="meta">${escapeHtml(bounty.room_slug)} · ${minorToDisplay(bounty.price_minor)} HHC-SIM · worker ${minorToDisplay(bounty.worker_minor)} · pool ${minorToDisplay(bounty.pool_minor)} · ${escapeHtml(bounty.poster_handle || "")}${bounty.claimant_handle ? " · claimed by " + escapeHtml(bounty.claimant_handle) : ""}</p>
+    </li>`).join("") || `<li class="meta">No bounties yet.</li>`;
+}
+
+async function openBounty(bountyId) {
+  const client = requireClient();
+  const { data: rows, error } = await client
+    .from("cp8_moltbook_public_bounties")
+    .select("bounty_id,title,description,status,promotion,price_minor,worker_minor,pool_minor,poster_human_id,poster_handle,claimant_handle,artifact_hash,claim_generation,claim_lease_expires_at")
+    .eq("bounty_id", bountyId)
+    .limit(1);
+  if (error) throw error;
+  const bounty = rows && rows[0];
+  if (!bounty) throw new Error("bounty not found");
+  state.bounty = bounty;
+  bountyReader.hidden = false;
+  bountyReaderTitle.textContent = bounty.title;
+  bountyReaderBody.innerHTML = `
+    <p>${escapeHtml(bounty.description)}</p>
+    <p class="meta">${escapeHtml(bounty.status)} · promotion ${escapeHtml(bounty.promotion)} · attempt ${escapeHtml(bounty.claim_generation)} · artifact ${escapeHtml(bounty.artifact_hash || "none yet")}</p>`;
+  const attempts = await client.from("cp8_moltbook_public_bounty_attempts").select("generation,status,claimant_agent_id,artifact_hash").eq("bounty_id", bountyId).order("generation");
+  if (attempts.error) throw attempts.error;
+  bountyAttempts.innerHTML = (attempts.data || []).map((row) =>
+    `<li class="meta">#${escapeHtml(row.generation)} ${escapeHtml(row.status)} ${escapeHtml(row.artifact_hash || "")}</li>`
+  ).join("") || `<li class="meta">No attempts yet.</li>`;
+  const verdicts = await client.from("cp8_moltbook_public_bounty_verdicts").select("passed,verifier_kind,verifier_handle,created_at").eq("bounty_id", bountyId).order("created_at");
+  if (verdicts.error) throw verdicts.error;
+  bountyVerdicts.innerHTML = (verdicts.data || []).map((row) =>
+    `<li>${badge(row.verifier_kind)} ${escapeHtml(row.verifier_handle || "")} · ${row.passed ? "pass" : "fail"}</li>`
+  ).join("") || `<li class="meta">No verdicts yet.</li>`;
+  const transfers = await client.from("cp8_moltbook_public_transfers").select("kind,code,amount_minor,debit_account,credit_account").eq("bounty_id", bountyId).order("created_at");
+  if (transfers.error) throw transfers.error;
+  bountyTransfers.innerHTML = (transfers.data || []).map((row) =>
+    `<li class="meta">${escapeHtml(row.kind)} ${escapeHtml(row.code)} ${escapeHtml(row.amount_minor)} minor · ${escapeHtml(row.debit_account)} → ${escapeHtml(row.credit_account)}</li>`
+  ).join("") || `<li class="meta">No transfers yet.</li>`;
+  const mine = state.profile && state.profile.human_id === bounty.poster_human_id;
+  promoteButton.hidden = !(mine && bounty.status === "SETTLED" && bounty.promotion === "HOLD");
 }
 
 async function boot() {
@@ -172,6 +253,7 @@ async function boot() {
     await loadRooms();
     await loadIdentities();
     await loadFeed();
+    await loadBounties();
   } catch (error) {
     say(authStatus, error.message);
   }
@@ -305,6 +387,97 @@ document.querySelector("#composer").addEventListener("submit", async (event) => 
     else await openPost(data.post_id);
   } catch (error) {
     say(postStatus, error.message);
+  }
+});
+
+document.querySelector("#bounty-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    if (!state.profile || state.profile.actor_kind !== "human") {
+      throw new Error("Sign in as a human before funding a bounty.");
+    }
+    const form = new FormData(event.currentTarget);
+    const priceMinor = Math.round(Number(form.get("price")) * 1000);
+    if (!Number.isInteger(priceMinor) || priceMinor <= 0) {
+      throw new Error("Price must be a positive HHC-SIM amount.");
+    }
+    const { data, error } = await requireClient().rpc("cp8_moltbook_human_open_bounty", {
+      p_room_slug: state.room,
+      p_title: form.get("title"),
+      p_description: form.get("description"),
+      p_price_minor: priceMinor,
+    });
+    if (error) throw error;
+    if (!data || data.status !== "OPEN" || data.promotion !== "HOLD") {
+      throw new Error("Server did not open a HOLD bounty.");
+    }
+    event.currentTarget.reset();
+    say(bountyStatus, `Funded ${data.bounty_id}. Worker ${data.worker_minor} minor, pool ${data.pool_minor} minor. Promotion ${data.promotion}.`);
+    await loadBalance();
+    await loadBounties();
+    await openBounty(data.bounty_id);
+  } catch (error) {
+    say(bountyStatus, error.message);
+  }
+});
+
+bountyList.addEventListener("click", async (event) => {
+  const bountyId = event.target?.dataset?.bounty;
+  if (!bountyId) return;
+  try {
+    await openBounty(bountyId);
+  } catch (error) {
+    say(bountyStatus, error.message);
+  }
+});
+
+async function fileVerdict(passed) {
+  if (!state.bounty) throw new Error("Open a bounty first.");
+  const note = new FormData(document.querySelector("#verdict-form")).get("note");
+  const { data, error } = await requireClient().rpc("cp8_moltbook_bounty_file_verdict", {
+    p_bounty_id: state.bounty.bounty_id,
+    p_passed: passed,
+    p_note: note || null,
+  });
+  if (error) throw error;
+  say(bountyStatus, `Verdict recorded. Status ${data.status}.`);
+  await loadBalance();
+  await loadBounties();
+  await openBounty(state.bounty.bounty_id);
+}
+
+document.querySelector("#verdict-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await fileVerdict(true);
+  } catch (error) {
+    say(bountyStatus, error.message);
+  }
+});
+
+document.querySelector("#verdict-fail").addEventListener("click", async () => {
+  try {
+    await fileVerdict(false);
+  } catch (error) {
+    say(bountyStatus, error.message);
+  }
+});
+
+promoteButton.addEventListener("click", async () => {
+  try {
+    const bountyId = state.bounty && state.bounty.bounty_id;
+    const { data, error } = await requireClient().rpc("cp8_moltbook_bounty_promote", {
+      p_bounty_id: bountyId,
+    });
+    if (error) throw error;
+    if (!data || data.promotion !== "SIM_ACCEPTED") {
+      throw new Error("Server did not promote the settled bounty.");
+    }
+    say(bountyStatus, `Promoted ${data.bounty_id} from HOLD to ${data.promotion} for artifact ${data.artifact_hash}.`);
+    await openBounty(bountyId);
+    await loadBounties();
+  } catch (error) {
+    say(bountyStatus, error.message);
   }
 });
 

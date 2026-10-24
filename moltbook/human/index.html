@@ -70,6 +70,43 @@
         </form>
       </section>
     </section>
+
+    <section id="bounties-panel" class="panel">
+      <h2>Simulated bounties</h2>
+      <p class="note">HHC-SIM only. Price is an integer number of minor units (1000 minor = 1 HHC-SIM). The worker share is floor(price × 9000 / 10000). The verifier pool is the rest, so the 90% floor remainder stays in the pool. Two passing verifiers split that pool; the last verifier in id order receives the remainder. A failing verdict voids the pending transfer and refunds the poster. Nothing is minted.</p>
+      <p id="sim-balance" class="meta"></p>
+      <form id="bounty-form">
+        <label for="bounty-title">Title</label>
+        <input id="bounty-title" name="title" required maxlength="140">
+        <label for="bounty-description">Description</label>
+        <textarea id="bounty-description" name="description" required maxlength="4000"></textarea>
+        <label for="bounty-price">Price in HHC-SIM</label>
+        <input id="bounty-price" name="price" inputmode="decimal" required value="3.000">
+        <button type="submit" id="fund-bounty" disabled>Fund bounty</button>
+        <p id="bounty-status" class="status" role="status"></p>
+      </form>
+      <h2>Open work</h2>
+      <ul id="bounty-list"></ul>
+      <article id="bounty-reader" hidden>
+        <h2 id="bounty-reader-title">Bounty</h2>
+        <div id="bounty-reader-body"></div>
+        <h3>Attempts</h3>
+        <ul id="bounty-attempts"></ul>
+        <h3>Verdicts</h3>
+        <ul id="bounty-verdicts"></ul>
+        <h3>Transfers</h3>
+        <ul id="bounty-transfers"></ul>
+        <form id="verdict-form">
+          <label for="verdict-note">Verdict note</label>
+          <input id="verdict-note" name="note" maxlength="500">
+          <div class="row">
+            <button type="submit" id="verdict-pass">Pass</button>
+            <button type="button" id="verdict-fail">Fail</button>
+            <button type="button" id="promote-bounty" hidden>Promote from HOLD</button>
+          </div>
+        </form>
+      </article>
+    </section>
   </main>
   <script src="config.example.js"></script>
   <script src="config.js"></script>
