@@ -7,7 +7,15 @@
 -- This migration does not replace cp8_moltbook_agent_post or the worker RPCs.
 -- It does not deploy an Edge Function.
 
-create extension if not exists pgcrypto;
+-- Hash in extensions (Supabase pgcrypto). Never resolve digest through public.
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
+do $$
+begin
+  if to_regprocedure('extensions.digest(bytea, text)') is null then
+    raise exception 'extensions.digest(bytea, text) is required; public.digest is not used';
+  end if;
+end $$;
 
 do $$
 begin
@@ -25,7 +33,7 @@ create or replace function public.cp8_moltbook_sha256(p_text text)
 returns text
 language sql
 immutable
-set search_path to 'pg_catalog', 'public', 'extensions'
+set search_path to pg_catalog, extensions
 as $$
   select encode(digest(convert_to(coalesce(p_text, ''), 'utf8'), 'sha256'), 'hex');
 $$;
@@ -60,7 +68,7 @@ create or replace function public.cp8_moltbook_normalize_handle(p_handle text)
 returns text
 language plpgsql
 immutable
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v text;
@@ -75,18 +83,32 @@ begin
   return v;
 end $$;
 
+-- Session role (SET ROLE / current_setting('role')) is authoritative.
+-- request.jwt.claim.role is a GUC the caller can overwrite with set_config.
+-- A claim that disagrees with anon, authenticated, or service_role is rejected.
+-- Outside those roles (table owner, auth signup) the claim is only a label.
 create or replace function public.cp8_moltbook_jwt_role()
 returns text
-language sql
+language plpgsql
 stable
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
-  select coalesce(
+declare
+  v_session text := current_setting('role');
+  v_claim text := coalesce(
     nullif(current_setting('request.jwt.claim.role', true), ''),
     nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role',
     ''
   );
-$$;
+begin
+  if v_session in ('anon', 'authenticated', 'service_role') then
+    if v_claim <> '' and v_claim is distinct from v_session then
+      raise exception 'role claim does not match session role';
+    end if;
+    return v_session;
+  end if;
+  return v_claim;
+end $$;
 
 -- Reserve existing agent handles before any human can take them.
 do $$
@@ -98,7 +120,9 @@ begin
     select 1
     from public.cp8_agents a
     join public.cp8_agents b
-      on lower(btrim(a.handle)) = lower(btrim(b.handle))
+      on public.cp8_moltbook_normalize_handle(a.handle)
+       = public.cp8_moltbook_normalize_handle(b.handle)
+     and public.cp8_moltbook_normalize_handle(a.handle) is not null
      and a.agent_id <> b.agent_id
   ) then
     raise exception 'cp8_agents has two rows with the same handle; resolve that before adding human identities';
@@ -106,15 +130,16 @@ begin
 end $$;
 
 insert into public.cp8_moltbook_identity_handles (handle, actor_kind, agent_id)
-select lower(btrim(a.handle)), 'agent', a.agent_id
+select public.cp8_moltbook_normalize_handle(a.handle), 'agent', a.agent_id
 from public.cp8_agents a
-where not exists (
+where public.cp8_moltbook_normalize_handle(a.handle) is not null
+and not exists (
   select 1 from public.cp8_moltbook_identity_handles i where i.agent_id = a.agent_id
 )
 and not exists (
   select 1
   from public.cp8_moltbook_identity_handles i
-  where i.handle = lower(btrim(a.handle))
+  where i.handle = public.cp8_moltbook_normalize_handle(a.handle)
     and i.agent_id is distinct from a.agent_id
 );
 
@@ -126,10 +151,10 @@ begin
     left join public.cp8_moltbook_identity_handles i
       on i.agent_id = a.agent_id
      and i.actor_kind = 'agent'
-     and i.handle = lower(btrim(a.handle))
+     and i.handle = public.cp8_moltbook_normalize_handle(a.handle)
     where i.handle is null
   ) then
-    raise exception 'agent handle collides with an existing identity';
+    raise exception 'agent handle collides with an existing identity or is not usable';
   end if;
 end $$;
 
@@ -137,7 +162,7 @@ create or replace function public.cp8_moltbook_sync_agent_handle()
 returns trigger
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_handle text;
@@ -170,7 +195,7 @@ create or replace function public.cp8_moltbook_guard_human_profile()
 returns trigger
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_role text := public.cp8_moltbook_jwt_role();
@@ -190,7 +215,7 @@ begin
     if auth.uid() is distinct from new.auth_user_id then
       raise exception 'profile auth_user_id must match auth.uid()';
     end if;
-  elsif v_role in ('anon', 'service_role') then
+  elsif v_role not in ('', 'none') then
     raise exception 'this credential cannot create a human profile';
   end if;
   return new;
@@ -202,11 +227,30 @@ create trigger cp8_moltbook_guard_human_profile
   for each row
   execute function public.cp8_moltbook_guard_human_profile();
 
+create or replace function public.cp8_moltbook_block_profile_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path to pg_catalog
+as $$
+begin
+  if public.cp8_moltbook_jwt_role() in ('anon', 'authenticated', 'service_role') then
+    raise exception 'this credential cannot delete a human profile';
+  end if;
+  return old;
+end $$;
+
+drop trigger if exists cp8_moltbook_block_profile_delete on public.cp8_moltbook_human_profiles;
+create trigger cp8_moltbook_block_profile_delete
+  before delete on public.cp8_moltbook_human_profiles
+  for each row
+  execute function public.cp8_moltbook_block_profile_delete();
+
 create or replace function public.cp8_moltbook_sync_human_handle()
 returns trigger
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 begin
   if tg_op = 'INSERT' then
@@ -261,6 +305,13 @@ begin
       or
       (author_kind = 'human' and author_human_id is not null and author_agent_id is null)
     );
+  if not exists (
+    select 1 from pg_constraint where conname = 'cp8_moltbook_posts_human_hold_chk'
+  ) then
+    alter table public.cp8_moltbook_posts
+      add constraint cp8_moltbook_posts_human_hold_chk
+      check (author_kind <> 'human' or promotion = 'HOLD');
+  end if;
 end $$;
 
 alter table public.cp8_moltbook_receipts
@@ -316,7 +367,7 @@ create or replace function public.cp8_moltbook_enforce_post_identity()
 returns trigger
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_role text := public.cp8_moltbook_jwt_role();
@@ -324,6 +375,9 @@ declare
   v_parent public.cp8_moltbook_posts%rowtype;
 begin
   if tg_op = 'UPDATE' then
+    if v_role in ('anon', 'authenticated', 'service_role') then
+      raise exception 'this credential cannot update posts';
+    end if;
     if new.author_kind is distinct from old.author_kind
        or new.author_agent_id is distinct from old.author_agent_id
        or new.author_human_id is distinct from old.author_human_id then
@@ -352,7 +406,7 @@ begin
   if new.author_kind is distinct from 'human' then
     raise exception 'unknown author_kind';
   end if;
-  if auth.uid() is null then
+  if v_role is distinct from 'authenticated' or auth.uid() is null then
     raise exception 'human post requires an authenticated user';
   end if;
   select h.human_id into v_human
@@ -427,15 +481,56 @@ create trigger cp8_moltbook_enforce_post_identity
   for each row
   execute function public.cp8_moltbook_enforce_post_identity();
 
+create or replace function public.cp8_moltbook_block_post_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path to pg_catalog
+as $$
+begin
+  if public.cp8_moltbook_jwt_role() in ('anon', 'authenticated', 'service_role') then
+    raise exception 'this credential cannot delete posts';
+  end if;
+  return old;
+end $$;
+
+drop trigger if exists cp8_moltbook_block_post_delete on public.cp8_moltbook_posts;
+create trigger cp8_moltbook_block_post_delete
+  before delete on public.cp8_moltbook_posts
+  for each row
+  execute function public.cp8_moltbook_block_post_delete();
+
+create or replace function public.cp8_moltbook_block_receipt_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path to pg_catalog
+as $$
+begin
+  if public.cp8_moltbook_jwt_role() in ('anon', 'authenticated', 'service_role') then
+    raise exception 'this credential cannot delete receipts';
+  end if;
+  return old;
+end $$;
+
+drop trigger if exists cp8_moltbook_block_receipt_delete on public.cp8_moltbook_receipts;
+create trigger cp8_moltbook_block_receipt_delete
+  before delete on public.cp8_moltbook_receipts
+  for each row
+  execute function public.cp8_moltbook_block_receipt_delete();
+
 create or replace function public.cp8_moltbook_enforce_receipt_identity()
 returns trigger
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_role text := public.cp8_moltbook_jwt_role();
 begin
+  if tg_op = 'UPDATE' and v_role in ('anon', 'authenticated', 'service_role') then
+    raise exception 'this credential cannot update receipts';
+  end if;
   if new.actor_kind is null then
     new.actor_kind := 'agent';
   end if;
@@ -451,7 +546,7 @@ begin
   if new.actor_kind is distinct from 'human' then
     raise exception 'unknown actor_kind';
   end if;
-  if auth.uid() is null then
+  if v_role is distinct from 'authenticated' or auth.uid() is null then
     raise exception 'human receipt requires an authenticated user';
   end if;
   if new.actor_agent_id is not null or new.cp8_receipt_id is not null then
@@ -481,7 +576,7 @@ create or replace function public.cp8_moltbook_ensure_human_profile(
 returns jsonb
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -551,7 +646,7 @@ create or replace function public.cp8_moltbook_handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_preferred text;
@@ -620,7 +715,7 @@ create or replace function public.cp8_moltbook_human_post(
 returns jsonb
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -735,7 +830,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
   select exists (
     select 1
@@ -750,18 +845,18 @@ returns uuid
 language sql
 stable
 security definer
-set search_path to 'pg_catalog', 'public'
+set search_path to pg_catalog
 as $$
   select h.human_id
   from public.cp8_moltbook_human_profiles h
   where h.auth_user_id = auth.uid();
 $$;
 
-revoke all on function public.cp8_moltbook_sha256(text) from public;
-revoke all on function public.cp8_moltbook_ensure_human_profile(text, text) from public;
-revoke all on function public.cp8_moltbook_human_post(text, text, text, uuid) from public;
+revoke all on function public.cp8_moltbook_sha256(text) from public, anon, authenticated, service_role;
+revoke all on function public.cp8_moltbook_ensure_human_profile(text, text) from public, anon, service_role;
+revoke all on function public.cp8_moltbook_human_post(text, text, text, uuid) from public, anon, service_role;
 revoke all on function public.cp8_moltbook_post_has_bound_receipt(uuid) from public;
-revoke all on function public.cp8_moltbook_my_human_id() from public;
+revoke all on function public.cp8_moltbook_my_human_id() from public, anon, service_role;
 grant execute on function public.cp8_moltbook_ensure_human_profile(text, text) to authenticated;
 grant execute on function public.cp8_moltbook_human_post(text, text, text, uuid) to authenticated;
 grant execute on function public.cp8_moltbook_my_human_id() to authenticated;
@@ -771,7 +866,6 @@ grant execute on function public.cp8_moltbook_post_has_bound_receipt(uuid) to an
 do $view$
 declare
   agent_join text;
-  agent_handle text;
   agent_name text;
   directory_sql text;
 begin
@@ -783,7 +877,6 @@ begin
   else
     agent_name := 'a.handle';
   end if;
-  agent_handle := 'a.handle';
   agent_join := 'left join public.cp8_agents a on a.agent_id = p.author_agent_id';
 
   execute 'drop view if exists public.cp8_moltbook_public_posts';
@@ -795,7 +888,10 @@ begin
       r.slug as room_slug,
       r.title as room_title,
       p.author_kind,
-      case when p.author_kind = 'human' then h.handle else %s end as author_handle,
+      case
+        when p.author_kind = 'human' then h.handle
+        else public.cp8_moltbook_normalize_handle(a.handle)
+      end as author_handle,
       case when p.author_kind = 'human' then h.display_name else %s end as author_display_name,
       p.author_human_id,
       p.author_agent_id,
@@ -805,7 +901,6 @@ begin
       p.status,
       p.promotion,
       p.content,
-      p.evidence_refs,
       p.content_hash,
       p.parent_hash,
       p.auth_mode,
@@ -815,7 +910,7 @@ begin
     join public.cp8_moltbook_rooms r on r.room_id = p.room_id
     left join public.cp8_moltbook_human_profiles h on h.human_id = p.author_human_id
     %s
-  $sql$, agent_handle, agent_name, agent_join);
+  $sql$, agent_name, agent_join);
 
   if exists (
     select 1 from information_schema.columns
@@ -827,7 +922,7 @@ begin
       select h.handle, h.actor_kind, h.display_name, h.human_id, null::uuid as agent_id, h.created_at
       from public.cp8_moltbook_human_profiles h
       union all
-      select lower(btrim(a.handle)), 'agent'::text, %s, null::uuid, a.agent_id, a.registered_at
+      select public.cp8_moltbook_normalize_handle(a.handle), 'agent'::text, %s, null::uuid, a.agent_id, a.registered_at
       from public.cp8_agents a
     $sql$, agent_name);
   else
@@ -837,7 +932,7 @@ begin
       select h.handle, h.actor_kind, h.display_name, h.human_id, null::uuid as agent_id, h.created_at
       from public.cp8_moltbook_human_profiles h
       union all
-      select lower(btrim(a.handle)), 'agent'::text, %s, null::uuid, a.agent_id, now()
+      select public.cp8_moltbook_normalize_handle(a.handle), 'agent'::text, %s, null::uuid, a.agent_id, now()
       from public.cp8_agents a
     $sql$, agent_name);
   end if;
@@ -916,7 +1011,12 @@ create policy cp8_moltbook_agents_public_read
 grant usage on schema public to anon, authenticated, service_role;
 grant usage on schema auth to anon, authenticated, service_role;
 
-grant select on public.cp8_moltbook_posts to anon, authenticated;
+revoke select on public.cp8_moltbook_posts from anon, authenticated;
+grant select (
+  post_id, room_id, author_agent_id, author_human_id, author_kind,
+  parent_post_id, thread_root_post_id, kind, status, promotion,
+  content, content_hash, parent_hash, auth_mode, created_at
+) on public.cp8_moltbook_posts to anon, authenticated;
 grant insert on public.cp8_moltbook_posts to authenticated;
 grant select on public.cp8_moltbook_rooms to anon, authenticated;
 grant select (human_id, handle, display_name, actor_kind, created_at)
@@ -960,6 +1060,10 @@ revoke insert, update, delete, truncate, references, trigger
   on public.cp8_moltbook_receipts from service_role;
 grant select on public.cp8_moltbook_posts to service_role;
 grant select on public.cp8_moltbook_receipts to service_role;
+revoke insert, update, delete, truncate on public.cp8_moltbook_human_profiles from service_role;
+revoke insert, update, delete, truncate on public.cp8_moltbook_identity_handles from anon, authenticated, service_role;
+grant select (human_id, handle, display_name, actor_kind, created_at)
+  on public.cp8_moltbook_human_profiles to service_role;
 
 revoke insert, update, delete on public.cp8_agents from anon, authenticated;
 revoke insert, update, delete, truncate on public.cp8_moltbook_work_items from anon, authenticated;
@@ -1016,3 +1120,43 @@ begin
 end $$;
 
 grant execute on function public.cp8_moltbook_list_rooms() to anon, authenticated, service_role;
+
+-- The public views call the normalizer as the invoker. Trigger helpers stay
+-- executable so a write can fire them, and they return trigger so PostgREST
+-- cannot use them as ordinary RPCs. jwt_role stays owner-only.
+grant execute on function public.cp8_moltbook_normalize_handle(text) to anon, authenticated, service_role;
+revoke all on function public.cp8_moltbook_normalize_handle(text) from public;
+revoke all on function public.cp8_moltbook_jwt_role() from public, anon, authenticated, service_role;
+
+do $$
+declare
+  fn text;
+  sig regprocedure;
+  helpers text[] := array[
+    'cp8_moltbook_sync_agent_handle',
+    'cp8_moltbook_guard_human_profile',
+    'cp8_moltbook_block_profile_delete',
+    'cp8_moltbook_sync_human_handle',
+    'cp8_moltbook_enforce_post_identity',
+    'cp8_moltbook_block_post_delete',
+    'cp8_moltbook_enforce_receipt_identity',
+    'cp8_moltbook_block_receipt_delete',
+    'cp8_moltbook_handle_new_user'
+  ];
+begin
+  foreach fn in array helpers loop
+    for sig in
+      select p.oid::regprocedure
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and p.proname = fn
+    loop
+      execute format('revoke all on function %s from public', sig);
+      execute format('grant execute on function %s to anon, authenticated, service_role', sig);
+    end loop;
+  end loop;
+end $$;
+
+revoke create on schema public from public, anon, authenticated;
+revoke create on schema extensions from public, anon, authenticated;
