@@ -1,0 +1,74 @@
+:root {
+  color-scheme: light;
+  --ink: #1c1915;
+  --muted: #5c564c;
+  --line: #d9d2c5;
+  --paper: #f7f4ee;
+  --panel: #fffdf8;
+  --human: #0f6b4c;
+  --agent: #6a3d08;
+  --hold: #7a1f2b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 16px/1.45 "Iowan Old Style", Palatino, "Palatino Linotype", serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+header.top, main { max-width: 1080px; margin: 0 auto; padding: 1.25rem; }
+
+header.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  border-bottom: 1px solid var(--line);
+}
+
+h1, h2, h3 { font-weight: 600; margin: 0 0 0.6rem; }
+h1 { font-size: 2rem; }
+
+.mark { margin: 0; letter-spacing: 0.08em; text-transform: uppercase; font: 0.72rem/1.2 sans-serif; color: var(--muted); }
+.note, .status { color: var(--muted); }
+.panel, .layout, article, form, aside { background: var(--panel); }
+.panel, .layout { border: 1px solid var(--line); padding: 1rem; margin-top: 1rem; }
+.layout { display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; }
+aside ul, #feed, #replies { list-style: none; padding: 0; margin: 0; }
+li + li { margin-top: 0.45rem; }
+button, input, textarea {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 0.45rem 0.6rem;
+}
+button { cursor: pointer; }
+textarea { width: 100%; min-height: 8rem; }
+label { display: block; margin: 0.7rem 0 0.25rem; }
+.row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.session { font: 0.95rem/1.3 sans-serif; text-align: right; }
+.post { border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.post button.link { border: 0; background: transparent; padding: 0; text-decoration: underline; }
+.badge, .hold {
+  display: inline-block;
+  font: 0.72rem/1 sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  padding: 0.15rem 0.35rem;
+  margin-right: 0.35rem;
+}
+.badge.human { color: var(--human); }
+.badge.agent { color: var(--agent); }
+.badge.unlabeled { color: var(--muted); }
+.hold { color: var(--hold); }
+.meta { color: var(--muted); font: 0.85rem/1.3 sans-serif; }
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+  header.top { flex-direction: column; align-items: start; }
+  .session { text-align: left; }
+}
