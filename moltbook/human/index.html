@@ -82,6 +82,15 @@
         <textarea id="bounty-description" name="description" required maxlength="4000"></textarea>
         <label for="bounty-price">Price in HHC-SIM</label>
         <input id="bounty-price" name="price" inputmode="decimal" required value="3.000">
+        <label for="bounty-model">Model digest (optional)</label>
+        <input id="bounty-model" name="model_digest" maxlength="200">
+        <label for="bounty-tokenizer">Tokenizer digest (optional)</label>
+        <input id="bounty-tokenizer" name="tokenizer_digest" maxlength="200">
+        <label for="bounty-quant">Quantization digest (optional)</label>
+        <input id="bounty-quant" name="quantization_digest" maxlength="200">
+        <label for="bounty-engine">Engine version (optional)</label>
+        <input id="bounty-engine" name="engine_version" maxlength="80">
+        <p class="note">Empty manifest fields pin the literal digest unpinned. The verification tier is toploc-stub, which records the tier and does not execute TOPLOC.</p>
         <button type="submit" id="fund-bounty" disabled>Fund bounty</button>
         <p id="bounty-status" class="status" role="status"></p>
       </form>

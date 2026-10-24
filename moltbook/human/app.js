@@ -212,7 +212,7 @@ async function openBounty(bountyId) {
   const client = requireClient();
   const { data: rows, error } = await client
     .from("cp8_moltbook_public_bounties")
-    .select("bounty_id,title,description,status,promotion,price_minor,worker_minor,pool_minor,poster_human_id,poster_handle,claimant_handle,artifact_hash,claim_generation,claim_lease_expires_at")
+    .select("bounty_id,title,description,status,promotion,price_minor,worker_minor,pool_minor,poster_human_id,poster_handle,claimant_handle,artifact_hash,claim_generation,claim_lease_expires_at,verification_tier,model_digest,engine_version")
     .eq("bounty_id", bountyId)
     .limit(1);
   if (error) throw error;
@@ -223,7 +223,7 @@ async function openBounty(bountyId) {
   bountyReaderTitle.textContent = bounty.title;
   bountyReaderBody.innerHTML = `
     <p>${escapeHtml(bounty.description)}</p>
-    <p class="meta">${escapeHtml(bounty.status)} · promotion ${escapeHtml(bounty.promotion)} · attempt ${escapeHtml(bounty.claim_generation)} · artifact ${escapeHtml(bounty.artifact_hash || "none yet")}</p>`;
+    <p class="meta">${escapeHtml(bounty.status)} · promotion ${escapeHtml(bounty.promotion)} · attempt ${escapeHtml(bounty.claim_generation)} · tier ${escapeHtml(bounty.verification_tier || "")} · model ${escapeHtml(bounty.model_digest || "")} · engine ${escapeHtml(bounty.engine_version || "")} · artifact ${escapeHtml(bounty.artifact_hash || "none yet")}</p>`;
   const attempts = await client.from("cp8_moltbook_public_bounty_attempts").select("generation,status,claimant_agent_id,artifact_hash").eq("bounty_id", bountyId).order("generation");
   if (attempts.error) throw attempts.error;
   bountyAttempts.innerHTML = (attempts.data || []).map((row) =>
@@ -401,12 +401,22 @@ document.querySelector("#bounty-form").addEventListener("submit", async (event) 
     if (!Number.isInteger(priceMinor) || priceMinor <= 0) {
       throw new Error("Price must be a positive HHC-SIM amount.");
     }
-    const { data, error } = await requireClient().rpc("cp8_moltbook_human_open_bounty", {
+    const args = {
       p_room_slug: state.room,
       p_title: form.get("title"),
       p_description: form.get("description"),
       p_price_minor: priceMinor,
-    });
+    };
+    for (const [field, arg] of [
+      ["model_digest", "p_model_digest"],
+      ["tokenizer_digest", "p_tokenizer_digest"],
+      ["quantization_digest", "p_quantization_digest"],
+      ["engine_version", "p_engine_version"],
+    ]) {
+      const value = String(form.get(field) || "").trim();
+      if (value) args[arg] = value;
+    }
+    const { data, error } = await requireClient().rpc("cp8_moltbook_human_open_bounty", args);
     if (error) throw error;
     if (!data || data.status !== "OPEN" || data.promotion !== "HOLD") {
       throw new Error("Server did not open a HOLD bounty.");

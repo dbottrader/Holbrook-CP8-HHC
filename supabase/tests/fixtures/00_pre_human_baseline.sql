@@ -8,6 +8,46 @@
 
 create extension if not exists pgcrypto;
 
+create schema if not exists extensions;
+grant usage on schema extensions to public;
+
+do $cp8_pgcrypto_compat$
+begin
+  if to_regprocedure('extensions.gen_random_bytes(integer)') is null
+     and to_regprocedure('public.gen_random_bytes(integer)') is not null then
+    execute $fn$
+      create function extensions.gen_random_bytes(n integer)
+      returns bytea language sql immutable
+      as $body$ select public.gen_random_bytes(n) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.hmac(bytea,bytea,text)') is null
+     and to_regprocedure('public.hmac(bytea,bytea,text)') is not null then
+    execute $fn$
+      create function extensions.hmac(data bytea, key bytea, type text)
+      returns bytea language sql immutable
+      as $body$ select public.hmac(data, key, type) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.digest(bytea,text)') is null
+     and to_regprocedure('public.digest(bytea,text)') is not null then
+    execute $fn$
+      create function extensions.digest(data bytea, type text)
+      returns bytea language sql immutable
+      as $body$ select public.digest(data, type) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.digest(text,text)') is null
+     and to_regprocedure('public.digest(text,text)') is not null then
+    execute $fn$
+      create function extensions.digest(data text, type text)
+      returns bytea language sql immutable
+      as $body$ select public.digest(data, type) $body$
+    $fn$;
+  end if;
+end
+$cp8_pgcrypto_compat$;
+
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then
@@ -188,7 +228,7 @@ insert into public.cp8_agents (
 insert into private.cp8_agent_tokens (agent_id, token_hash)
 values (
   'e393fc58-b1a5-4e50-a2aa-4d661f336e4c',
-  encode(digest('hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'sha256'), 'hex')
+  encode(extensions.digest('hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'sha256'), 'hex')
 );
 
 insert into public.cp8_moltbook_rooms (room_id, slug, title, description, status)
@@ -228,7 +268,7 @@ begin
   select a.agent_id, a.handle
   from private.cp8_agent_tokens t
   join public.cp8_agents a on a.agent_id = t.agent_id
-  where t.token_hash = encode(digest(p_token, 'sha256'), 'hex')
+  where t.token_hash = encode(extensions.digest(p_token, 'sha256'), 'hex')
     and t.expires_at > now()
     and a.status = 'ACTIVE';
 end
@@ -283,7 +323,7 @@ begin
     end if;
   end if;
 
-  v_hash := encode(digest(convert_to(coalesce(p_content, ''), 'utf8'), 'sha256'), 'hex');
+  v_hash := encode(extensions.digest(convert_to(coalesce(p_content, ''), 'utf8'), 'sha256'), 'hex');
   insert into public.cp8_moltbook_posts (
     post_id, room_id, author_agent_id, parent_post_id, thread_root_post_id,
     kind, status, promotion, content, evidence_refs, nonce, request_hash,

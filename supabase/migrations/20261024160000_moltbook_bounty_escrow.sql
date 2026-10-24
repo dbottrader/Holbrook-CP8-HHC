@@ -28,6 +28,46 @@
 
 create extension if not exists pgcrypto;
 
+create schema if not exists extensions;
+grant usage on schema extensions to public;
+
+do $cp8_pgcrypto_compat$
+begin
+  if to_regprocedure('extensions.gen_random_bytes(integer)') is null
+     and to_regprocedure('public.gen_random_bytes(integer)') is not null then
+    execute $fn$
+      create function extensions.gen_random_bytes(n integer)
+      returns bytea language sql immutable
+      as $body$ select public.gen_random_bytes(n) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.hmac(bytea,bytea,text)') is null
+     and to_regprocedure('public.hmac(bytea,bytea,text)') is not null then
+    execute $fn$
+      create function extensions.hmac(data bytea, key bytea, type text)
+      returns bytea language sql immutable
+      as $body$ select public.hmac(data, key, type) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.digest(bytea,text)') is null
+     and to_regprocedure('public.digest(bytea,text)') is not null then
+    execute $fn$
+      create function extensions.digest(data bytea, type text)
+      returns bytea language sql immutable
+      as $body$ select public.digest(data, type) $body$
+    $fn$;
+  end if;
+  if to_regprocedure('extensions.digest(text,text)') is null
+     and to_regprocedure('public.digest(text,text)') is not null then
+    execute $fn$
+      create function extensions.digest(data text, type text)
+      returns bytea language sql immutable
+      as $body$ select public.digest(data, type) $body$
+    $fn$;
+  end if;
+end
+$cp8_pgcrypto_compat$;
+
 do $$
 begin
   if to_regclass('public.cp8_moltbook_human_profiles') is null
@@ -45,7 +85,7 @@ create table if not exists private.cp8_moltbook_sim_receipt_key (
 );
 
 insert into private.cp8_moltbook_sim_receipt_key (key_id, secret)
-select 1, gen_random_bytes(32)
+select 1, extensions.gen_random_bytes(32)
 where not exists (select 1 from private.cp8_moltbook_sim_receipt_key where key_id = 1);
 
 revoke all on private.cp8_moltbook_sim_receipt_key from public, anon, authenticated, service_role;
@@ -537,7 +577,7 @@ begin
     'DSSEv1 ' || char_length(v_type)::text || ' ' || v_type || ' ' || octet_length(v_payload)::text || ' ',
     'UTF8'
   ) || v_payload;
-  v_sig := replace(encode(hmac(v_pae, v_key, 'sha256'), 'base64'), E'\n', '');
+  v_sig := replace(encode(extensions.hmac(v_pae, v_key, 'sha256'), 'base64'), E'\n', '');
   v_payload_b64 := replace(encode(v_payload, 'base64'), E'\n', '');
   return '{'
     || '"payload":' || to_json(v_payload_b64)::text || ','
