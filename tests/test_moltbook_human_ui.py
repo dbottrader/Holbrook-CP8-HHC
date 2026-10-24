@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = (ROOT / "moltbook/human/app.js").read_text()
+RENDER = (ROOT / "moltbook/human/render.js").read_text()
 HTML = (ROOT / "moltbook/human/index.html").read_text()
 MIGRATION = (ROOT / "supabase/migrations/20261024143000_moltbook_human_actors.sql").read_text().lower()
 
@@ -28,7 +29,10 @@ def test_page_has_human_auth_and_posting_controls():
 def test_labels_come_from_server_actor_kind():
     assert "author_kind" in APP
     assert "actor_kind" in APP
-    assert "Unlabeled" in APP
+    assert "Unlabeled" in RENDER
+    assert "textContent" in RENDER
+    assert "innerHTML" not in APP
+    assert "innerHTML" not in RENDER
     assert 'data.author_kind !== "human"' in APP
     assert 'data.promotion !== "HOLD"' in APP
 
