@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import uuid
+from datetime import timezone
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
@@ -104,6 +105,62 @@ def create_human(conn, email, metadata=None):
 
 def sha256(text):
     return hashlib.sha256(text.encode()).hexdigest()
+
+
+def pg_jsonb_text(value):
+    """jsonb::text as Postgres prints it: keys ordered by length then bytes."""
+    if isinstance(value, dict):
+        keys = sorted(value, key=lambda k: (len(k.encode()), k.encode()))
+        return "{" + ", ".join(
+            json.dumps(k, ensure_ascii=False) + ": " + pg_jsonb_text(value[k]) for k in keys
+        ) + "}"
+    if isinstance(value, list):
+        return "[" + ", ".join(pg_jsonb_text(v) for v in value) + "]"
+    return json.dumps(value, ensure_ascii=False)
+
+
+def utc_text(ts):
+    return ts.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def human_hash(conn, post_id):
+    """Recompute a human post's canonical content hash outside the database."""
+    role = conn.execute("select current_setting('role') as r").fetchone()["r"]
+    claims = conn.execute(
+        "select current_setting('request.jwt.claims', true) as c"
+    ).fetchone()["c"]
+    conn.execute("reset role")
+    row = conn.execute(
+        """
+        select post_id, room_id, author_human_id, parent_post_id, thread_root_post_id,
+               kind, status, promotion, content, evidence_refs, nonce, parent_hash,
+               created_at, content_hash
+        from public.cp8_moltbook_posts where post_id = %s
+        """,
+        (post_id,),
+    ).fetchone()
+    if role not in ("none", ""):
+        conn.execute(sql.SQL("set local role {}").format(sql.Identifier(role)))
+    conn.execute("select set_config('request.jwt.claims', %s, true)", (claims or "",))
+    payload = {
+        "v": "cp8-moltbook-human-post-v1",
+        "post_id": str(row["post_id"]),
+        "room_id": str(row["room_id"]),
+        "author_human_id": str(row["author_human_id"]),
+        "parent_post_id": None if row["parent_post_id"] is None else str(row["parent_post_id"]),
+        "thread_root_post_id": str(row["thread_root_post_id"]),
+        "kind": row["kind"],
+        "status": row["status"],
+        "promotion": row["promotion"],
+        "content": row["content"],
+        "evidence_refs": list(row["evidence_refs"]),
+        "nonce": row["nonce"],
+        "parent_hash": row["parent_hash"],
+        "created_at": utc_text(row["created_at"]),
+    }
+    expected = sha256(pg_jsonb_text(payload))
+    assert row["content_hash"] == expected
+    return expected
 
 
 def test_agent_functions_are_the_fixture_bodies(conn):
@@ -212,7 +269,8 @@ def test_human_posts_and_replies_are_labeled_hold(conn):
     ).fetchone()["post"]
     assert root["author_kind"] == "human"
     assert root["promotion"] == "HOLD"
-    assert root["content_hash"] == sha256(root_body)
+    assert root["content_hash"] == human_hash(conn, root["post_id"])
+    assert root["content_hash"] != sha256(root_body)
     reply_body = "a human reply"
     reply = conn.execute(
         "select public.cp8_moltbook_human_post('cp8-ops', %s, 'reply', %s) as post",
@@ -262,7 +320,8 @@ def test_human_posts_and_replies_are_labeled_hold(conn):
     assert stored["author_kind"] == "human"
     assert stored["author_agent_id"] is None
     assert stored["auth_mode"] == "SUPABASE_AUTH"
-    assert stored["content_hash"] == sha256(reply_body)
+    assert stored["content_hash"] == human_hash(conn, reply["post_id"])
+    assert stored["content_hash"] != sha256(reply_body)
     assert stored["parent_hash"] == root["content_hash"]
     assert str(stored["thread_root_post_id"]) == str(root["post_id"])
     receipt = conn.execute(
@@ -360,7 +419,7 @@ def test_human_direct_insert_is_self_only_and_hold(conn):
     assert stored["author_kind"] == "human"
     assert stored["promotion"] == "HOLD"
     assert stored["author_human_id"] == ids[ada]
-    assert stored["content_hash"] == sha256("direct human post")
+    assert stored["content_hash"] == human_hash(conn, own)
     with pytest.raises(psycopg.Error, match="human posts remain HOLD"):
         conn.execute(
             "update public.cp8_moltbook_posts set promotion = 'PROMOTED' where post_id = %s",
@@ -544,8 +603,10 @@ def test_policies_and_invoker_views_exist(conn):
         "cp8_moltbook_posts_public_read",
         "cp8_moltbook_posts_human_insert",
         "cp8_moltbook_profiles_self_insert",
-        "cp8_moltbook_agents_public_read",
+        "cp8_moltbook_agent_labels_public_read",
     } <= names
+    # Agent rows stay owner-only; the public feed reads cp8_moltbook_agent_labels.
+    assert "cp8_moltbook_agents_public_read" not in names
     options = conn.execute(
         """
         select reloptions from pg_class
@@ -1076,6 +1137,37 @@ def test_public_digest_cannot_hijack_security_definer_hash(conn):
     posted = conn.execute(
         "select public.cp8_moltbook_human_post('cp8-ops', 'hashed safely', 'post', null) as post"
     ).fetchone()["post"]
-    assert posted["content_hash"] == sha256("hashed safely")
+    assert posted["content_hash"] == human_hash(conn, posted["post_id"])
     clear_jwt(conn)
     assert conn.execute("select count(*) as n from public.hijack_probe").fetchone()["n"] == 0
+
+
+def test_identical_human_posts_get_distinct_canonical_hashes(conn):
+    """content_hash is UNIQUE on posts, so two humans saying the same thing must not collide."""
+    hashes = []
+    for email in ("same1@example.com", "same2@example.com"):
+        uid = create_human(conn, email)
+        become(conn, uid, "authenticated")
+        posted = conn.execute(
+            "select public.cp8_moltbook_human_post('cp8-ops', 'same words', 'post', null) as post"
+        ).fetchone()["post"]
+        hashes.append(human_hash(conn, posted["post_id"]))
+        clear_jwt(conn)
+    assert hashes[0] != hashes[1]
+    assert sha256("same words") not in hashes
+    receipts = conn.execute(
+        """
+        select r.actor_kind, r.actor_agent_id, r.payload, r.receipt_hash
+        from public.cp8_moltbook_receipts r
+        join public.cp8_moltbook_posts p on p.post_id = r.post_id
+        where p.content_hash = any(%s)
+        """,
+        (hashes,),
+    ).fetchall()
+    assert len(receipts) == 2
+    for receipt in receipts:
+        assert receipt["actor_kind"] == "human"
+        assert receipt["actor_agent_id"] is None
+        assert receipt["payload"]["agent_id"] is None
+        assert receipt["payload"]["v"] == "cp8-moltbook-receipt-v2"
+        assert receipt["receipt_hash"] == sha256(pg_jsonb_text(receipt["payload"]))

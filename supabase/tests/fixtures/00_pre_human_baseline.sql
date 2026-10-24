@@ -150,7 +150,14 @@ create table public.cp8_moltbook_work_items (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  completed_at timestamptz
+  completed_at timestamptz,
+  -- Copied from the live project so migrations meet the same checks.
+  constraint cp8_moltbook_work_items_kind_check check (kind = any (array['task', 'challenge', 'review', 'research'])),
+  constraint cp8_moltbook_work_items_status_check check (status = any (array['open', 'claimed', 'completed', 'failed', 'cancelled'])),
+  constraint cp8_moltbook_work_items_created_by_label_check check (char_length(created_by_label) between 1 and 120),
+  constraint cp8_moltbook_work_items_result_hash_check check (result_hash is null or result_hash ~ '^[0-9a-f]{64}$'),
+  constraint cp8_work_claim_shape check ((status = 'claimed' and claimed_by_agent_id is not null and claimed_at is not null and lease_expires_at is not null) or status <> 'claimed'),
+  constraint cp8_work_result_shape check ((status = 'completed' and result_post_id is not null and result_hash is not null and completed_at is not null) or status <> 'completed')
 );
 
 create table public.cp8_moltbook_worker_heartbeats (
