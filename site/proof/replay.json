@@ -1,0 +1,113 @@
+{
+  "cases": [
+    {
+      "bounty_id": "bty_pass",
+      "price_hhc_sim": "10.000",
+      "price_milli": 10000,
+      "publisher_hhc_sim": "0.000",
+      "publisher_milli": 0,
+      "remainder_milli": 0,
+      "state": "TERMINAL_PAID",
+      "verifier_a_hhc_sim": "0.500",
+      "verifier_a_milli": 500,
+      "verifier_b_hhc_sim": "0.500",
+      "verifier_b_milli": 500,
+      "worker_hhc_sim": "9.000",
+      "worker_milli": 9000
+    },
+    {
+      "bounty_id": "bty_fail",
+      "price_hhc_sim": "4.000",
+      "price_milli": 4000,
+      "publisher_hhc_sim": "4.000",
+      "publisher_milli": 4000,
+      "remainder_milli": 0,
+      "state": "TERMINAL_REFUNDED",
+      "verifier_a_hhc_sim": "0.000",
+      "verifier_a_milli": 0,
+      "verifier_b_hhc_sim": "0.000",
+      "verifier_b_milli": 0,
+      "worker_hhc_sim": "0.000",
+      "worker_milli": 0
+    },
+    {
+      "bounty_id": "bty_probe",
+      "price_hhc_sim": "0.007",
+      "price_milli": 7,
+      "publisher_hhc_sim": "0.001",
+      "publisher_milli": 1,
+      "remainder_milli": 1,
+      "state": "TERMINAL_PAID",
+      "verifier_a_hhc_sim": "0.000",
+      "verifier_a_milli": 0,
+      "verifier_b_hhc_sim": "0.000",
+      "verifier_b_milli": 0,
+      "worker_hhc_sim": "0.006",
+      "worker_milli": 6
+    }
+  ],
+  "fixture": "powc-launch-v1",
+  "gates": [
+    {
+      "detail": "4 bounties posted with bound text hashes.",
+      "id": "bounty_posted",
+      "status": "PASS"
+    },
+    {
+      "detail": "A rival was rejected at tick 11 and claimed bty_fence only at tick 40, when the lease ended.",
+      "id": "fenced_lease",
+      "status": "PASS"
+    },
+    {
+      "detail": "Each settled bounty has two verifiers, distinct from each other, the worker, and the publisher.",
+      "id": "verifier_independence",
+      "status": "PASS"
+    },
+    {
+      "detail": "Bty_pass pays 9.000 / 0.500 / 0.500 HHC-SIM from 10.000.",
+      "id": "settlement_90_5_5",
+      "status": "PASS"
+    },
+    {
+      "detail": "Bty_fail refunds 4.000 HHC-SIM; the pass vote is unpaid.",
+      "id": "fail_full_refund",
+      "status": "PASS"
+    },
+    {
+      "detail": "Bty_probe price 7 milli returns remainder 1 to the publisher. 3 settlements conserve the escrowed milli-credits.",
+      "id": "credit_conservation",
+      "status": "PASS"
+    },
+    {
+      "detail": "20 receipts recompute and link to 195381c9c68d4ecb002663d5ee69cc0283e8ac05b1af5598923352cdb416256b.",
+      "id": "receipt_chain",
+      "status": "PASS"
+    },
+    {
+      "detail": "HHC-SIM stays simulated, promotion stays HOLD, and site/config.js carries the public anon key for ecenvlwyenpakrxfuqup; the key signature was not re-checked.",
+      "id": "simulated_hold_boundary",
+      "status": "PASS"
+    }
+  ],
+  "gates_passed": 8,
+  "gates_total": 8,
+  "head_receipt_hash": "195381c9c68d4ecb002663d5ee69cc0283e8ac05b1af5598923352cdb416256b",
+  "local_replay": [
+    "git clone https://github.com/dbottrader/Holbrook-CP8-HHC.git",
+    "cd Holbrook-CP8-HHC",
+    "python3 scripts/replay_proof_of_work_commons.py --out /tmp/powc-replay",
+    "python3 scripts/replay_proof_of_work_commons.py --check site/proof"
+  ],
+  "monetary_authority": false,
+  "note": "HHC-SIM credits in this replay are simulated. They are not a token, not money, and not redeemable. A passing replay does not promote the system.",
+  "promotion": "HOLD",
+  "receipt_count": 20,
+  "receipts_sha256": "0de5d8288faa7c1015a209b5d83d7123a410e7367359c29aaea0654c2d6b4e12",
+  "schema": "powc-replay-v1",
+  "settlement_rule": {
+    "fail": "any fail among two verdicts refunds the publisher the full price; worker and verifiers receive 0",
+    "pass": "worker 90 percent, verifier A 5 percent, verifier B 5 percent, integer floor; undistributed remainder returns to the publisher",
+    "unit": "milli-HHC-SIM; 1000 milli = 1.000 HHC-SIM"
+  },
+  "unit": "HHC-SIM"
+}

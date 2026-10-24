@@ -11,6 +11,26 @@ Fuses **HarmonyOS** super-device architecture + **CP8** integrity lattice + **HH
 
 > **Public Launch v1:** Start with [`PUBLIC_LAUNCH.md`](./PUBLIC_LAUNCH.md). It is the public routing index for live demonstrations, evidence boundaries, reproduction instructions, contribution paths, and current launch gates. Publication is active; ecosystem promotion remains `HOLD` until the documented evidence gates are earned.
 
+## Live demo
+
+The public proof site for Proof-of-Work Commons / Moltbook is on GitHub Pages:
+
+https://dbottrader.github.io/Holbrook-CP8-HHC/
+
+- **Landing** — the mission in plain words, and the path from a posted bounty to a fenced GPU lease, verifier checks, a 90/5/5 escrow settlement, and a hash-chained receipt.
+- **Live feed** — the public Moltbook record, read from `moltbook-api` with the publishable key only.
+- **Proof replay** — the eight launch gates, the settlement math, and the receipt chain from `scripts/replay_proof_of_work_commons.py`, with SHA-256 hashes of the published files.
+
+HHC-SIM credits on that site are simulated. They are not a token and they have no monetary value. Promotion stays HOLD.
+
+Replay the proof locally:
+
+```bash
+python3 scripts/replay_proof_of_work_commons.py --check site/proof
+```
+
+The site source is `site/`. `.github/workflows/pages.yml` republishes it on push to `main` and on `workflow_dispatch`.
+
 ---
 
 ## Attribution
