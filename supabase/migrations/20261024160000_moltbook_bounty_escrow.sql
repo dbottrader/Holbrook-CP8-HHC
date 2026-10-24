@@ -26,7 +26,8 @@
 -- Promotion is separate and stays HOLD until the poster human promotes the
 -- exact artifact hash. Human posts are still forced to HOLD by the earlier trigger.
 
-create extension if not exists pgcrypto;
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 do $$
 begin
@@ -45,7 +46,7 @@ create table if not exists private.cp8_moltbook_sim_receipt_key (
 );
 
 insert into private.cp8_moltbook_sim_receipt_key (key_id, secret)
-select 1, gen_random_bytes(32)
+select 1, extensions.gen_random_bytes(32)
 where not exists (select 1 from private.cp8_moltbook_sim_receipt_key where key_id = 1);
 
 revoke all on private.cp8_moltbook_sim_receipt_key from public, anon, authenticated, service_role;
@@ -537,7 +538,7 @@ begin
     'DSSEv1 ' || char_length(v_type)::text || ' ' || v_type || ' ' || octet_length(v_payload)::text || ' ',
     'UTF8'
   ) || v_payload;
-  v_sig := replace(encode(hmac(v_pae, v_key, 'sha256'), 'base64'), E'\n', '');
+  v_sig := replace(encode(extensions.hmac(v_pae, v_key, 'sha256'), 'base64'), E'\n', '');
   v_payload_b64 := replace(encode(v_payload, 'base64'), E'\n', '');
   return '{'
     || '"payload":' || to_json(v_payload_b64)::text || ','
@@ -620,7 +621,8 @@ begin
   end if;
   select h.human_id into v_human
   from public.cp8_moltbook_human_profiles h
-  where h.auth_user_id = auth.uid();
+  where h.auth_user_id = auth.uid()
+    and h.status = 'ACTIVE';
   if v_human is null then
     raise exception 'human profile missing';
   end if;
@@ -725,7 +727,9 @@ begin
     p_room_slug,
     btrim(p_title),
     btrim(p_description),
-    'bounty',
+    -- Live work_items only allows task, challenge, review, research. A bounty
+    -- is the task whose work_id appears in cp8_moltbook_bounties.
+    'task',
     'open',
     50,
     null,
@@ -1179,6 +1183,49 @@ begin
   return public.cp8_moltbook_bounty_apply_verdict(p_bounty_id, null, v_agent, p_passed, p_note);
 end $$;
 
+drop function if exists public.cp8_moltbook_bounty_promotion_ok(uuid, text);
+
+-- Append-only promotion records. The post row stays as written (HOLD); the
+-- simulated acceptance of a bounty submission is its own row, inserted only by
+-- cp8_moltbook_bounty_promote for the human who posted the bounty.
+create table if not exists public.cp8_moltbook_post_promotions (
+  promotion_id uuid primary key default gen_random_uuid(),
+  post_id uuid not null unique references public.cp8_moltbook_posts(post_id),
+  bounty_id uuid not null unique references public.cp8_moltbook_bounties(bounty_id),
+  promotion text not null default 'SIM_ACCEPTED',
+  artifact_hash text not null,
+  promoted_by_human_id uuid not null references public.cp8_moltbook_human_profiles(human_id),
+  created_at timestamptz not null default clock_timestamp(),
+  constraint cp8_moltbook_post_promotions_kind_chk check (promotion = 'SIM_ACCEPTED')
+);
+
+create or replace function public.cp8_moltbook_guard_post_promotion_record()
+returns trigger
+language plpgsql
+set search_path to 'pg_catalog', 'public'
+as $$
+begin
+  if tg_op <> 'INSERT' then
+    raise exception 'post promotions are append-only';
+  end if;
+  if current_setting('cp8.post_promotion', true) is distinct from 'on' then
+    raise exception 'promotion_requires_human_rpc';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists cp8_moltbook_guard_post_promotion_record on public.cp8_moltbook_post_promotions;
+create trigger cp8_moltbook_guard_post_promotion_record
+  before insert or update or delete on public.cp8_moltbook_post_promotions
+  for each row
+  execute function public.cp8_moltbook_guard_post_promotion_record();
+
+drop trigger if exists cp8_moltbook_block_post_promotion_truncate on public.cp8_moltbook_post_promotions;
+create trigger cp8_moltbook_block_post_promotion_truncate
+  before truncate on public.cp8_moltbook_post_promotions
+  for each statement
+  execute function public.cp8_moltbook_guard_post_promotion_record();
+
 create or replace function public.cp8_moltbook_bounty_promote(p_bounty_id uuid)
 returns jsonb
 language plpgsql
@@ -1218,16 +1265,19 @@ begin
     raise exception 'artifact_mismatch';
   end if;
 
-  perform set_config('cp8.bounty_promote', 'on', true);
-  update public.cp8_moltbook_posts
-  set promotion = 'SIM_ACCEPTED'
-  where post_id = v_row.submission_post_id
-    and author_kind = 'agent'
-    and promotion = 'HOLD'
-    and content_hash = v_row.artifact_hash;
-  if not found then
-    raise exception 'artifact_mismatch';
+  if exists (
+    select 1 from public.cp8_moltbook_post_promotions pp
+    where pp.post_id = v_row.submission_post_id
+  ) then
+    raise exception 'already_promoted';
   end if;
+  perform set_config('cp8.post_promotion', 'on', true);
+  insert into public.cp8_moltbook_post_promotions (
+    post_id, bounty_id, promotion, artifact_hash, promoted_by_human_id
+  ) values (
+    v_row.submission_post_id, p_bounty_id, 'SIM_ACCEPTED', v_row.artifact_hash, v_human
+  );
+  perform set_config('cp8.post_promotion', 'off', true);
 
   perform set_config('cp8.bounty_write', 'on', true);
   perform set_config('cp8.bounty_promote', 'on', true);
@@ -1821,11 +1871,12 @@ set search_path to 'pg_catalog', 'public'
 as $$
 begin
   if tg_op = 'UPDATE' and new.promotion is distinct from old.promotion then
-    if current_setting('cp8.bounty_promote', true) is distinct from 'on' then
-      raise exception 'promotion_requires_human_rpc';
-    end if;
     if old.author_kind is distinct from 'agent' or new.author_kind is distinct from 'agent' then
       raise exception 'human posts remain HOLD';
+    end if;
+    -- SIM_ACCEPTED lives in cp8_moltbook_post_promotions, never on the post.
+    if new.promotion = 'SIM_ACCEPTED' then
+      raise exception 'promotion_requires_human_rpc';
     end if;
   end if;
   return new;
@@ -2213,3 +2264,51 @@ comment on function public.custom_access_token_hook(jsonb) is
   'Supabase custom access token hook. Sets actor_type=human. Never emits agent.';
 comment on table public.cp8_moltbook_transfers is
   'Append-only integer two-phase transfers. pending funds escrow, post pays worker and verifiers, void refunds the poster.';
+
+-- Promotion records: public read, written only by cp8_moltbook_bounty_promote.
+alter table public.cp8_moltbook_post_promotions enable row level security;
+drop policy if exists cp8_moltbook_post_promotions_public_read on public.cp8_moltbook_post_promotions;
+create policy cp8_moltbook_post_promotions_public_read
+  on public.cp8_moltbook_post_promotions
+  for select
+  to anon, authenticated
+  using (true);
+revoke all on public.cp8_moltbook_post_promotions from anon, authenticated, service_role;
+grant select on public.cp8_moltbook_post_promotions to anon, authenticated, service_role;
+revoke all on function public.cp8_moltbook_guard_post_promotion_record() from public;
+grant execute on function public.cp8_moltbook_guard_post_promotion_record() to anon, authenticated, service_role;
+
+-- The read model shows the promotion record when one exists. The post row is
+-- unchanged and still says HOLD.
+create or replace view public.cp8_moltbook_public_posts
+with (security_invoker = true) as
+select
+  p.post_id,
+  r.slug as room_slug,
+  r.title as room_title,
+  p.author_kind,
+  case
+    when p.author_kind = 'human' then h.handle
+    else a.handle
+  end as author_handle,
+  case when p.author_kind = 'human' then h.display_name else a.display_name end as author_display_name,
+  p.author_human_id,
+  p.author_agent_id,
+  p.parent_post_id,
+  p.thread_root_post_id,
+  p.kind,
+  p.status,
+  coalesce(pp.promotion, p.promotion) as promotion,
+  p.content,
+  p.content_hash,
+  p.parent_hash,
+  p.auth_mode,
+  p.created_at,
+  cp8_moltbook_internal.post_has_bound_receipt(p.post_id) as has_bound_receipt
+from public.cp8_moltbook_posts p
+join public.cp8_moltbook_rooms r on r.room_id = p.room_id
+left join public.cp8_moltbook_human_profiles h on h.human_id = p.author_human_id
+left join public.cp8_moltbook_agent_labels a on a.agent_id = p.author_agent_id
+left join public.cp8_moltbook_post_promotions pp on pp.post_id = p.post_id;
+
+grant select on public.cp8_moltbook_public_posts to anon, authenticated;

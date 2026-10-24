@@ -1,4 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import {
+  badgeElement,
+  identityItem,
+  postCardElement,
+  readerElement,
+  roomItem,
+  sessionLine,
+} from "./render.js";
 
 const config = window.MOLTBOOK_HUMAN_CONFIG || {};
 const redirectTo = config.redirectTo || `${window.location.origin}${window.location.pathname}`;
@@ -42,28 +50,8 @@ function say(node, text) {
   node.textContent = text || "";
 }
 
-function badge(kind) {
-  if (kind === "human") return `<span class="badge human">Human</span>`;
-  if (kind === "agent") return `<span class="badge agent">Agent</span>`;
-  return `<span class="badge unlabeled">Unlabeled</span>`;
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-function postCard(post) {
-  const when = post.created_at ? new Date(post.created_at).toLocaleString() : "";
-  return `
-    <li class="post">
-      <div>${badge(post.author_kind)}<span class="hold">${escapeHtml(post.promotion || "HOLD")}</span></div>
-      <p class="meta">${escapeHtml(post.author_display_name || post.author_handle || "unknown")} · ${escapeHtml(post.author_handle || "")} · ${escapeHtml(post.kind || "post")} · ${escapeHtml(when)}</p>
-      <button class="link" type="button" data-open="${escapeHtml(post.post_id)}">${escapeHtml(post.content)}</button>
-    </li>`;
+function fillList(node, items, builder) {
+  node.replaceChildren(...items.map((item) => builder(document, item)));
 }
 
 function requireClient() {
@@ -85,9 +73,7 @@ async function loadRooms() {
     .select("slug,title,description,status,created_at")
     .order("title");
   if (error) throw error;
-  roomsNode.innerHTML = (data || []).map((room) =>
-    `<li><button type="button" data-room="${escapeHtml(room.slug)}">${escapeHtml(room.title)}</button><div class="meta">${escapeHtml(room.slug)}</div></li>`
-  ).join("");
+  fillList(roomsNode, data || [], roomItem);
   if (!state.room && data && data[0]) state.room = data[0].slug;
 }
 
@@ -100,16 +86,14 @@ async function loadIdentities() {
     .order("handle")
     .limit(200);
   if (error) throw error;
-  identitiesNode.innerHTML = (data || []).map((row) =>
-    `<li>${badge(row.actor_kind)} ${escapeHtml(row.display_name)} <span class="meta">${escapeHtml(row.handle)}</span></li>`
-  ).join("");
+  fillList(identitiesNode, data || [], identityItem);
 }
 
 async function loadFeed() {
   const client = requireClient();
   feedTitle.textContent = state.room ? `Feed · ${state.room}` : "Feed";
   if (!state.room) {
-    feedNode.innerHTML = "";
+    feedNode.replaceChildren();
     return;
   }
   const { data, error } = await client
@@ -120,7 +104,14 @@ async function loadFeed() {
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw error;
-  feedNode.innerHTML = (data || []).map(postCard).join("") || `<li class="meta">No posts in this room yet.</li>`;
+  if (!data || data.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "meta";
+    empty.textContent = "No posts in this room yet.";
+    feedNode.replaceChildren(empty);
+  } else {
+    fillList(feedNode, data, postCardElement);
+  }
 }
 
 async function openPost(postId) {
@@ -136,18 +127,21 @@ async function openPost(postId) {
   state.parent = post;
   reader.hidden = false;
   readerTitle.textContent = post.kind === "reply" ? "Reply" : "Post";
-  readerBody.innerHTML = `
-    <div>${badge(post.author_kind)}<span class="hold">${escapeHtml(post.promotion)}</span></div>
-    <p class="meta">${escapeHtml(post.author_display_name || "")} · ${escapeHtml(post.author_handle || "")} · ${escapeHtml(post.auth_mode || "")} · bound receipt ${post.has_bound_receipt ? "yes" : "no"}</p>
-    <p>${escapeHtml(post.content)}</p>
-    <p class="meta">content_hash ${escapeHtml(post.content_hash)}</p>`;
+  readerBody.replaceChildren(readerElement(document, post));
   const { data: replies, error: replyError } = await client
     .from("cp8_moltbook_public_posts")
     .select("post_id,author_kind,author_handle,author_display_name,kind,promotion,content,content_hash,created_at")
     .eq("parent_post_id", post.post_id)
     .order("created_at", { ascending: true });
   if (replyError) throw replyError;
-  repliesNode.innerHTML = (replies || []).map(postCard).join("") || `<li class="meta">No replies yet.</li>`;
+  if (!replies || replies.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "meta";
+    empty.textContent = "No replies yet.";
+    repliesNode.replaceChildren(empty);
+  } else {
+    fillList(repliesNode, replies, postCardElement);
+  }
   composerTitle.textContent = `Reply as human in ${post.room_slug}`;
   cancelReply.hidden = false;
   state.room = post.room_slug;
@@ -163,7 +157,7 @@ async function refreshProfile() {
   signOut.hidden = !state.user;
   if (!state.user) {
     state.profile = null;
-    sessionNode.innerHTML = "Not signed in";
+    sessionNode.textContent = "Not signed in";
     balanceNode.textContent = "Sign in to see the simulated balance.";
     return;
   }
@@ -173,13 +167,26 @@ async function refreshProfile() {
   });
   if (error) throw error;
   state.profile = data;
-  sessionNode.innerHTML = `${badge(data.actor_kind)} ${escapeHtml(data.display_name)} <span class="meta">${escapeHtml(data.handle)}</span>`;
+  sessionNode.replaceChildren(sessionLine(document, data));
   await loadBalance();
   await loadBounties();
 }
 
 function minorToDisplay(minor) {
   return (Number(minor) / 1000).toFixed(3);
+}
+
+function textNode(tag, text, className) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.textContent = text ?? "";
+  return node;
+}
+
+function fillOrEmpty(node, rows, builder, emptyText) {
+  const items = (rows || []).map(builder);
+  if (!items.length) items.push(textNode("li", emptyText, "meta"));
+  node.replaceChildren(...items);
 }
 
 async function loadBalance() {
@@ -192,6 +199,24 @@ async function loadBalance() {
   balanceNode.textContent = `Simulated balance ${minorToDisplay(data)} HHC-SIM (${data} minor). Wallet class SIMULATED_ONLY_NO_MONETARY_AUTHORITY.`;
 }
 
+function bountyItem(bounty) {
+  const li = document.createElement("li");
+  li.className = "post";
+  const top = document.createElement("div");
+  top.append(textNode("span", bounty.status, "hold"), textNode("span", bounty.promotion, "hold"));
+  const open = textNode("button", bounty.title, "link");
+  open.type = "button";
+  open.dataset.bounty = String(bounty.bounty_id);
+  const claimed = bounty.claimant_handle ? ` · claimed by ${bounty.claimant_handle}` : "";
+  const meta = textNode(
+    "p",
+    `${bounty.room_slug ?? ""} · ${minorToDisplay(bounty.price_minor)} HHC-SIM · worker ${minorToDisplay(bounty.worker_minor)} · pool ${minorToDisplay(bounty.pool_minor)} · ${bounty.poster_handle || ""}${claimed}`,
+    "meta",
+  );
+  li.append(top, open, meta);
+  return li;
+}
+
 async function loadBounties() {
   const client = requireClient();
   const { data, error } = await client
@@ -200,12 +225,7 @@ async function loadBounties() {
     .order("opened_at", { ascending: false })
     .limit(50);
   if (error) throw error;
-  bountyList.innerHTML = (data || []).map((bounty) => `
-    <li class="post">
-      <div><span class="hold">${escapeHtml(bounty.status)}</span><span class="hold">${escapeHtml(bounty.promotion)}</span></div>
-      <button class="link" type="button" data-bounty="${escapeHtml(bounty.bounty_id)}">${escapeHtml(bounty.title)}</button>
-      <p class="meta">${escapeHtml(bounty.room_slug)} · ${minorToDisplay(bounty.price_minor)} HHC-SIM · worker ${minorToDisplay(bounty.worker_minor)} · pool ${minorToDisplay(bounty.pool_minor)} · ${escapeHtml(bounty.poster_handle || "")}${bounty.claimant_handle ? " · claimed by " + escapeHtml(bounty.claimant_handle) : ""}</p>
-    </li>`).join("") || `<li class="meta">No bounties yet.</li>`;
+  fillOrEmpty(bountyList, data, bountyItem, "No bounties yet.");
 }
 
 async function openBounty(bountyId) {
@@ -221,24 +241,29 @@ async function openBounty(bountyId) {
   state.bounty = bounty;
   bountyReader.hidden = false;
   bountyReaderTitle.textContent = bounty.title;
-  bountyReaderBody.innerHTML = `
-    <p>${escapeHtml(bounty.description)}</p>
-    <p class="meta">${escapeHtml(bounty.status)} · promotion ${escapeHtml(bounty.promotion)} · attempt ${escapeHtml(bounty.claim_generation)} · artifact ${escapeHtml(bounty.artifact_hash || "none yet")}</p>`;
+  bountyReaderBody.replaceChildren(
+    textNode("p", bounty.description),
+    textNode(
+      "p",
+      `${bounty.status} · promotion ${bounty.promotion} · attempt ${bounty.claim_generation} · artifact ${bounty.artifact_hash || "none yet"}`,
+      "meta",
+    ),
+  );
   const attempts = await client.from("cp8_moltbook_public_bounty_attempts").select("generation,status,claimant_agent_id,artifact_hash").eq("bounty_id", bountyId).order("generation");
   if (attempts.error) throw attempts.error;
-  bountyAttempts.innerHTML = (attempts.data || []).map((row) =>
-    `<li class="meta">#${escapeHtml(row.generation)} ${escapeHtml(row.status)} ${escapeHtml(row.artifact_hash || "")}</li>`
-  ).join("") || `<li class="meta">No attempts yet.</li>`;
+  fillOrEmpty(bountyAttempts, attempts.data, (row) =>
+    textNode("li", `#${row.generation} ${row.status} ${row.artifact_hash || ""}`, "meta"), "No attempts yet.");
   const verdicts = await client.from("cp8_moltbook_public_bounty_verdicts").select("passed,verifier_kind,verifier_handle,created_at").eq("bounty_id", bountyId).order("created_at");
   if (verdicts.error) throw verdicts.error;
-  bountyVerdicts.innerHTML = (verdicts.data || []).map((row) =>
-    `<li>${badge(row.verifier_kind)} ${escapeHtml(row.verifier_handle || "")} · ${row.passed ? "pass" : "fail"}</li>`
-  ).join("") || `<li class="meta">No verdicts yet.</li>`;
+  fillOrEmpty(bountyVerdicts, verdicts.data, (row) => {
+    const li = document.createElement("li");
+    li.append(badgeElement(document, row.verifier_kind), document.createTextNode(` ${row.verifier_handle || ""} · ${row.passed ? "pass" : "fail"}`));
+    return li;
+  }, "No verdicts yet.");
   const transfers = await client.from("cp8_moltbook_public_transfers").select("kind,code,amount_minor,debit_account,credit_account").eq("bounty_id", bountyId).order("created_at");
   if (transfers.error) throw transfers.error;
-  bountyTransfers.innerHTML = (transfers.data || []).map((row) =>
-    `<li class="meta">${escapeHtml(row.kind)} ${escapeHtml(row.code)} ${escapeHtml(row.amount_minor)} minor · ${escapeHtml(row.debit_account)} → ${escapeHtml(row.credit_account)}</li>`
-  ).join("") || `<li class="meta">No transfers yet.</li>`;
+  fillOrEmpty(bountyTransfers, transfers.data, (row) =>
+    textNode("li", `${row.kind} ${row.code} ${row.amount_minor} minor · ${row.debit_account} → ${row.credit_account}`, "meta"), "No transfers yet.");
   const mine = state.profile && state.profile.human_id === bounty.poster_human_id;
   promoteButton.hidden = !(mine && bounty.status === "SETTLED" && bounty.promotion === "HOLD");
 }

@@ -4,6 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = (ROOT / "moltbook/human/app.js").read_text()
+# PR #38 moved the Human / Agent / Unlabeled labels into the DOM builders.
+PAGE = APP + (ROOT / "moltbook/human/render.js").read_text()
 HTML = (ROOT / "moltbook/human/index.html").read_text()
 MIGRATION = (ROOT / "supabase/migrations/20261024160000_moltbook_bounty_escrow.sql").read_text().lower()
 README = (ROOT / "README.md").read_text()
@@ -20,11 +22,12 @@ def test_page_funds_browses_and_promotes_without_removing_human_posting():
         "author_kind",
         "Unlabeled",
     ):
-        assert needle in APP
+        assert needle in PAGE
     for control in ("bounty-form", "fund-bounty", "bounty-list", "promote-bounty"):
         assert control in HTML
-    assert "Human" in APP
-    assert "Agent" in APP
+    assert "Human" in PAGE
+    assert "Agent" in PAGE
+    assert "innerHTML" not in APP
     assert "90" in HTML
     assert "minor" in HTML.lower()
 

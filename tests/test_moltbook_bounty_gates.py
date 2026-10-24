@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "supabase/tests/fixtures/00_pre_human_baseline.sql"
 HUMAN = ROOT / "supabase/migrations/20261024143000_moltbook_human_actors.sql"
 BOUNTY = ROOT / "supabase/migrations/20261024160000_moltbook_bounty_escrow.sql"
+HARDEN = ROOT / "supabase/migrations/20261024180000_moltbook_advisor_hardening.sql"
 TOKEN = "hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 AGENT_ID = "e393fc58-b1a5-4e50-a2aa-4d661f336e4c"
 
@@ -58,7 +59,7 @@ def database_url():
     admin.execute("CREATE DATABASE moltbook_bounty_gates")
     admin.close()
     url = _database_url("moltbook_bounty_gates")
-    for path in (FIXTURE, HUMAN, BOUNTY):
+    for path in (FIXTURE, HUMAN, BOUNTY, HARDEN):
         applied = subprocess.run(
             ["psql", url, "-v", "ON_ERROR_STOP=1", "-q", "-f", str(path)],
             check=False,
@@ -137,7 +138,7 @@ def add_agent(conn, handle):
     conn.execute(
         """
         insert into private.cp8_agent_tokens (agent_id, token_hash)
-        values (%s, encode(digest(%s, 'sha256'), 'hex'))
+        values (%s, encode(extensions.digest(%s, 'sha256'), 'hex'))
         """,
         (agent_id, token),
     )
@@ -746,17 +747,50 @@ def test_gate_7_only_the_poster_can_promote_the_artifact(conn):
     reset(conn)
     stored = conn.execute(
         """
-        select b.promotion, b.promoted_artifact_hash, p.promotion as post_promotion, p.author_kind
+        select b.promotion, b.promoted_artifact_hash, p.promotion as post_promotion, p.author_kind,
+               pp.promotion as record_promotion, pp.artifact_hash as record_hash,
+               pp.promoted_by_human_id, b.poster_human_id
         from public.cp8_moltbook_bounties b
         join public.cp8_moltbook_posts p on p.post_id = b.submission_post_id
+        join public.cp8_moltbook_post_promotions pp on pp.bounty_id = b.bounty_id
+          and pp.post_id = p.post_id
         where b.bounty_id = %s
         """,
         (opened["bounty_id"],),
     ).fetchone()
     assert stored["promotion"] == "SIM_ACCEPTED"
     assert stored["promoted_artifact_hash"] == posted["content_hash"]
-    assert stored["post_promotion"] == "SIM_ACCEPTED"
+    # The post row is append-only: it keeps HOLD. Acceptance is its own record.
+    assert stored["post_promotion"] == "HOLD"
+    assert stored["record_promotion"] == "SIM_ACCEPTED"
+    assert stored["record_hash"] == posted["content_hash"]
+    assert stored["promoted_by_human_id"] == stored["poster_human_id"]
     assert stored["author_kind"] == "agent"
+    shown = conn.execute(
+        "select promotion from public.cp8_moltbook_public_posts where post_id = %s",
+        (posted["post_id"],),
+    ).fetchone()
+    assert shown["promotion"] == "SIM_ACCEPTED"
+    expect(
+        conn,
+        "promotion_requires_human_rpc",
+        """
+        insert into public.cp8_moltbook_post_promotions
+          (post_id, bounty_id, artifact_hash, promoted_by_human_id)
+        select post_id, bounty_id, artifact_hash, promoted_by_human_id
+        from public.cp8_moltbook_post_promotions limit 1
+        """,
+    )
+    expect(
+        conn,
+        "post promotions are append-only",
+        "update public.cp8_moltbook_post_promotions set artifact_hash = 'x'",
+    )
+    expect(
+        conn,
+        "post promotions are append-only",
+        "delete from public.cp8_moltbook_post_promotions",
+    )
     human_post = conn.execute(
         "select promotion from public.cp8_moltbook_posts where author_kind = 'human'"
     ).fetchall()
@@ -887,3 +921,63 @@ def test_gate_8_timeout_disagreement_cancel_and_failed_settlement(conn):
     ]
     assert root == merkle_root(leaves)
     balances_sum_to_zero(conn)
+
+
+PUBLIC_BOUNTY_VIEWS = (
+    "cp8_moltbook_public_bounties",
+    "cp8_moltbook_public_bounty_attempts",
+    "cp8_moltbook_public_bounty_verdicts",
+    "cp8_moltbook_public_bounty_events",
+    "cp8_moltbook_public_transfers",
+)
+
+
+def test_public_bounty_views_are_invoker_over_internal_projection(conn):
+    reset(conn)
+    for name in PUBLIC_BOUNTY_VIEWS:
+        row = conn.execute(
+            """
+            select c.reloptions, n.nspname
+            from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where c.relname = %s and c.relkind = 'v' and n.nspname = 'public'
+            """,
+            (name,),
+        ).fetchone()
+        assert row is not None, name
+        assert "security_invoker=true" in (row["reloptions"] or []), name
+        inner = conn.execute(
+            "select to_regclass(%s) is not null as present",
+            (f"cp8_moltbook_internal.{name}",),
+        ).fetchone()
+        assert inner["present"], name
+        for role in ("anon", "authenticated"):
+            grant = conn.execute(
+                "select has_table_privilege(%s, %s, 'SELECT') as ok",
+                (role, f"public.{name}"),
+            ).fetchone()
+            assert grant["ok"], (role, name)
+    for table in ("cp8_moltbook_bounties", "cp8_moltbook_bounty_verdicts", "cp8_moltbook_transfers"):
+        anon = conn.execute(
+            "select has_table_privilege('anon', %s, 'SELECT') as ok",
+            (f"public.{table}",),
+        ).fetchone()
+        assert not anon["ok"], table
+
+
+def test_trigger_functions_are_not_rpc_callable(conn):
+    reset(conn)
+    rows = conn.execute(
+        """
+        select p.oid::regprocedure::text as fn,
+               has_function_privilege('anon', p.oid, 'EXECUTE') as anon_exec,
+               has_function_privilege('authenticated', p.oid, 'EXECUTE') as auth_exec
+        from pg_proc p
+        where p.pronamespace = 'public'::regnamespace
+          and p.proname like 'cp8\\_moltbook\\_%%'
+          and p.prorettype = 'pg_catalog.trigger'::regtype
+        """
+    ).fetchall()
+    assert rows
+    for row in rows:
+        assert not row["anon_exec"], row["fn"]
+        assert not row["auth_exec"], row["fn"]

@@ -6,7 +6,12 @@
 -- The agent/worker functions here are local stand-ins so RLS tests can prove
 -- the human migration does not replace them. They are not the production bodies.
 
-create extension if not exists pgcrypto;
+-- pgcrypto lives in extensions, matching Supabase. public.digest must stay
+-- available for a search_path hijack test and must not be the hasher the
+-- migration calls.
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
+grant usage on schema extensions to anon, authenticated, service_role;
 
 do $$
 begin
@@ -145,7 +150,14 @@ create table public.cp8_moltbook_work_items (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  completed_at timestamptz
+  completed_at timestamptz,
+  -- Copied from the live project so migrations meet the same checks.
+  constraint cp8_moltbook_work_items_kind_check check (kind = any (array['task', 'challenge', 'review', 'research'])),
+  constraint cp8_moltbook_work_items_status_check check (status = any (array['open', 'claimed', 'completed', 'failed', 'cancelled'])),
+  constraint cp8_moltbook_work_items_created_by_label_check check (char_length(created_by_label) between 1 and 120),
+  constraint cp8_moltbook_work_items_result_hash_check check (result_hash is null or result_hash ~ '^[0-9a-f]{64}$'),
+  constraint cp8_work_claim_shape check ((status = 'claimed' and claimed_by_agent_id is not null and claimed_at is not null and lease_expires_at is not null) or status <> 'claimed'),
+  constraint cp8_work_result_shape check ((status = 'completed' and result_post_id is not null and result_hash is not null and completed_at is not null) or status <> 'completed')
 );
 
 create table public.cp8_moltbook_worker_heartbeats (
@@ -185,10 +197,23 @@ insert into public.cp8_agents (
   'CAPABILITY_TOKEN'
 );
 
+insert into public.cp8_agents (
+  agent_id, cp8_numeric_id, handle, display_name, status, metadata, platform, authentication_mode
+) values (
+  '22222222-2222-4222-8222-222222222222',
+  2,
+  'cp8.ops',
+  'CP8 Ops Agent',
+  'ACTIVE',
+  '{}'::jsonb,
+  'fixture',
+  'CAPABILITY_TOKEN'
+);
+
 insert into private.cp8_agent_tokens (agent_id, token_hash)
 values (
   'e393fc58-b1a5-4e50-a2aa-4d661f336e4c',
-  encode(digest('hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'sha256'), 'hex')
+  encode(extensions.digest('hc_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'sha256'), 'hex')
 );
 
 insert into public.cp8_moltbook_rooms (room_id, slug, title, description, status)
@@ -220,7 +245,7 @@ create or replace function public.cp8_moltbook_resolve_agent_token(p_token text)
 returns table(agent_id uuid, handle text)
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public', 'private'
+set search_path to 'pg_catalog', 'extensions', 'public', 'private'
 as $function$
 begin
   -- fixture-resolve-agent-token-v1
@@ -248,7 +273,7 @@ create or replace function public.cp8_moltbook_agent_post(
 returns table(post_id uuid, content_hash text, promotion text)
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public', 'private'
+set search_path to 'pg_catalog', 'extensions', 'public', 'private'
 as $function$
 declare
   v_agent uuid;
@@ -328,7 +353,7 @@ create or replace function public.cp8_moltbook_worker_claim(
 returns table(work_id uuid, status text, claimed_by text)
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public', 'private'
+set search_path to 'pg_catalog', 'extensions', 'public', 'private'
 as $function$
 declare
   v_agent uuid;
@@ -386,7 +411,7 @@ create or replace function public.cp8_moltbook_worker_complete(
 returns table(work_id uuid, status text, result_post_id uuid, result_hash text)
 language plpgsql
 security definer
-set search_path to 'pg_catalog', 'public', 'private'
+set search_path to 'pg_catalog', 'extensions', 'public', 'private'
 as $function$
 declare
   v_agent uuid;
