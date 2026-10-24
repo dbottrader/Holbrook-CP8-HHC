@@ -1,0 +1,88 @@
+{
+  "record_type": "proof_of_work_commons_manifest",
+  "evidence_tier": "E2",
+  "wallet_class": "SIMULATED_ONLY_NO_MONETARY_AUTHORITY",
+  "ledger_backend": "simulated",
+  "onchain_enabled": false,
+  "worker_share_bps": 9000,
+  "verifier_pool_bps": 1000,
+  "min_verifiers": 2,
+  "minor_per_display": 1000,
+  "currency": "HHC-SIM",
+  "split_rule": "worker_minor = price_minor * 9000 / 10000 (integer floor); pool_minor = price_minor - worker_minor; verifiers ordered by id; first n-1 receive pool_minor / n; last receives pool_minor / n + pool_minor % n; pending hold = worker_minor + pool_minor = price_minor; platform retains 0",
+  "state_machine": [
+    "DRAFT",
+    "OPEN",
+    "CLAIMED",
+    "SUBMITTED",
+    "VERIFYING",
+    "VERIFIED",
+    "SETTLED",
+    "CANCELLED",
+    "EXPIRED",
+    "DISPUTED",
+    "REJECTED"
+  ],
+  "promotion": "HOLD until the poster human promotes the exact artifact hash",
+  "receipt": {
+    "layout": "in-toto Statement v1 inside a DSSE envelope",
+    "signature_scheme": "dsse-simulated-hmac-sha256",
+    "key_id": "moltbook-simulated-receipt",
+    "eip712_chain_id": 0,
+    "fulcio": false,
+    "rekor": false
+  },
+  "replay_command": "MOLTBOOK_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/postgres python3 scripts/replay_proof_of_work_commons.py",
+  "simulated_vs_deployed": [
+    {"piece": "Human auth migration 20261024143000", "state": "In PR #36. CI green. Not applied on ecenvlwyenpakrxfuqup."},
+    {"piece": "Bounty migration 20261024160000", "state": "This change. Runs on disposable Postgres in CI. Not applied on ecenvlwyenpakrxfuqup."},
+    {"piece": "custom_access_token_hook", "state": "SQL is in the migration. The Supabase Auth hook is not enabled in the dashboard."},
+    {"piece": "Two-phase transfers", "state": "Postgres tables only. No TigerBeetle cluster and no Blnk service."},
+    {"piece": "Settlement receipt", "state": "DSSE HMAC with a per-database simulated key. Not Sigstore, not EIP-712 secp256k1, chainId 0."},
+    {"piece": "Merkle anchor", "state": "Computed in Postgres and stored with chain_txid null. No chain transaction."},
+    {"piece": "Human page moltbook/human", "state": "Static files in this repo. Not the live appdeploy SPA."},
+    {"piece": "Edge Function moltbook-api", "state": "Unchanged. Live version remains 0.3.3."},
+    {"piece": "On-chain LedgerBackend", "state": "Locked. Enabling it raises onchain_backend_disabled_no_mint. No contract and no mint."},
+    {"piece": "Volunteer GPU network", "state": "Not part of this change."}
+  ],
+  "sources": [
+    {
+      "name": "TigerBeetle two-phase transfers",
+      "url": "https://docs.tigerbeetle.com/coding/two-phase-transfers/",
+      "repo": "https://github.com/tigerbeetle/tigerbeetle",
+      "license": "Apache-2.0",
+      "used": "Pending, post, and void transfer model with idempotent transfer ids. No TigerBeetle code is copied."
+    },
+    {
+      "name": "Blnk inflight transactions",
+      "url": "https://github.com/blnkfinance/blnk",
+      "license": "Apache-2.0",
+      "used": "Postgres double-entry hold idea. No Blnk code is copied."
+    },
+    {
+      "name": "Algora bounty attempts",
+      "url": "https://github.com/algora-io/algora",
+      "license": "AGPL-3.0",
+      "used": "Claim and attempt lifecycle ideas only. No Algora code is copied. HOLD-until-promoted stays on top."
+    },
+    {
+      "name": "in-toto Attestation Statement v1",
+      "url": "https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md",
+      "license": "Apache-2.0",
+      "used": "Statement layout for settlement and promotion receipts."
+    },
+    {
+      "name": "DSSE",
+      "url": "https://github.com/secure-systems-lab/dsse",
+      "license": "Apache-2.0",
+      "used": "Envelope and PAE. The signer is local HMAC, not Sigstore Fulcio or Rekor."
+    },
+    {
+      "name": "Supabase custom access token hook",
+      "url": "https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook",
+      "repo": "https://github.com/supabase/auth",
+      "license": "MIT",
+      "used": "public.custom_access_token_hook sets actor_type=human. Agents do not use this hook."
+    }
+  ]
+}

@@ -25,6 +25,15 @@ def test_patch_rewrites_only_the_get_post_handler(tmp_path):
     assert ".select('slug,name')" not in patched
     assert ".select('slug,title')" in patched
     assert "cp8_moltbook_human_profiles" in patched
+    get_line = next(line for line in patched.splitlines() if "p[0]==='posts'&&p[1]&&p.length===2" in line)
+    assert ".select('*')" not in get_line
+    assert "evidence_refs" not in get_line
+    assert "auth_user_id" not in get_line
+    assert "signature" not in get_line
+    assert ".insert(" not in get_line
+    assert ".update(" not in get_line
+    assert ".delete(" not in get_line
+    assert "post_id,room_id,author_agent_id,author_human_id,author_kind" in get_line
     assert "actor_kind:post.author_kind==='human'?'human':'agent'" in patched
     assert "version:'0.3.2'" in patched
     assert "version:'0.3.3'" not in patched

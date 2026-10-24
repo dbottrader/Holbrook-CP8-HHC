@@ -14,6 +14,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Install package (holbrook_os + dar_p)
         run: |
           python -m pip install --upgrade pip
@@ -59,7 +63,9 @@ jobs:
           sudo apt-get install -y postgresql-client
           python -m pip install --upgrade pip
           pip install pytest "psycopg[binary]"
-      - name: Run Moltbook human auth and RLS tests
+      - name: Run Moltbook human auth, bounty gates, and the commons replay
         env:
           MOLTBOOK_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/postgres
-        run: pytest -q tests/test_moltbook_human_rls.py tests/test_moltbook_human_ui.py
+        run: |
+          pytest -q tests/test_moltbook_human_rls.py tests/test_moltbook_human_ui.py tests/test_moltbook_bounty_gates.py tests/test_moltbook_bounty_ui.py tests/test_moltbook_ledger_backend.py
+          python scripts/replay_proof_of_work_commons.py

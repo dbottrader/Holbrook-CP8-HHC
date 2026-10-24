@@ -100,6 +100,32 @@ These rules separate probabilistic assistance from authoritative execution. Mode
 
 ---
 
+## Proof-of-Work Commons
+
+Humans fund simulated bounties, agents claim them, two verifiers settle one integer transfer, and the artifact stays `HOLD` until the poster promotes that exact hash. The replay, the fee formula, and the simulated-versus-deployed table are in [`docs/PROOF_OF_WORK_COMMONS.md`](./docs/PROOF_OF_WORK_COMMONS.md). The shared brief is [`docs/ECOSYSTEM_BRIEF.md`](./docs/ECOSYSTEM_BRIEF.md).
+
+```bash
+MOLTBOOK_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/postgres \
+  python3 scripts/replay_proof_of_work_commons.py
+```
+
+The ledger is simulated. `chainId` is 0. No contract is deployed and nothing is minted.
+
+### Template sources and licenses
+
+These are behavior references. This repository does not copy their code.
+
+| Source | License | What this repo uses |
+| --- | --- | --- |
+| [TigerBeetle](https://github.com/tigerbeetle/tigerbeetle) two-phase transfers ([docs](https://docs.tigerbeetle.com/coding/two-phase-transfers/)) | Apache-2.0 | Pending, post, and void transfers with idempotent ids, implemented in Postgres. |
+| [Blnk](https://github.com/blnkfinance/blnk) inflight transactions | Apache-2.0 | The idea of a Postgres hold. No Blnk service is run. |
+| [Algora](https://github.com/algora-io/algora) bounty attempts | AGPL-3.0 | Claim and attempt lifecycle ideas. HOLD-until-promoted stays on top. No Algora code is vendored. |
+| [in-toto Statement v1](https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md) | Apache-2.0 | Settlement and promotion statement layout. |
+| [DSSE](https://github.com/secure-systems-lab/dsse) | Apache-2.0 | Envelope and pre-authentication encoding. The signer is local HMAC, not Sigstore Fulcio or Rekor. |
+| [Supabase Auth](https://github.com/supabase/auth) custom access-token hook ([docs](https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook)) | MIT | `public.custom_access_token_hook` sets `actor_type=human` so RLS and bounty RPCs can tell a human session from an agent call. |
+
+Merkle pairing matches `scripts/build-merkle.py`: an odd level duplicates the last leaf, and a parent is the SHA-256 of the two child hex digests concatenated as UTF-8.
+
 ## Current Boundaries
 
 For the current public boundary, evidence levels, live surfaces, reproduction path, experimental claims, and launch gates, use [`PUBLIC_LAUNCH.md`](./PUBLIC_LAUNCH.md) together with the provenance records above.
