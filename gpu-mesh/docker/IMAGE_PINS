@@ -1,0 +1,4 @@
+# Base images for the coordinator and the node.
+# Float neither of these to :latest. A digest is filled in when a registry
+# lookup is available; until then the tag is the pin.
+python:3.12-slim

@@ -19,7 +19,8 @@ https://dbottrader.github.io/Holbrook-CP8-HHC/
 
 - **Landing** — the mission in plain words, and the path from a posted bounty to a fenced GPU lease, verifier checks, a 90/5/5 escrow settlement, and a hash-chained receipt.
 - **Live feed** — the public Moltbook record, read from `moltbook-api` with the publishable key only.
-- **Proof replay** — the eight launch gates, the settlement math, and the receipt chain from `scripts/replay_proof_of_work_commons.py`, with SHA-256 hashes of the published files.
+- **Console** — read-only HHC-SIM balances, the bounty board, the settlement ledger, and join notes. It uses the publishable anon key against project `ecenvlwyenpakrxfuqup`. HHC-SIM is a simulated utility credit, not money, and nothing on the page is for sale.
+- **Proof replay** — the eight launch gates, the settlement math, and the receipt chain from `scripts/replay_proof_of_work_commons.py`, with SHA-256 hashes of the published files. That replay is demo fixture data, not the live board.
 
 HHC-SIM credits on that site are simulated. They are not a token and they have no monetary value. Promotion stays HOLD.
 
@@ -30,6 +31,19 @@ python3 scripts/replay_proof_of_work_commons.py --check site/proof
 ```
 
 The site source is `site/`. `.github/workflows/pages.yml` republishes it on push to `main` and on `workflow_dispatch`.
+
+## GPU mesh
+
+[`gpu-mesh/`](./gpu-mesh/) is the volunteer inference coordinator: a FastAPI process, poll-only workers, fenced leases, an OpenAI-compatible `POST /v1/chat/completions`, spot-checks, and integer receipts signed with Ed25519.
+
+Two worker backends are easy to confuse:
+
+- `mock-tiny` (`GPU_MESH_BACKEND=cpu`) is a deterministic stub. It is not an open-weight model.
+- `llamacpp` serves **SmolLM2-360M-Instruct** (Apache-2.0) through llama.cpp. The GGUF is downloaded at runtime and is not in git. An NVIDIA volunteer joins with Ollama and an invite; that path is separate from the stub.
+
+HHC on this mesh is a simulated utility credit for verified contribution. The integer amount is recorded only after a second worker spot-checks the output. It is not sold and it pays no return. The on-chain ledger backend refuses to mint. Promotion of the mesh stays HOLD.
+
+Join and free-tier steps, including the one-time Hugging Face Space setup Dennis would run himself: [`gpu-mesh/docs/FREE_TIER.md`](./gpu-mesh/docs/FREE_TIER.md). CI for this tree is [`.github/workflows/gpu-mesh.yml`](./.github/workflows/gpu-mesh.yml).
 
 ---
 
@@ -84,6 +98,7 @@ These rules separate probabilistic assistance from authoritative execution. Mode
 | Path | Purpose | Status |
 |------|---------|--------|
 | `PUBLIC_LAUNCH.md` | Public launch routing index | Active |
+| `gpu-mesh/` | Volunteer inference coordinator and CPU/Ollama workers | Active, promotion HOLD |
 | `ARCHITECTURE.md` | Distributed node architecture | Implemented |
 | `docs/PUBLIC_PROVENANCE_RECORD.md` | Public chronology and evidence boundary | Maintained |
 | `provenance/public-record.json` | Machine-readable provenance summary | Maintained |
