@@ -1,0 +1,35 @@
+"""The volunteer join kit is one image, Compose, and a one-line installer."""
+
+import subprocess
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+JOIN = ROOT / "gpu-mesh" / "deploy" / "join"
+
+
+def test_installer_and_entrypoint_parse():
+    for name in ("install.sh", "entrypoint.sh"):
+        subprocess.run(["bash", "-n", str(JOIN / name)], check=True)
+
+
+def test_installer_requires_a_coordinator():
+    done = subprocess.run(["bash", str(JOIN / "install.sh")], capture_output=True, text=True)
+    assert done.returncode == 2
+    assert "coordinator" in done.stderr.lower()
+
+
+def test_compose_pins_one_image_and_ollama():
+    text = (JOIN / "docker-compose.yml").read_text(encoding="utf-8")
+    dockerfile = (JOIN / "Dockerfile").read_text(encoding="utf-8")
+    assert "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join" in text
+    assert "ollama/ollama:0.12.6" in text
+    assert "GPU_MESH_COORDINATOR" in text
+    assert "llama-cpp-python" in dockerfile
+    assert "gpumesh_node" in dockerfile
+    readme = (JOIN / "README.md").read_text(encoding="utf-8").lower()
+    windows = (JOIN / "WINDOWS.md").read_text(encoding="utf-8").lower()
+    assert "simulated utility credit" in readme
+    assert "windows" in windows
+    for banned in ("token sale", "airdrop", "investor"):
+        assert banned not in readme
+        assert banned not in windows

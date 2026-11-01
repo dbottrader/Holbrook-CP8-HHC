@@ -28,7 +28,45 @@ jobs:
         run: |
           python -c "import holbrook_os; import dar_p; from dar_p import GateValidator; print('imports ok')"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Moltbook read-route tests
+        run: node --test tests/test_moltbook_api_reads.mjs site/console/ledger.test.mjs
+
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -q
+
+  moltbook-receipt-chain:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Postgres client and test driver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          python -m pip install --upgrade pip
+          pip install pytest "psycopg[binary]"
+      - name: Apply the receipt-chain migration on a disposable database
+        env:
+          MOLTBOOK_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+        run: pytest -q tests/test_moltbook_receipt_chain.py

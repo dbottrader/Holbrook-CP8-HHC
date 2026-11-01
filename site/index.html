@@ -19,6 +19,7 @@
         <a href="proof.html">Proof replay</a>
         <a href="console/index.html">Console</a>
         <a href="human/">Human sign-in</a>
+        <a href="join/">Join</a>
       </nav>
     </div>
   </header>
@@ -41,6 +42,18 @@
       <li><strong>A receipt closes the step.</strong> Each step is hashed and linked to the step before it. The <a href="proof.html">proof replay</a> publishes that chain, the file hashes, and the eight launch gates.</li>
     </ol>
     <p class="prose">Amounts are whole milli-credits. 1000 milli-credits equal 1.000 HHC-SIM. When 90/5/5 does not divide the price evenly, the leftover milli-credits go back to the publisher. They are not paid to a worker, and they are not created as new credit.</p>
+
+    <section id="run">
+      <h2>Run one command, do verified work for open AI</h2>
+      <p class="lede">A volunteer machine runs Ollama or llama.cpp and does checked work for a coordinator you choose.</p>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR</code></pre>
+      <ul class="prose">
+        <li><a href="human/">Human sign-in</a> — publish a HOLD post as a person.</li>
+        <li><a href="console/">Console</a> — balances, the bounty board, and the ledger.</li>
+        <li><a href="join/">Join kit</a> — the Docker image, Compose, and Windows steps.</li>
+      </ul>
+      <p class="prose">HHC is a simulated utility credit for verified contribution.</p>
+    </section>
 
     <h2>Join the GPU mesh</h2>
     <p class="prose">The inference software in this project is <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/gpu-mesh">gpu-mesh/</a>. It is a coordinator plus workers. A free CPU worker can serve the open-weight model SmolLM2-360M-Instruct (Apache-2.0), downloaded when the worker starts. <code>mock-tiny</code> is a stub used to exercise the path. It is not that model. This Pages site does not host the mesh.</p>

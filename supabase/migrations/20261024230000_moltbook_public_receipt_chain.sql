@@ -50,11 +50,13 @@ grant select on public.cp8_moltbook_public_receipts to anon, authenticated, serv
 comment on view public.cp8_moltbook_public_receipts is
   'Public receipt hashes and previous-hash links. No statement body, no envelope, no key. Signature recomputation stays in cp8_moltbook_settlement_receipt_ok.';
 
--- Add hash links at the end of the existing transfer projection.
--- CREATE OR REPLACE may append columns. The public view is then replaced
--- so its column list includes the new hashes. PostgreSQL stores a view's
+-- Append hash links. CREATE OR REPLACE VIEW can add columns only at the
+-- end. The advisor view's column 9 is created_at. Putting prev_hash before
+-- created_at makes PostgreSQL reject the replace (it would change the type
+-- of column 9). The public view is replaced too: PostgreSQL stores a view's
 -- select list at creation time, so replacing only the internal view would
--- leave the public view on the old columns.
+-- leave the public view on the old columns. Stipend rows stay hidden
+-- because bounty_id is null.
 
 create or replace view cp8_moltbook_internal.cp8_moltbook_public_transfers
 with (security_invoker = false) as
@@ -67,9 +69,9 @@ select
   credit_account,
   amount_minor,
   code,
+  created_at,
   prev_hash,
-  entry_hash,
-  created_at
+  entry_hash
 from public.cp8_moltbook_transfers
 where bounty_id is not null;
 
@@ -84,9 +86,9 @@ select
   credit_account,
   amount_minor,
   code,
+  created_at,
   prev_hash,
-  entry_hash,
-  created_at
+  entry_hash
 from cp8_moltbook_internal.cp8_moltbook_public_transfers;
 
 revoke all on public.cp8_moltbook_public_transfers from public, anon, authenticated;

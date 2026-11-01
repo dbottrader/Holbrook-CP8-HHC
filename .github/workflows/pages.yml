@@ -31,6 +31,9 @@ jobs:
           python3 scripts/replay_proof_of_work_commons.py --out site/proof
           python3 scripts/replay_proof_of_work_commons.py --check site/proof
 
+      - name: Check site links
+        run: python3 scripts/check_site_links.py
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 

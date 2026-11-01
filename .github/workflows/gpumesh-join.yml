@@ -1,0 +1,58 @@
+name: gpumesh-join
+
+on:
+  pull_request:
+    paths:
+      - "gpu-mesh/**"
+      - ".github/workflows/gpumesh-join.yml"
+  push:
+    branches: [main]
+    paths:
+      - "gpu-mesh/**"
+      - ".github/workflows/gpumesh-join.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Script syntax
+        run: |
+          bash -n gpu-mesh/deploy/join/install.sh
+          bash -n gpu-mesh/deploy/join/entrypoint.sh
+          GPU_MESH_COORDINATOR=http://127.0.0.1:8741 docker compose -f gpu-mesh/deploy/join/docker-compose.yml config >/dev/null
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: gpu-mesh
+          file: gpu-mesh/deploy/join/Dockerfile
+          load: true
+          push: false
+          build-args: WITH_LLAMA=${{ github.event_name == 'pull_request' && '0' || '1' }}
+          tags: gpumesh-join:ci
+
+      - name: Smoke
+        run: docker run --rm --entrypoint python gpumesh-join:ci -c "import gpumesh_node, gpumesh_node.runtime"
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GHCR
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag gpumesh-join:ci "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:${{ github.sha }}"
+          docker tag gpumesh-join:ci ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest
+          docker push "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:${{ github.sha }}"
+          docker push ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest

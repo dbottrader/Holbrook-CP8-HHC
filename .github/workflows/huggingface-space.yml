@@ -1,0 +1,55 @@
+name: huggingface-space
+
+on:
+  pull_request:
+    paths:
+      - "gpu-mesh/**"
+      - ".github/workflows/huggingface-space.yml"
+  push:
+    branches: [main]
+    paths:
+      - "gpu-mesh/**"
+      - ".github/workflows/huggingface-space.yml"
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the Space tree
+        run: gpu-mesh/deploy/huggingface/assemble.sh /tmp/gpu-mesh-space
+
+      - name: Build
+        run: docker build -t gpumesh-space:ci /tmp/gpu-mesh-space
+
+      - name: Smoke
+        run: |
+          set -eu
+          docker run -d --name gpumesh-space-ci -p 7860:7860 \
+            -e GPU_MESH_ADMIN_TOKEN=ci-admin-token \
+            -e GPU_MESH_INVITE_TOKEN=ci-invite-token \
+            -e GPU_MESH_PUBLIC_BASE_URL=http://127.0.0.1:7860 \
+            gpumesh-space:ci
+          cleanup() { docker logs gpumesh-space-ci >&2 || true; docker rm -f gpumesh-space-ci >/dev/null || true; }
+          trap cleanup EXIT
+          ok=0
+          for _ in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:7860/health >/dev/null; then
+              ok=1
+              break
+            fi
+            if ! docker inspect -f '{{.State.Running}}' gpumesh-space-ci | grep -q true; then
+              echo "container exited before /health" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          test "$ok" = 1
+          curl -fsS http://127.0.0.1:7860/health
+          echo
+          curl -fsS http://127.0.0.1:7860/v1/models
+          echo
+          sleep 3
+          docker inspect -f '{{.State.Running}}' gpumesh-space-ci | grep -q true

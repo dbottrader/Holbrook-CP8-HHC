@@ -47,7 +47,8 @@ def test_console_is_read_only_and_names_the_public_views() -> None:
     ):
         assert name in combined
     assert "No live bounties yet." in html
-    assert "The GPU network is not live." in html
+    assert "This page does not host the coordinator." in html
+    assert "gpu-mesh/deploy/join/install.sh" in html
     assert "not for sale" in html.lower() or "Nothing here is for sale." in html
     assert "innerHTML" not in script
     assert 'jwtRole(cfg.publishableKey) !== "anon"' in script

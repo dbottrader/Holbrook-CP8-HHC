@@ -1,0 +1,36 @@
+# Volunteer worker against a coordinator you already have.
+# HHC recorded by that coordinator is a simulated utility credit.
+#
+#   GPU_MESH_COORDINATOR=https://coordinator.example docker compose up --build
+#   GPU_MESH_BACKEND=ollama docker compose --profile ollama up --build
+#
+# Ollama's image is the official ollama/ollama image, pinned by tag.
+# This file does not mint a token and does not open a chain connection.
+
+services:
+  worker:
+    image: ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:${GPU_MESH_IMAGE_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: deploy/join/Dockerfile
+    environment:
+      GPU_MESH_COORDINATOR: ${GPU_MESH_COORDINATOR:?Set GPU_MESH_COORDINATOR}
+      GPU_MESH_BACKEND: ${GPU_MESH_BACKEND:-llamacpp}
+      GPU_MESH_OLLAMA_HOST: ${GPU_MESH_OLLAMA_HOST:-http://ollama:11434}
+      GPU_MESH_INVITE: ${GPU_MESH_INVITE:-}
+      GPU_MESH_NAME: ${GPU_MESH_NAME:-volunteer}
+      GPU_MESH_ALLOW_CPU: "1"
+    volumes:
+      - join-data:/var/lib/gpumesh
+    restart: unless-stopped
+
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:0.12.6
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  join-data:
+  ollama:
