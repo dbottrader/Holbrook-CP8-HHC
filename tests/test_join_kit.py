@@ -24,7 +24,9 @@ def test_compose_pins_one_image_and_ollama():
     assert "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join" in text
     assert "ollama/ollama:0.12.6" in text
     assert "GPU_MESH_COORDINATOR" in text
-    assert "llama-cpp-python" in dockerfile
+    assert "llama_cpp_python-0.3.36-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl" in dockerfile
+    assert "--only-binary=:all:" in dockerfile
+    assert "llama-cpp-python>=" not in dockerfile
     assert "gpumesh_node" in dockerfile
     readme = (JOIN / "README.md").read_text(encoding="utf-8").lower()
     windows = (JOIN / "WINDOWS.md").read_text(encoding="utf-8").lower()

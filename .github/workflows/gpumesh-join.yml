@@ -35,11 +35,11 @@ jobs:
           file: gpu-mesh/deploy/join/Dockerfile
           load: true
           push: false
-          build-args: WITH_LLAMA=${{ github.event_name == 'pull_request' && '0' || '1' }}
+          build-args: WITH_LLAMA=1
           tags: gpumesh-join:ci
 
       - name: Smoke
-        run: docker run --rm --entrypoint python gpumesh-join:ci -c "import gpumesh_node, gpumesh_node.runtime"
+        run: docker run --rm --entrypoint python gpumesh-join:ci -c "import gpumesh_node, gpumesh_node.runtime, llama_cpp; assert llama_cpp.__version__ == '0.3.36'"
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'

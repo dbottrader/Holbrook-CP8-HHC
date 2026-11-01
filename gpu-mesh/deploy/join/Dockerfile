@@ -1,8 +1,12 @@
 # One volunteer image. Build context is gpu-mesh/ (the directory that
-# contains gpumesh_node/). llama-cpp-python is the same CPU worker already
+# contains gpumesh_node/). llama.cpp is the same CPU worker already
 # used by gpu-mesh/gpumesh_node/llamacpp.py. Ollama stays outside this image:
 # set GPU_MESH_BACKEND=ollama and GPU_MESH_OLLAMA_HOST.
-# image pin: the tag below.
+#
+# PyPI llama-cpp-python 0.3.36 is a source tarball. The main publish
+# (Actions run 41285393780) failed in that build: CMake had no C or C++
+# compiler. The CPU binary is the v0.3.36 GitHub release wheel, the tag
+# with no CUDA, HIP, or Vulkan suffix. --only-binary refuses a source build.
 FROM python:3.12-slim
 
 RUN apt-get update \
@@ -17,8 +21,13 @@ COPY gpumesh_node /opt/gpumesh/gpumesh_node
 COPY deploy/join/entrypoint.sh /opt/gpumesh/entrypoint.sh
 
 ARG WITH_LLAMA=1
-RUN pip install --no-cache-dir 'httpx>=0.27' \
-    && if [ "$WITH_LLAMA" = "1" ]; then pip install --no-cache-dir 'llama-cpp-python>=0.3.4'; fi \
+ARG LLAMA_CPP_VERSION=0.3.36
+ARG LLAMA_CPP_WHEEL=llama_cpp_python-0.3.36-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+RUN pip install --no-cache-dir 'httpx==0.28.1' \
+    && if [ "$WITH_LLAMA" = "1" ]; then \
+         pip install --no-cache-dir --only-binary=:all: \
+           "https://github.com/abetlen/llama-cpp-python/releases/download/v${LLAMA_CPP_VERSION}/${LLAMA_CPP_WHEEL}"; \
+       fi \
     && chmod 755 /opt/gpumesh/entrypoint.sh
 
 ENV PYTHONPATH=/opt/gpumesh \
