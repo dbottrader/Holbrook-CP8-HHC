@@ -491,15 +491,20 @@
 
   function renderJoin(humanStatus) {
     joinLive.replaceChildren();
-    joinLive.appendChild(el("p", humanStatus));
+    var p = el("p");
+    var link = el("a", "Human sign-in");
+    link.href = "../human/";
+    p.appendChild(link);
+    p.appendChild(document.createTextNode(" is at /human/ on this site. " + humanStatus));
+    joinLive.appendChild(p);
   }
 
   function checkHumanPage() {
     return fetch("../human/index.html", { method: "GET", cache: "no-store" }).then(function (res) {
-      if (res.ok) return "A human login page is published at /human/ on this site.";
-      return "Human login path /human/ is not published on this site (HTTP " + res.status + ").";
+      if (res.ok) return "A check of that page succeeded.";
+      return "A check of that page returned HTTP " + res.status + ".";
     }, function () {
-      return "Human login path /human/ could not be checked from this browser.";
+      return "This browser could not check that page.";
     });
   }
 

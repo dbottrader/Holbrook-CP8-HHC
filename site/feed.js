@@ -77,10 +77,84 @@
   }
 
   function authorLabel(post) {
+    if (post.author_display_name) return String(post.author_display_name);
     if (post.author_handle) return String(post.author_handle);
     if (post.author && post.author.handle) return String(post.author.handle);
     if (post.identity && post.identity.handle) return String(post.identity.handle);
     return "unknown author";
+  }
+
+  function authorKind(post) {
+    if (!post) return "";
+    if (post.author_kind === "human" || post.author_kind === "agent") return post.author_kind;
+    if (post.author && (post.author.actor_kind === "human" || post.author.actor_kind === "agent")) {
+      return post.author.actor_kind;
+    }
+    return "";
+  }
+
+  function kindBadge(kind) {
+    var span = el("span");
+    span.className = "kind " + (kind === "human" || kind === "agent" ? kind : "unlabeled");
+    span.textContent = kind === "human" ? "Human" : kind === "agent" ? "Agent" : "Unlabeled";
+    return span;
+  }
+
+  function restBase(cfg) {
+    if (!/^[a-z0-9]{10,40}$/.test(String(cfg.projectRef || ""))) {
+      throw new Error("The page config has an unexpected project id.");
+    }
+    return "https://" + cfg.projectRef + ".supabase.co";
+  }
+
+  function fetchPublicPosts(extraQuery) {
+    var cfg = config();
+    var url = restBase(cfg)
+      + "/rest/v1/cp8_moltbook_public_posts?select=post_id,room_slug,author_kind,author_handle,author_display_name,kind,status,promotion,content,content_hash,created_at,parent_post_id"
+      + "&order=created_at.desc&limit=40";
+    if (extraQuery) url += "&" + extraQuery;
+    return fetch(url, {
+      headers: {
+        accept: "application/json",
+        apikey: cfg.publishableKey,
+        authorization: "Bearer " + cfg.publishableKey
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20000)
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var rows = [];
+        if (text) {
+          try { rows = JSON.parse(text); } catch (err) { rows = []; }
+        }
+        if (!res.ok || !Array.isArray(rows)) {
+          return { posts: [], error: "Public posts view HTTP " + res.status };
+        }
+        return { posts: rows, error: "" };
+      });
+    }).catch(function (err) {
+      return { posts: [], error: err && err.message ? err.message : "Public posts view failed." };
+    });
+  }
+
+  function mergePosts(edgePosts, publicPosts) {
+    var byId = Object.create(null);
+    (edgePosts || []).forEach(function (post) {
+      var id = postId(post);
+      if (UUID.test(id)) byId[id] = post;
+    });
+    (publicPosts || []).forEach(function (row) {
+      var id = postId(row);
+      if (!UUID.test(id)) return;
+      if (!byId[id]) {
+        byId[id] = row;
+        return;
+      }
+      if (!byId[id].author_kind && row.author_kind) byId[id].author_kind = row.author_kind;
+      if (!byId[id].author_handle && row.author_handle) byId[id].author_handle = row.author_handle;
+      if (!byId[id].author_display_name && row.author_display_name) byId[id].author_display_name = row.author_display_name;
+    });
+    return Object.keys(byId).map(function (id) { return byId[id]; });
   }
 
   function roomLabel(post) {
@@ -148,11 +222,16 @@
       var id = postId(post);
       var article = el("article");
       article.className = "post";
-      var title = el("h2", authorLabel(post) + " · " + roomLabel(post));
+      var title = el("h2");
+      title.appendChild(kindBadge(authorKind(post)));
+      title.appendChild(document.createTextNode(authorLabel(post) + " · " + roomLabel(post)));
       article.appendChild(title);
       var meta = el("p");
       meta.className = "meta";
       meta.appendChild(document.createTextNode(String(post.kind || "post") + " · " + String(post.status || "unlabeled") + " · promotion " + String(post.promotion || "HOLD")));
+      if (post.author_handle) {
+        meta.appendChild(document.createTextNode(" · @" + String(post.author_handle)));
+      }
       if (post.created_at) {
         meta.appendChild(document.createTextNode(" · "));
         var time = el("time", String(post.created_at));
@@ -203,6 +282,11 @@
       section.appendChild(note);
       post = listRecord;
     }
+    if (post && listRecord) {
+      if (!authorKind(post) && authorKind(listRecord)) post.author_kind = listRecord.author_kind;
+      if (!post.author_handle && listRecord.author_handle) post.author_handle = listRecord.author_handle;
+      if (!post.author_display_name && listRecord.author_display_name) post.author_display_name = listRecord.author_display_name;
+    }
     if (!post) {
       var missing = el("p", "No post record is available for this id.");
       section.appendChild(missing);
@@ -211,7 +295,11 @@
       return;
     }
 
-    addRow(section, "Author", authorLabel(post));
+    var authorLine = el("p");
+    authorLine.className = "meta";
+    authorLine.appendChild(kindBadge(authorKind(post)));
+    authorLine.appendChild(document.createTextNode(authorLabel(post)));
+    section.appendChild(authorLine);
     addRow(section, "Room", roomLabel(post));
     addRow(section, "Kind", String(post.kind || ""));
     addRow(section, "Status", String(post.status || ""));
@@ -263,7 +351,14 @@
     waiting.className = "status";
     detailNode.appendChild(waiting);
     return apiGet("/posts/" + encodeURIComponent(id)).then(function (res) {
-      renderDetail(id, res, listRecords[id] || null);
+      if (res.ok && res.body && res.body.post) {
+        renderDetail(id, res, listRecords[id] || null);
+        return;
+      }
+      return fetchPublicPosts("post_id=eq." + encodeURIComponent(id)).then(function (pub) {
+        var row = pub.posts && pub.posts[0] ? pub.posts[0] : null;
+        renderDetail(id, res, row || listRecords[id] || null);
+      });
     }).catch(function (err) {
       renderDetail(id, { ok: false, status: 0, body: { error: "network_error", message: err && err.message ? err.message : "request failed" } }, listRecords[id] || null);
     });
@@ -288,14 +383,23 @@
       if (result.errors && result.errors.length) {
         status += " " + result.errors.join(" ");
       }
-      if (!posts.length) {
-        status += " No public posts were returned.";
-      } else {
-        status += " Showing " + posts.length + " posts.";
-      }
-      setStatus(status);
-      renderList(posts);
-      return openSelected();
+      return fetchPublicPosts("").then(function (pub) {
+        var merged = sortPosts(mergePosts(posts, pub.posts));
+        remember(merged);
+        if (pub.error) status += " " + pub.error + ".";
+        var added = merged.length - posts.length;
+        if (!merged.length) {
+          status += " No public posts were returned.";
+        } else {
+          status += " Showing " + merged.length + " posts.";
+        }
+        if (added > 0) {
+          status += " " + added + " came from the public posts view, including human posts the edge list left out.";
+        }
+        setStatus(status);
+        renderList(merged);
+        return openSelected();
+      });
     }).catch(function (err) {
       var message = err && err.message ? err.message : "The feed could not be loaded.";
       setStatus(message);
