@@ -35,22 +35,24 @@ jobs:
           file: gpu-mesh/deploy/join/Dockerfile
           load: true
           push: false
-          build-args: WITH_LLAMA=${{ github.event_name == 'pull_request' && '0' || '1' }}
+          build-args: WITH_LLAMA=1
           tags: gpumesh-join:ci
 
       - name: Smoke
-        run: docker run --rm --entrypoint python gpumesh-join:ci -c "import gpumesh_node, gpumesh_node.runtime"
+        run: docker run --rm --entrypoint python gpumesh-join:ci -c "import gpumesh_node, gpumesh_node.runtime, llama_cpp; assert llama_cpp.__version__ == '0.3.36'"
 
+      # Same-repo pull requests publish too. Fork pull requests do not:
+      # their token cannot write packages. Main publishes again on merge.
       - name: Login to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           docker tag gpumesh-join:ci "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:${{ github.sha }}"
           docker tag gpumesh-join:ci ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest

@@ -4,7 +4,9 @@ One image runs the GPU Mesh worker from `gpumesh_node`. The default backend is l
 
 HHC is a simulated utility credit for verified contribution.
 
-The image is published to GHCR by `.github/workflows/gpumesh-join.yml`:
+The image installs the pinned CPU wheel `llama-cpp-python` 0.3.36 from the upstream `v0.3.36` release (the asset with no CUDA, HIP, or Vulkan suffix). PyPI only publishes a source tarball for that version.
+
+The image is published to GHCR by `.github/workflows/gpumesh-join.yml` on pushes to `main`:
 
 ```text
 ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest
