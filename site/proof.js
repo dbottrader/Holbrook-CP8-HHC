@@ -110,12 +110,16 @@
 
     var summary = el("p");
     summary.className = "card";
-    summary.textContent = replay.gates_passed + " of " + replay.gates_total +
+    summary.textContent = "Demo data from " + (replay.fixture || "the local fixture") + ". " +
+      replay.gates_passed + " of " + replay.gates_total +
       " launch gates passed. Promotion " + replay.promotion + ". " + replay.note;
     bodyNode.appendChild(summary);
 
     var gateHeading = el("h2", "Gate results");
     bodyNode.appendChild(gateHeading);
+    if (!(replay.gates || []).length) {
+      bodyNode.appendChild(el("p", "This demo artifact listed no gates."));
+    }
     (replay.gates || []).forEach(function (gate) {
       var article = el("article");
       article.className = "gate " + (gate.status === "PASS" ? "PASS" : "FAIL");
@@ -129,12 +133,15 @@
       bodyNode.appendChild(article);
     });
 
-    bodyNode.appendChild(el("h2", "Settlement math"));
+    bodyNode.appendChild(el("h2", "Demo settlement math"));
     var rule = el("p", (replay.settlement_rule && replay.settlement_rule.unit) + " " +
       (replay.settlement_rule && replay.settlement_rule.pass) + " " +
       (replay.settlement_rule && replay.settlement_rule.fail));
     rule.className = "prose";
     bodyNode.appendChild(rule);
+    if (!(replay.cases || []).length) {
+      bodyNode.appendChild(el("p", "This demo artifact has no settlement cases."));
+    }
     (replay.cases || []).forEach(function (item) {
       bodyNode.appendChild(renderCase(item));
     });
@@ -162,15 +169,18 @@
     bodyNode.appendChild(el("h2", "Receipt chain"));
     var chain = receipts && Array.isArray(receipts.receipts) ? receipts.receipts : [];
     if (!chain.length) {
-      bodyNode.appendChild(el("p", "The receipt chain was empty."));
+      bodyNode.appendChild(el("p", "This demo artifact has no receipts."));
       return;
     }
+    var chainNote = el("p", "Demo receipt chain from the launch fixture. Each row should name the previous receipt hash. This is not the live ledger.");
+    chainNote.className = "prose";
+    bodyNode.appendChild(chainNote);
     var table = el("table");
-    var caption = el("caption", "Hash-chained receipts from the launch fixture");
+    var caption = el("caption", "Demo receipt chain from the launch fixture");
     table.appendChild(caption);
     var head = el("thead");
     var headRow = el("tr");
-    ["Seq", "Kind", "Receipt hash"].forEach(function (label) {
+    ["Seq", "Kind", "Receipt hash", "Previous hash", "Link"].forEach(function (label) {
       var cell = el("th", label);
       cell.setAttribute("scope", "col");
       headRow.appendChild(cell);
@@ -178,15 +188,32 @@
     head.appendChild(headRow);
     table.appendChild(head);
     var tbody = el("tbody");
-    chain.forEach(function (receipt) {
+    chain.forEach(function (receipt, index) {
       var row = el("tr");
       var seq = el("th", String(receipt.seq));
       seq.setAttribute("scope", "row");
+      if (/^\d+$/.test(String(receipt.seq))) row.id = "demo-receipt-" + String(receipt.seq);
       row.appendChild(seq);
       row.appendChild(el("td", String(receipt.kind || "")));
       var hashCell = el("td", String(receipt.receipt_hash || ""));
       hashCell.className = "hash";
       row.appendChild(hashCell);
+      var prevCell = el("td");
+      prevCell.className = "hash";
+      var prev = String(receipt.prev_hash || "");
+      var prior = index > 0 ? chain[index - 1] : null;
+      if (prior && /^\d+$/.test(String(prior.seq))) {
+        var link = el("a", prev);
+        link.href = "#demo-receipt-" + String(prior.seq);
+        prevCell.appendChild(link);
+      } else {
+        prevCell.textContent = prev;
+      }
+      row.appendChild(prevCell);
+      var linked = prior ? prev === String(prior.receipt_hash || "") : prev !== "";
+      row.appendChild(el("td", prior
+        ? (linked ? "links to the previous demo receipt" : "does not link to the previous demo receipt")
+        : "first demo receipt"));
       tbody.appendChild(row);
     });
     table.appendChild(tbody);

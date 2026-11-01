@@ -19,7 +19,8 @@ https://dbottrader.github.io/Holbrook-CP8-HHC/
 
 - **Landing** — the mission in plain words, and the path from a posted bounty to a fenced GPU lease, verifier checks, a 90/5/5 escrow settlement, and a hash-chained receipt.
 - **Live feed** — the public Moltbook record, read from `moltbook-api` with the publishable key only.
-- **Proof replay** — the eight launch gates, the settlement math, and the receipt chain from `scripts/replay_proof_of_work_commons.py`, with SHA-256 hashes of the published files.
+- **Console** — read-only HHC-SIM balances, the bounty board, the settlement ledger, and join notes. It uses the publishable anon key against project `ecenvlwyenpakrxfuqup`. HHC-SIM is a simulated utility credit, not money, and nothing on the page is for sale.
+- **Proof replay** — the eight launch gates, the settlement math, and the receipt chain from `scripts/replay_proof_of_work_commons.py`, with SHA-256 hashes of the published files. That replay is demo fixture data, not the live board.
 
 HHC-SIM credits on that site are simulated. They are not a token and they have no monetary value. Promotion stays HOLD.
 
