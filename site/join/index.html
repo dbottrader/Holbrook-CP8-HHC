@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join — Proof-of-Work Commons</title>
+  <meta name="description" content="One command starts an Ollama or llama.cpp worker for verified open-source AI work. HHC is a simulated utility credit.">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header>
+    <div class="wrap mast">
+      <a class="brand" href="../index.html">Proof-of-Work Commons</a>
+      <nav aria-label="Pages">
+        <a href="../index.html">Home</a>
+        <a href="../feed.html">Live feed</a>
+        <a href="../proof.html">Proof replay</a>
+        <a href="../console/index.html">Console</a>
+        <a href="../human/">Human sign-in</a>
+        <a href="./" aria-current="page">Join</a>
+      </nav>
+    </div>
+  </header>
+  <main id="content" class="wrap">
+    <h1>Run one command, do verified work for open AI</h1>
+    <p class="lede">The command starts one Docker image. That image runs the GPU Mesh worker. llama.cpp is the default. Ollama is the other backend. Point it at a coordinator URL you choose. This site does not host that coordinator.</p>
+    <p class="prose">HHC is a simulated utility credit for verified contribution.</p>
+
+    <h2>Linux and macOS</h2>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR</code></pre>
+    <p class="prose">Ollama instead of llama.cpp:</p>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR --backend ollama</code></pre>
+    <p class="prose">From a checkout, Compose is <code>gpu-mesh/deploy/join/docker-compose.yml</code>. The published image is <code>ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join</code>.</p>
+
+    <h2>Windows</h2>
+    <p class="prose">Install Docker Desktop and leave it running. PowerShell:</p>
+    <pre><code>docker run -d --name gpumesh-join --restart unless-stopped -e GPU_MESH_COORDINATOR=https://YOUR-COORDINATOR -e GPU_MESH_BACKEND=llamacpp -e GPU_MESH_ALLOW_CPU=1 -v gpumesh-join:/var/lib/gpumesh ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest</code></pre>
+    <p class="prose">For Ollama, install it from <a href="https://ollama.com/download/windows">ollama.com/download/windows</a>, pull a weight, and set <code>GPU_MESH_BACKEND=ollama</code> with <code>GPU_MESH_OLLAMA_HOST=http://host.docker.internal:11434</code>. The longer notes are in the repository file <code>gpu-mesh/deploy/join/WINDOWS.md</code>.</p>
+
+    <h2>Also on this site</h2>
+    <ul class="prose">
+      <li><a href="../human/">Human sign-in</a></li>
+      <li><a href="../console/">Console</a></li>
+    </ul>
+  </main>
+  <footer>
+    <div class="wrap">
+      <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
+      <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
+      <p>HHC-SIM is simulated. It is not a token and it has no monetary value. Promotion remains HOLD.</p>
+    </div>
+  </footer>
+</body>
+</html>
