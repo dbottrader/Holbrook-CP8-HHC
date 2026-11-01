@@ -1,0 +1,43 @@
+name: gpu-mesh
+
+on:
+  push:
+    paths:
+      - "gpu-mesh/**"
+      - ".github/workflows/gpu-mesh.yml"
+  pull_request:
+    paths:
+      - "gpu-mesh/**"
+      - ".github/workflows/gpu-mesh.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gpu-mesh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ python3-dev
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install 'torch==2.5.1' --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy
+          pip install --no-build-isolation --no-deps --no-binary=toploc 'toploc==0.1.6'
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest -q
+
+      - name: Installer syntax
+        run: bash -n gpumesh/assets/install.sh
