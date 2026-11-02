@@ -5,8 +5,9 @@ DSSE envelope (the Sigstore payload layout) with HMAC-SHA256. That HMAC mode is
 labeled SIMULATED. Ed25519 attribution is checked with public keys only. This
 module does not call Fulcio, Rekor, or any chain, and it does not mint a token.
 
-The on-chain backend is a locked adapter. Constructing it is allowed so callers
-can see the interface; every method refuses before any network call.
+The on-chain backend stays locked unless HHCW_SETTLEMENT_ADDR is set. Without
+that variable, constructing it is allowed and every method refuses before any
+network call. There is no mint on that path.
 
 Merkle pairing matches scripts/build-merkle.py: odd levels duplicate the last
 leaf, and a parent is sha256 of the UTF-8 concatenation of the two child hex
@@ -239,6 +240,41 @@ class ReceiptVerificationError(ValueError):
     """An attributable receipt failed a public-key check."""
 
 
+def sign_ed25519_envelope(
+    statement_json: str,
+    *,
+    private_key_raw: bytes,
+    key_id: str,
+) -> str:
+    """DSSE envelope signed with Ed25519 (attributable; public-key verifiable).
+
+    ``private_key_raw`` is the 32-byte seed. HMAC ``sign_envelope`` remains the
+    SIMULATED path and must not be treated as production attribution.
+    """
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    if len(private_key_raw) != 32:
+        raise ValueError("ed25519 private key must be 32 bytes")
+    if not key_id:
+        raise ValueError("key_id required")
+    payload = statement_json.encode("utf-8")
+    private = Ed25519PrivateKey.from_private_bytes(private_key_raw)
+    signature = private.sign(pae(PAYLOAD_TYPE, payload))
+    envelope = {
+        "payload": base64.b64encode(payload).decode("ascii"),
+        "payloadType": PAYLOAD_TYPE,
+        "signatures": [
+            {
+                "keyid": key_id,
+                "sig": base64.b64encode(signature).decode("ascii"),
+                "scheme": ATTRIBUTION_SCHEME,
+            }
+        ],
+    }
+    return canonical_json(envelope)
+
+
 def verify_ed25519_envelope(
     envelope_json: str,
     public_keys: dict[str, bytes],
@@ -315,7 +351,19 @@ class SimulatedLedger:
     name = "simulated"
 
     def sign_settlement(self, statement: dict, key: bytes) -> str:
-        return sign_envelope(canonical_json(statement), key)
+        """HMAC-SIMULATED by default. Pass ed25519_key_id on the statement and a
+        32-byte Ed25519 seed as ``key`` to emit an attributable envelope (gap #02).
+        """
+
+        body = canonical_json(statement)
+        key_id = None
+        if isinstance(statement, dict):
+            key_id = statement.get("ed25519_key_id") or statement.get("predicate", {}).get(
+                "ed25519KeyId"
+            )
+        if key_id and len(key) == 32:
+            return sign_ed25519_envelope(body, private_key_raw=key, key_id=str(key_id))
+        return sign_envelope(body, key)
 
     def verify_envelope(self, envelope_json: str, key: bytes) -> bool:
         return verify_envelope(envelope_json, key)
@@ -324,22 +372,34 @@ class SimulatedLedger:
         return merkle_root(receipt_hashes)
 
 
-class OnchainLedger:
+class OnchainLedgerLocked:
+    """Locked stub kept for callers that construct without env. Prefer get_backend('onchain')."""
+
     name = "onchain"
 
     def sign_settlement(self, statement: dict, key: bytes) -> str:
-        raise OnchainDisabled("onchain backend is off; no chain calls and no minting")
+        raise OnchainDisabled("onchain backend is off; no mint until HHCW_SETTLEMENT_ADDR is set")
 
     def verify_envelope(self, envelope_json: str, key: bytes) -> bool:
-        raise OnchainDisabled("onchain backend is off; no chain calls and no minting")
+        raise OnchainDisabled("onchain backend is off; no mint until HHCW_SETTLEMENT_ADDR is set")
 
     def anchor(self, receipt_hashes: list[str]) -> str:
-        raise OnchainDisabled("onchain backend is off; no chain calls and no minting")
+        raise OnchainDisabled("onchain backend is off; no mint until HHCW_SETTLEMENT_ADDR is set")
+
+
+# Back-compat alias
+OnchainLedger = OnchainLedgerLocked
 
 
 def get_backend(name: str = "simulated") -> LedgerBackend:
     if name == "simulated":
         return SimulatedLedger()
     if name == "onchain":
-        return OnchainLedger()
+        import os
+
+        if not os.environ.get("HHCW_SETTLEMENT_ADDR"):
+            return OnchainLedgerLocked()
+        from moltbook.ledger.onchain import get_onchain_backend
+
+        return get_onchain_backend()
     raise ValueError(f"unknown ledger backend: {name}")

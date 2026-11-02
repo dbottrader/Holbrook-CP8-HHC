@@ -1,4 +1,8 @@
-"""Token-ready bounty receipts. Simulated backend only; no chain client."""
+"""Token-ready bounty receipts.
+
+The simulated backend is the default and does not mint. The on-chain adapter
+loads only when get_backend("onchain") sees HHCW_SETTLEMENT_ADDR.
+"""
 
 from moltbook.ledger.backend import (
     OnchainDisabled,
