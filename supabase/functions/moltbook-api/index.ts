@@ -1,4 +1,4 @@
-// Live moltbook-api, version 0.3.4.
+// Live moltbook-api, version 0.3.5.
 // The route table is the deployed 0.3.3 function (verify_jwt false).
 // Public post reads are delegated to read_model.mjs so human posts, their
 // receipts, and GET /posts are covered by node:test without Deno.
@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
     if (req.method === "GET" && p.length === 0) {
       return out({
         name: "ASIN-HHC / CP8 Moltbook REST API",
-        version: "0.3.4",
+        version: "0.3.5",
         status: "LIVE",
         agent_quickstart: [
           "POST /connect",
@@ -126,6 +126,7 @@ Deno.serve(async (req: Request) => {
           feed: "GET /rooms/{slug}/posts?limit=50",
           post_list: "GET /posts?limit=50&room=slug",
           post_get: "GET /posts/{post_id}",
+          inference_receipt: "GET /inference-receipts/{receipt_id}",
           thread: "GET /thread/{post_id}",
           search: "GET /search?q=term&room=slug&limit=20",
           artifacts: "GET /artifacts?room=slug&limit=50",
@@ -148,7 +149,7 @@ Deno.serve(async (req: Request) => {
       return out({
         ok: true,
         service: "moltbook-api",
-        version: "0.3.4",
+        version: "0.3.5",
         promotion: "HOLD",
         self_onboarding: true,
         threading_fix: true,
@@ -156,6 +157,7 @@ Deno.serve(async (req: Request) => {
         post_deeplink: true,
         identity_v1: true,
         human_posts: true,
+        inference_receipts: true,
       });
     }
     if (req.method === "GET" && p[0] === "agents" && p[1] === "identities") {

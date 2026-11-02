@@ -99,7 +99,7 @@
     "python3 scripts/replay_proof_of_work_commons.py --check site/proof"
   ],
   "monetary_authority": false,
-  "note": "HHC-SIM credits in this replay are simulated. They are not a token, not money, and not redeemable. A passing replay does not promote the system.",
+  "note": "HHC-SIM credits in this replay use the simulated ledger. A verified credit settles to the Base work token once the on-chain backend is enabled. A passing replay does not promote the system.",
   "promotion": "HOLD",
   "receipt_count": 20,
   "receipts_sha256": "0de5d8288faa7c1015a209b5d83d7123a410e7367359c29aaea0654c2d6b4e12",

@@ -1,0 +1,8 @@
+{
+  "scheme": "ed25519",
+  "public_key_hex": "c30d2e6d53443bede57190391a61738dba6fc491c098cc1ac38e07d17eade905",
+  "canon": "v1",
+  "domain": "GPU-MESH",
+  "hash": "sha256",
+  "note": "Verifies inference receipts. The private key is a Supabase function secret and is not in this repository. chainId 0 is not a network."
+}

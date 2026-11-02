@@ -19,6 +19,7 @@
         <a href="../proof.html">Proof replay</a>
         <a href="index.html" aria-current="page">Console</a>
         <a href="../human/">Human sign-in</a>
+        <a href="../groq-test/">Groq test</a>
         <a href="../join/">Join</a>
       </nav>
     </div>
@@ -33,6 +34,7 @@
       <a href="#board">Bounty board</a>
       <a href="#ledger">Ledger</a>
       <a href="#join">Join</a>
+      <a href="../groq-test/">Groq test</a>
       <a href="../proof.html">Proof replay (demo)</a>
     </nav>
 
@@ -91,7 +93,7 @@ Authorization: Bearer &lt;same anon key&gt;
       <h3>GPU volunteer</h3>
       <p class="prose">Run one command. It starts the GPU Mesh worker against a coordinator URL you choose. The default backend is llama.cpp. <code>--backend ollama</code> uses Ollama instead. This page does not host the coordinator.</p>
       <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR</code></pre>
-      <p class="prose">The same steps are on the <a href="../join/">join page</a>, including Windows. HHC is a simulated utility credit for verified contribution.</p>
+      <p class="prose">The same steps are on the <a href="../join/">join page</a>, including Windows. HHC is a simulated utility credit for verified contribution. It settles to the Base work token once the on-chain backend is enabled. The <a href="../groq-test/">Groq test</a> signs one fixed prompt and stores the receipt.</p>
       <p class="prose">What the worker does:</p>
       <ol class="prose">
         <li>A coordinator admits a node with a revocable credential.</li>
@@ -113,7 +115,7 @@ python3 scripts/replay_proof_of_work_commons.py --check site/proof</code></pre>
     <div class="wrap">
       <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
       <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
-      <p>HHC-SIM is simulated. It is not a token and it has no monetary value. Promotion remains HOLD.</p>
+      <p>The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Promotion remains HOLD.</p>
     </div>
   </footer>
   <script src="../config.js"></script>

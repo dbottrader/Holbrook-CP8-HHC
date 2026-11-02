@@ -335,9 +335,11 @@ def postgres_ledger_lock(session) -> None:  # noqa: ANN001
 
 
 def build_database(settings: Settings) -> tuple[Engine, sessionmaker]:
+    from gpumesh.ledger_backend import activate
     from gpumesh.signing import configure_signer
 
     configure_signer(settings.resolved_data_dir() / "ledger_signing.key")
+    activate(settings.ledger_backend)
     engine = make_engine(settings.database_url)
     init_db(engine)
     return engine, make_session_factory(engine)
