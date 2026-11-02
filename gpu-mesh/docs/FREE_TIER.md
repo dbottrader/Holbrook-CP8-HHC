@@ -8,6 +8,20 @@ This network does not speak the AI Horde worker protocol. A Horde worker cannot 
 
 `GPU_MESH_BACKEND=llamacpp` is the CPU worker that serves a real open-weight model. The default is SmolLM2-360M-Instruct Q8_0 (Apache-2.0), downloaded from `HuggingFaceTB/SmolLM2-360M-Instruct-GGUF` on first start and checked against a pinned SHA-256. The GGUF is not committed. That worker does not attach a TOPLOC hidden-state proof.
 
+## Public coordinator
+
+Strangers join the hosted coordinator without an account and without an invite:
+
+```text
+https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh
+```
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash
+```
+
+Details are in [PUBLIC_COORDINATOR.md](PUBLIC_COORDINATOR.md). The Hugging Face Space steps below are the alternate always-on CPU demo. They are not required for this public coordinator.
+
 ## Coordinator
 
 Use a machine that stays on and has a disk you can back up. A sleeping free web host drops the worker's long-poll. An always-on free VM (for example an Oracle Cloud always-free instance, or a home Linux box) is enough. SQLite on that disk is enough for a small invite-only cohort. Put HTTPS in front with Caddy or a tunnel. Workers only make outbound calls.

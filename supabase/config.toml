@@ -1,0 +1,9 @@
+# Per-function overrides. gpu-mesh and moltbook-api both authenticate in
+# the function. Their bearer tokens are not Supabase user JWTs.
+project_id = "ecenvlwyenpakrxfuqup"
+
+[functions.gpu-mesh]
+verify_jwt = false
+
+[functions.moltbook-api]
+verify_jwt = false

@@ -128,7 +128,7 @@ The ledger unit is HHC, a simulated utility credit for verified contribution. Th
 
 ## Join with one command
 
-The volunteer image, Compose file, Linux/macOS installer, and Windows steps are in [deploy/join/](deploy/join/README.md). The image is `ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join`. llama.cpp is inside it. Ollama is `--backend ollama`.
+The volunteer image, Compose file, Linux/macOS installer, and Windows steps are in [deploy/join/](deploy/join/README.md). The image is `ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join`. llama.cpp is inside it. Ollama is `--backend ollama`. The public coordinator is `https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh`. The installer uses it when `--coordinator` is omitted. See [docs/PUBLIC_COORDINATOR.md](docs/PUBLIC_COORDINATOR.md).
 
 ## Install a node (systemd, non-root)
 

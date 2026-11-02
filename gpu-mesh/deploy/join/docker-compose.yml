@@ -1,7 +1,8 @@
 # Volunteer worker against a coordinator you already have.
 # HHC recorded by that coordinator is a simulated utility credit.
 #
-#   GPU_MESH_COORDINATOR=https://coordinator.example docker compose up --build
+#   docker compose -f gpu-mesh/deploy/join/docker-compose.yml up --build
+# GPU_MESH_COORDINATOR overrides the public coordinator below.
 #   GPU_MESH_BACKEND=ollama docker compose --profile ollama up --build
 #
 # Ollama's image is the official ollama/ollama image, pinned by tag.
@@ -14,7 +15,7 @@ services:
       context: ../..
       dockerfile: deploy/join/Dockerfile
     environment:
-      GPU_MESH_COORDINATOR: ${GPU_MESH_COORDINATOR:?Set GPU_MESH_COORDINATOR}
+      GPU_MESH_COORDINATOR: ${GPU_MESH_COORDINATOR:-https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh}
       GPU_MESH_BACKEND: ${GPU_MESH_BACKEND:-llamacpp}
       GPU_MESH_OLLAMA_HOST: ${GPU_MESH_OLLAMA_HOST:-http://ollama:11434}
       GPU_MESH_INVITE: ${GPU_MESH_INVITE:-}

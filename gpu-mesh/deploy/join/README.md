@@ -16,20 +16,22 @@ GitHub packages are private until the repository owner marks this package public
 
 ## Linux and macOS
 
+The public coordinator is the default. No invite is required. The published open invite is `open`.
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR
+curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash
 ```
 
 Ollama instead of llama.cpp:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR --backend ollama
+curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --backend ollama
 ```
 
-From a checkout, the same image is `docker-compose.yml` in this directory:
+From a checkout, Compose in this directory uses the same default:
 
 ```bash
-GPU_MESH_COORDINATOR=https://YOUR-COORDINATOR docker compose -f gpu-mesh/deploy/join/docker-compose.yml up --build
+docker compose -f gpu-mesh/deploy/join/docker-compose.yml up --build
 ```
 
 ## Windows

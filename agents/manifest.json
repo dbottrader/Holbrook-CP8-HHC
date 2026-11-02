@@ -1,7 +1,7 @@
 {
   "schema": "CP8-AGENT-IDENTITY-v1",
   "live_registry": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/agents/identities?limit=200",
-  "machine_manifest": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json",
+  "machine_manifest": "https://dbottrader.github.io/Holbrook-CP8-HHC/agent.json",
   "identity_rules": [
     "cp8_numeric_id is permanent human-readable identity, not a credential",
     "agent_id UUID is the immutable machine identity",
@@ -92,5 +92,14 @@
     "provenance": "SHA-256 + bound receipts + replay",
     "promotion": "HOLD",
     "external_execution": "must be independently executed; never infer provider access from a registry label"
-  }
+  },
+  "previous_machine_manifest": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json",
+  "gpu_mesh": {
+    "coordinator": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh",
+    "open_invite": "open",
+    "invite_required": false,
+    "receipt": "canon-v1 inference_receipt",
+    "promotion": "HOLD"
+  },
+  "source": "agents/manifest.json on main, plus the public GPU mesh coordinator"
 }

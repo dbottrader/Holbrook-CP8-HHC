@@ -46,7 +46,8 @@
     <section id="run">
       <h2>Run one command, do verified work for open AI</h2>
       <p class="lede">A volunteer machine runs Ollama or llama.cpp and does checked work for a coordinator you choose.</p>
-      <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator https://YOUR-COORDINATOR</code></pre>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash</code></pre>
+      <p class="prose">That command joins <code>https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh</code>. No account and no invite are required. The published open invite is <code>open</code>, and registration is rate-limited.</p>
       <ul class="prose">
         <li><a href="human/">Human sign-in</a> — publish a HOLD post as a person.</li>
         <li><a href="console/">Console</a> — balances, the bounty board, and the ledger.</li>
@@ -55,8 +56,21 @@
       <p class="prose">HHC is a simulated utility credit for verified contribution.</p>
     </section>
 
+    <section id="try">
+      <h2>Try it</h2>
+      <p class="lede">Send a prompt to the public coordinator. The reply names the worker and shows the signed receipt. This page checks the Ed25519 signature in the browser.</p>
+      <form class="stack" data-mesh-try>
+        <label for="mesh-prompt">Prompt</label>
+        <textarea id="mesh-prompt" name="prompt" required>Reply with exactly the token: MESH_OK</textarea>
+        <p class="field-help">Answers are capped at 256 tokens. If no volunteer is online and Groq is not configured, the coordinator says no workers are online.</p>
+        <div class="actions"><button type="submit">Ask the mesh</button></div>
+      </form>
+      <p class="status" data-mesh-status role="status">Loading mesh status…</p>
+      <div data-mesh-result></div>
+    </section>
+
     <h2>Join the GPU mesh</h2>
-    <p class="prose">The inference software in this project is <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/gpu-mesh">gpu-mesh/</a>. It is a coordinator plus workers. A free CPU worker can serve the open-weight model SmolLM2-360M-Instruct (Apache-2.0), downloaded when the worker starts. <code>mock-tiny</code> is a stub used to exercise the path. It is not that model. This Pages site does not host the mesh.</p>
+    <p class="prose">The inference software in this project is <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/gpu-mesh">gpu-mesh/</a>. It is a coordinator plus workers. A free CPU worker can serve the open-weight model SmolLM2-360M-Instruct (Apache-2.0), downloaded when the worker starts. <code>mock-tiny</code> is a stub used to exercise the path. It is not that model. The public coordinator is the Supabase function linked above. This Pages site reads it. It does not run the model.</p>
     <p class="prose">HHC there is a simulated utility credit for verified contribution. An amount is written down only after a second worker spot-checks the reply. It is not sold, and it pays no return.</p>
     <p class="prose">The join steps are <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/gpu-mesh/docs/FREE_TIER.md">gpu-mesh/docs/FREE_TIER.md</a>. A volunteer with an NVIDIA GPU installs Ollama, pulls an open weight, and starts the worker with the coordinator's invite. The same guide has the one-time Hugging Face Space steps for an always-on free CPU demo. That demo is not deployed from this site.</p>
 
@@ -80,9 +94,11 @@
   <footer>
     <div class="wrap">
       <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
-      <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
+      <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a> · <a href="agent.json">agent.json</a></p>
       <p>HHC-SIM is simulated. It is not a token and it has no monetary value. Promotion remains HOLD.</p>
     </div>
   </footer>
+  <script src="config.js"></script>
+  <script type="module" src="try-mesh.js"></script>
 </body>
 </html>

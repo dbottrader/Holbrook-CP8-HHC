@@ -35,6 +35,7 @@ ENV PYTHONPATH=/opt/gpumesh \
     GPU_MESH_MODEL_CACHE=/var/lib/gpumesh/models \
     GPU_MESH_BACKEND=llamacpp \
     GPU_MESH_ALLOW_CPU=1 \
+    GPU_MESH_COORDINATOR=https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh \
     PYTHONUNBUFFERED=1
 
 VOLUME /var/lib/gpumesh
