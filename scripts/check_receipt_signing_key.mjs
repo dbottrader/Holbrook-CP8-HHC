@@ -16,6 +16,7 @@ try {
 }
 if (derived !== PUBLISHED_PUBLIC_KEY) {
   console.error("INFERENCE_RECEIPT_SIGNING_KEY does not match the published public key.");
+  console.error(`derived_public_key=${derived}`);
   process.exit(1);
 }
 console.log("INFERENCE_RECEIPT_SIGNING_KEY matches the published public key.");
