@@ -1,0 +1,64 @@
+{
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "rpc": "https://sepolia.base.org",
+  "description": "HHCW work token for verified contribution + Settlement (EIP-712)",
+  "admin": "0x182c77EDEc89961cde09f8f449aE5a3dFb16B89b",
+  "contracts": {
+    "HHCWorkCredit": {
+      "address": "0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d",
+      "symbol": "HHCW",
+      "name": "HHC Work Credit",
+      "deployTx": "0x48ecd923083a51cd54f0828ec4b8b4c23b09d2722fe01c30a1dac5a47a19f862",
+      "blockNumber": 53387342
+    },
+    "Settlement": {
+      "address": "0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA",
+      "deployTx": "0x9f3da862ff31465d4ec4ce9c187d42ada6fa0c6c50d138b4e668ddabde41d4e7",
+      "blockNumber": 53387352
+    },
+    "grantMinter": {
+      "tx": "0x6278ecf5e33b7553a9edf341536e9e3902c738ec1f3112349a6c5bf981a87456",
+      "blockNumber": 53387361
+    }
+  },
+  "liveProof": {
+    "settlementId": "settle-basesepolia-live-001",
+    "receiptHash": "18eff3522db0639e85bfb691ca71be012b175fa41216f6c3693bcc160a496f77",
+    "contributionMinor": 1000,
+    "split": {
+      "worker": 900,
+      "verifier1": 50,
+      "verifier2": 50
+    },
+    "worker": "0x1111111111111111111111111111111111111111",
+    "verifier1": "0x2222222222222222222222222222222222222222",
+    "verifier2": "0x3333333333333333333333333333333333333333",
+    "settleTx": "0xc8664a1dc651913cb501b7c720dd17456c5a43964b4f70d43e0588da8ec41180",
+    "settleBlock": 53387566,
+    "anchorTx": "0x10e5b60d3137af3cd0ca6f29dd3cfbe76fc4bcc9ca4a947b135e3dfba1bd0681",
+    "anchorBlock": 53387573,
+    "anchorCount": 1,
+    "replayRevert": "AlreadySettled(bytes32) selector 0xb196a44a (eth_call only)"
+  },
+  "verification": {
+    "basescan": "skipped (no BASESCAN_API_KEY)",
+    "sourcify": {
+      "HHCWorkCredit": {
+        "match": "exact_match",
+        "url": "https://repo.sourcify.dev/84532/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d/"
+      },
+      "Settlement": {
+        "match": "exact_match",
+        "url": "https://repo.sourcify.dev/84532/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA/"
+      }
+    }
+  },
+  "git": {
+    "branch": "cursor/base-hhcw-settlement-onchain",
+    "commit": "f0ca7adb99285ae27e013c5ed95585728fa5e9cd",
+    "pr": "https://github.com/dbottrader/Holbrook-CP8-HHC/pull/46"
+  },
+  "remainingDeployerWei": "59978822982043064",
+  "remainingDeployerEth": "0.059978822982043064"
+}

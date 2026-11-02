@@ -1,0 +1,3 @@
+# Live Base adapter (moltbook/ledger/onchain.py). Not required for the simulated ledger.
+web3>=6.15
+eth-account>=0.10
