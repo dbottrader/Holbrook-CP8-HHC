@@ -254,14 +254,27 @@ def verify_mesh_receipt(entry: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def receipt_is_verified(claim: Mapping[str, Any]) -> bool:
+    """True for a mesh worker award, not for the pre-check execution record.
+
+    gpu-mesh writes ``execution_submitted`` when a job finishes and
+    ``inference_receipt`` only after a checker agrees. The Groq path uses
+    that same pair. ``verifier_decision`` of ``agree`` is the verified job.
+    """
+
     payload = claim.get("payload")
     if not isinstance(payload, dict):
         return False
-    status = str(payload.get("status") or payload.get("state") or "").lower()
     kind = str(claim.get("kind") or "").lower()
-    if status in {"verified", "pass"}:
-        return True
-    return kind == "verified" and status in {"", "completed"}
+    if kind == "execution_submitted":
+        return False
+    decision = str(payload.get("verifier_decision") or "").lower()
+    status = str(payload.get("status") or payload.get("state") or "").lower()
+    amount = claim.get("amount")
+    positive = isinstance(amount, int) and not isinstance(amount, bool) and amount > 0
+    if kind == "inference_receipt":
+        agreed = decision in {"agree", "pass", "verified"} or status in {"verified", "pass"}
+        return agreed and positive
+    return kind == "verified" and status in {"verified", "pass"}
 
 
 def verifier_ids_of(claim: Mapping[str, Any]) -> list[str]:

@@ -13,6 +13,7 @@ from moltbook.ledger.mesh_receipt import (
     GENESIS_PREV,
     MeshReceiptError,
     mesh_merkle_root,
+    receipt_is_verified,
     sign_mesh_receipt,
     split_contribution,
     verify_mesh_receipt,
@@ -27,9 +28,11 @@ def _verified_receipt():
     v2 = "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
     receipt = sign_mesh_receipt(
         actor="groq-test",
-        kind="verified",
+        kind="inference_receipt",
         payload={
+            "schema": "gpumesh.execution.v1",
             "status": "verified",
+            "verifier_decision": "agree",
             "work_id": "work_groq",
             "worker_id": worker,
             "verifier_ids": [v1, v2],
@@ -67,6 +70,27 @@ def test_mesh_receipt_verifies_and_rejects_tamper():
     forged["amount"] = 2000
     with pytest.raises(MeshReceiptError):
         verify_mesh_receipt(forged)
+    assert receipt_is_verified(claim)
+
+
+def test_execution_submitted_is_not_settled():
+    private = Ed25519PrivateKey.generate()
+    receipt = sign_mesh_receipt(
+        actor="groq-test",
+        kind="execution_submitted",
+        payload={
+            "schema": "gpumesh.execution.v1",
+            "verifier_decision": "pending",
+            "worker_id": "node-1",
+            "amount": 0,
+        },
+        prev_hash=GENESIS_PREV,
+        seq=1,
+        ts=1700000000000,
+        private_key=private,
+    )
+    claim = verify_mesh_receipt(receipt)
+    assert receipt_is_verified(claim) is False
 
 
 def test_merkle_root_of_one_receipt_is_the_hash():

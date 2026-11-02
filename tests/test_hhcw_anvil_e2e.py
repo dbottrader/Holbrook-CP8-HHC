@@ -167,9 +167,11 @@ def test_anvil_settles_mesh_receipt_and_reads_balances():
         )
         receipt = sign_mesh_receipt(
             actor="groq-test",
-            kind="verified",
+            kind="inference_receipt",
             payload={
+                "schema": "gpumesh.execution.v1",
                 "status": "verified",
+                "verifier_decision": "agree",
                 "work_id": "work_anvil",
                 "worker_id": worker,
                 "verifier_ids": [verifier1, verifier2],
