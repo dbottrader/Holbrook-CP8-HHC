@@ -24,6 +24,12 @@ test("the published specimen verifies in the browser module", async () => {
   assert.equal(specimen.amount, 0);
 });
 
+test("groq-test reads the same secret name as cp8-groq-inference", () => {
+  const handler = readFileSync(new URL("../supabase/functions/groq-test/handler.mjs", import.meta.url), "utf8");
+  assert.match(handler, /const GROQ_API_KEY_NAME = "GROQ_API_KEY"/);
+  assert.match(handler, /cp8-groq-inference/);
+});
+
 test("the browser verifier is the function receipt module", () => {
   assert.equal(siteReceipt, fnReceipt);
 });
