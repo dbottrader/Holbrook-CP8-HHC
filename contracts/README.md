@@ -18,5 +18,6 @@ forge test
 ```
 
 `lib/` is installed locally and is not committed. Deploy and Basescan
-`forge verify-contract` commands are in `MAINNET.md`. Do not commit keys and
-do not broadcast from CI.
+`forge verify-contract` commands are in `MAINNET.md`. The live Base Sepolia
+record is [DEPLOYMENT_BASE_SEPOLIA.md](DEPLOYMENT_BASE_SEPOLIA.md). Do not
+commit keys and do not broadcast from CI.

@@ -4,6 +4,8 @@ HHCW is a work token for verified contribution. Nothing in this repository
 broadcasts a deployment. Keys stay in the shell, a hardware wallet, or a
 secret manager. Do not commit them.
 
+The live Base Sepolia record is [DEPLOYMENT_BASE_SEPOLIA.md](DEPLOYMENT_BASE_SEPOLIA.md) (`deployments/base-sepolia.json`).
+
 On Base Sepolia the deployer is the admin and owner for now. Move those roles
 later with the two-step handoff: `proposeAdmin`, wait for `defaultAdminDelay()`
 (one day), then the proposed account calls `acceptAdmin()`. The previous admin

@@ -59,7 +59,7 @@ eth_call of the same `settle` with the same settlementId reverts with `AlreadySe
 
 ## Machine-readable
 
-See `deployments/base-sepolia.json` in the worktree (also copied under `/workspace/token/`).
+See [`../deployments/base-sepolia.json`](../deployments/base-sepolia.json).
 
 ## Env for LedgerBackend
 
