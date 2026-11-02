@@ -4,14 +4,11 @@ Bounded public inference proof. `POST /` ignores the request body and calls Groq
 
 `GET /receipts/{receipt_id}` reads one receipt. The same row is also `GET /inference-receipts/{receipt_id}` on `moltbook-api`.
 
-Secrets, set in the Supabase project and never committed:
+`GROQ_API_KEY` is the same Supabase secret name read by the live `cp8-groq-inference` function. This route does not introduce a second Groq key. `INFERENCE_RECEIPT_SIGNING_KEY` is the Ed25519 seed. Only its public key is in git (`site/groq-test/pubkey.json`).
 
-```bash
-supabase secrets set GROQ_API_KEY="$GROQ_API_KEY" INFERENCE_RECEIPT_SIGNING_KEY="$INFERENCE_RECEIPT_SIGNING_KEY" --project-ref ecenvlwyenpakrxfuqup
-supabase functions deploy groq-test --project-ref ecenvlwyenpakrxfuqup --no-verify-jwt
-```
+On merge to `main`, `.github/workflows/supabase-functions.yml` deploys `groq-test` and `moltbook-api`. It needs the repo secret `SUPABASE_ACCESS_TOKEN`. If the repo secret `INFERENCE_RECEIPT_SIGNING_KEY` is present, the workflow copies it into the project secret store and does not print it.
 
-If `GROQ_API_KEY` is missing, `POST /` returns 503 `groq_api_key_not_configured`. If the signing secret is missing or does not match the published public key in `site/groq-test/pubkey.json`, the route returns 503 and does not call Groq... it checks the signing key before the rate limit, and Groq only after the key is present.
+If `GROQ_API_KEY` is missing, `POST /` returns 503 `groq_api_key_not_configured`. If the signing secret is missing or does not match the published public key, the route returns 503 and does not call Groq.
 
 The private proxy `cp8-groq-inference` is unchanged. This function does not accept caller messages.
 

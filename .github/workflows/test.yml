@@ -34,7 +34,7 @@ jobs:
           node-version: "22"
 
       - name: Moltbook read-route tests
-        run: node --test tests/test_moltbook_api_reads.mjs tests/test_groq_receipt.mjs site/console/ledger.test.mjs
+        run: node --test tests/test_moltbook_api_reads.mjs tests/test_groq_receipt.mjs tests/test_receipt_signing_key.mjs site/console/ledger.test.mjs
 
       - name: Run tests
         env:

@@ -1,16 +1,16 @@
 {
   "seq": 2,
-  "ts": 1793599284743,
+  "ts": 1793600236672,
   "actor": "groq-fallback",
   "kind": "groq_inference_receipt",
-  "payload": "{\"amount\":0,\"completion_tokens\":4,\"credits\":0,\"duration_ms\":1,\"job_id\":\"job_a9e239643a14\",\"max_tokens\":16,\"model\":\"openai/gpt-oss-20b\",\"output_hash\":\"97443e6bb4107cb1bc8fd31a071a343d5237572ea3ac2b02dd83ff1f9576818a\",\"promotion\":\"HOLD\",\"prompt_sha256\":\"79fea34fd23bcebda729af0c694e921684447e3afe84057c91e37377a7c5f41a\",\"prompt_tokens\":12,\"provider\":\"groq\",\"request_id\":\"specimen-local\",\"runtime\":\"groq\",\"schema\":\"gpumesh.groq_fallback.v1\",\"settlement_id\":\"job_a9e239643a14:groq\",\"state\":\"OBSERVED\",\"temperature_milli\":0,\"verification_method\":\"exact_match\",\"verifier_decision\":\"agree\",\"verifier_ids\":\"exact-match\",\"worker_id\":\"groq:openai/gpt-oss-20b\"}",
-  "prev_hash": "17ee258bb690ac702ea7ab7fd2a0ed17e3ff617b11a7048399ac56a9c0ccb923",
-  "hash": "1dccd423eed58772231c0ae47102b399c667cb9af09b4ec3ae4005938eefb746",
+  "payload": "{\"amount\":0,\"completion_tokens\":4,\"credits\":0,\"duration_ms\":1,\"job_id\":\"job_fe2ff67bb3ac\",\"max_tokens\":16,\"model\":\"openai/gpt-oss-20b\",\"output_hash\":\"97443e6bb4107cb1bc8fd31a071a343d5237572ea3ac2b02dd83ff1f9576818a\",\"promotion\":\"HOLD\",\"prompt_sha256\":\"79fea34fd23bcebda729af0c694e921684447e3afe84057c91e37377a7c5f41a\",\"prompt_tokens\":12,\"provider\":\"groq\",\"request_id\":\"specimen-local\",\"runtime\":\"groq\",\"schema\":\"gpumesh.groq_fallback.v1\",\"settlement_id\":\"job_fe2ff67bb3ac:groq\",\"state\":\"OBSERVED\",\"temperature_milli\":0,\"verification_method\":\"exact_match\",\"verifier_decision\":\"agree\",\"verifier_ids\":\"exact-match\",\"worker_id\":\"groq:openai/gpt-oss-20b\"}",
+  "prev_hash": "0cb9b97aad169116fef289aade6aea484b64b76e2ebb9e910a2b224273889d8a",
+  "hash": "43b9e361eb46fe1dd7a7c4b05e6cf5590f8dee1bd076d5459763e0c4e1aed539",
   "canon": "v1",
-  "body_json": "{\"actor\":\"groq-fallback\",\"kind\":\"groq_inference_receipt\",\"payload\":\"{\\\"amount\\\":0,\\\"completion_tokens\\\":4,\\\"credits\\\":0,\\\"duration_ms\\\":1,\\\"job_id\\\":\\\"job_a9e239643a14\\\",\\\"max_tokens\\\":16,\\\"model\\\":\\\"openai/gpt-oss-20b\\\",\\\"output_hash\\\":\\\"97443e6bb4107cb1bc8fd31a071a343d5237572ea3ac2b02dd83ff1f9576818a\\\",\\\"promotion\\\":\\\"HOLD\\\",\\\"prompt_sha256\\\":\\\"79fea34fd23bcebda729af0c694e921684447e3afe84057c91e37377a7c5f41a\\\",\\\"prompt_tokens\\\":12,\\\"provider\\\":\\\"groq\\\",\\\"request_id\\\":\\\"specimen-local\\\",\\\"runtime\\\":\\\"groq\\\",\\\"schema\\\":\\\"gpumesh.groq_fallback.v1\\\",\\\"settlement_id\\\":\\\"job_a9e239643a14:groq\\\",\\\"state\\\":\\\"OBSERVED\\\",\\\"temperature_milli\\\":0,\\\"verification_method\\\":\\\"exact_match\\\",\\\"verifier_decision\\\":\\\"agree\\\",\\\"verifier_ids\\\":\\\"exact-match\\\",\\\"worker_id\\\":\\\"groq:openai/gpt-oss-20b\\\"}\",\"prev_hash\":\"17ee258bb690ac702ea7ab7fd2a0ed17e3ff617b11a7048399ac56a9c0ccb923\",\"seq\":2,\"ts\":1793599284743}",
+  "body_json": "{\"actor\":\"groq-fallback\",\"kind\":\"groq_inference_receipt\",\"payload\":\"{\\\"amount\\\":0,\\\"completion_tokens\\\":4,\\\"credits\\\":0,\\\"duration_ms\\\":1,\\\"job_id\\\":\\\"job_fe2ff67bb3ac\\\",\\\"max_tokens\\\":16,\\\"model\\\":\\\"openai/gpt-oss-20b\\\",\\\"output_hash\\\":\\\"97443e6bb4107cb1bc8fd31a071a343d5237572ea3ac2b02dd83ff1f9576818a\\\",\\\"promotion\\\":\\\"HOLD\\\",\\\"prompt_sha256\\\":\\\"79fea34fd23bcebda729af0c694e921684447e3afe84057c91e37377a7c5f41a\\\",\\\"prompt_tokens\\\":12,\\\"provider\\\":\\\"groq\\\",\\\"request_id\\\":\\\"specimen-local\\\",\\\"runtime\\\":\\\"groq\\\",\\\"schema\\\":\\\"gpumesh.groq_fallback.v1\\\",\\\"settlement_id\\\":\\\"job_fe2ff67bb3ac:groq\\\",\\\"state\\\":\\\"OBSERVED\\\",\\\"temperature_milli\\\":0,\\\"verification_method\\\":\\\"exact_match\\\",\\\"verifier_decision\\\":\\\"agree\\\",\\\"verifier_ids\\\":\\\"exact-match\\\",\\\"worker_id\\\":\\\"groq:openai/gpt-oss-20b\\\"}\",\"prev_hash\":\"0cb9b97aad169116fef289aade6aea484b64b76e2ebb9e910a2b224273889d8a\",\"seq\":2,\"ts\":1793600236672}",
   "amount": 0,
-  "signature": "24ea7cb598531c65b8510b5d299a36bb22147540e3cbf5b9c1413dcbab7c3683cd2c18d716d15b40bcb5a84e49eca5ed52ad9739074b7c96b6ecdf9f75dbae0d",
-  "signer": "961ba2e921f56f9b7effdc35c82f3e75aae62b3bad76a964afe1a2b7af07740e",
+  "signature": "0b6d7edf2c5f0a4c4c80a80fca790a61cbd4c1d601d611ac49c6b76750f40fa50099ab92689c1acaa2da2fa17ab5f9d6a48c2d2e030fe5d3b1d874c98acbe70b",
+  "signer": "c30d2e6d53443bede57190391a61738dba6fc491c098cc1ac38e07d17eade905",
   "typed_data": {
     "domain": {
       "chainId": 0,
@@ -24,10 +24,10 @@
       "amount": 0,
       "kind": "groq_inference_receipt",
       "ledgerSeq": 2,
-      "payloadHash": "7345bd05e53148e0c68572d7e096d99862b3ec74c7fe95d7e6ccfae379b51ac4",
-      "prevHash": "17ee258bb690ac702ea7ab7fd2a0ed17e3ff617b11a7048399ac56a9c0ccb923",
-      "settlementId": "job_a9e239643a14:groq",
-      "ts": 1793599284743,
+      "payloadHash": "76567d00fb375974b2eff9510d611d6841f7e65a97edb11addab61a0fd4604cb",
+      "prevHash": "0cb9b97aad169116fef289aade6aea484b64b76e2ebb9e910a2b224273889d8a",
+      "settlementId": "job_fe2ff67bb3ac:groq",
+      "ts": 1793600236672,
       "verifierIds": "exact-match",
       "workerId": "groq:openai/gpt-oss-20b"
     },
@@ -98,5 +98,5 @@
   },
   "specimen": true,
   "output_text": "GROQ_MESH_OK",
-  "note": "Format specimen signed with the published receipt key. It is not a live Groq response. POST /groq-test produces the live receipt."
+  "note": "Format specimen signed with the published receipt key. It is not a live Groq response."
 }

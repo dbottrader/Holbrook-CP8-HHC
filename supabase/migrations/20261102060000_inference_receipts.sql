@@ -15,7 +15,7 @@ create table public.cp8_inference_signer (
 );
 
 insert into public.cp8_inference_signer (id, public_key_hex)
-values (1, '961ba2e921f56f9b7effdc35c82f3e75aae62b3bad76a964afe1a2b7af07740e');
+values (1, 'c30d2e6d53443bede57190391a61738dba6fc491c098cc1ac38e07d17eade905');
 
 create table public.cp8_inference_receipts (
   receipt_id uuid primary key default gen_random_uuid(),

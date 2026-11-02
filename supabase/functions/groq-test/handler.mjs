@@ -11,6 +11,8 @@ import {
   sha256Hex,
 } from "./receipt.mjs";
 
+// Same edge secret the live cp8-groq-inference function reads.
+const GROQ_API_KEY_NAME = "GROQ_API_KEY";
 const FINGERPRINT_LIMIT = 4;
 const GLOBAL_LIMIT = 30;
 const WINDOW_SECONDS = 3600;
@@ -115,7 +117,8 @@ export async function handleGroqTest(req, deps) {
       model: GROQ_TEST_MODEL,
       prompt: GROQ_TEST_PROMPT,
       max_tokens: GROQ_TEST_MAX_TOKENS,
-      groq_configured: Boolean(envGet(deps.env, "GROQ_API_KEY")),
+      groq_configured: Boolean(envGet(deps.env, GROQ_API_KEY_NAME)),
+      groq_secret_name: GROQ_API_KEY_NAME,
       signer_configured: Boolean(envGet(deps.env, "INFERENCE_RECEIPT_SIGNING_KEY")),
       public_key_hex: published,
       ledger_backend: "simulated",
@@ -139,14 +142,14 @@ export async function handleGroqTest(req, deps) {
     return result(405, { ok: false, error: "method_not_allowed" });
   }
 
-  const apiKey = envGet(deps.env, "GROQ_API_KEY").trim();
+  const apiKey = envGet(deps.env, GROQ_API_KEY_NAME).trim();
   if (!apiKey) {
     return result(503, {
       ok: false,
       error: "groq_api_key_not_configured",
       state: "HOLD",
       promotion: "HOLD",
-      message: "GROQ_API_KEY is not set on this Supabase function. Dennis needs to set that secret before this route can call Groq.",
+      message: "GROQ_API_KEY is not set for this function. cp8-groq-inference reads that same secret name.",
     });
   }
   const signing = await signingMaterial(deps.env, published);
