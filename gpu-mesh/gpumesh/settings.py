@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     invite_token: str = ""
     max_nodes: int = 64
     ledger_backend: str = "simulated"
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "openai/gpt-oss-20b"
+    groq_verify_model: str = "llama-3.1-8b-instant"
+    groq_timeout_sec: float = 30
+    groq_max_tokens: int = 256
     trust_min_age_sec: float = 7 * 24 * 3600
     trust_min_verified: int = 3
     kudos_free_max_tokens: int = 256

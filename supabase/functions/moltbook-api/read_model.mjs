@@ -53,6 +53,28 @@ const POST_COLUMNS = [
   "created_at",
 ].join(",");
 
+const INFERENCE_COLUMNS = [
+  "receipt_id",
+  "seq",
+  "ts",
+  "actor",
+  "kind",
+  "payload",
+  "prev_hash",
+  "hash",
+  "canon",
+  "body_json",
+  "signature",
+  "signer",
+  "typed_json",
+  "amount",
+  "verification",
+  "output_text",
+  "output_sha256",
+  "request_id",
+  "created_at",
+].join(",");
+
 const RECEIPT_COLUMNS = [
   "receipt_id",
   "action",
@@ -193,6 +215,23 @@ export async function handlePublicRead(req, db) {
   if (!req || req.method !== "GET") return null;
   const url = new URL(req.url);
   const p = segments(url);
+
+  if (p[0] === "inference-receipts" && p[1] && p.length === 2) {
+    if (!isUuid(p[1])) return { status: 404, body: { error: "receipt_not_found" } };
+    const row = await unwrap(
+      db.from("cp8_inference_receipts").select(INFERENCE_COLUMNS).eq("receipt_id", p[1]).maybeSingle(),
+    );
+    if (!row) return { status: 404, body: { error: "receipt_not_found" } };
+    return {
+      status: 200,
+      body: {
+        receipt: row,
+        state: "OBSERVED",
+        promotion: "HOLD",
+        ledger_backend: "simulated",
+      },
+    };
+  }
 
   if (p[0] === "posts" && p.length === 1) {
     const room = url.searchParams.get("room");

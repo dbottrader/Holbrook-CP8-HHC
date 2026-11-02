@@ -2,7 +2,7 @@
 
 Volunteer GPU network for free open-weight inference. People contribute GPU time the way miners contribute hashpower. The coordinator queues chat jobs and hands them to machines that already run those models through [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai). Anyone can call the public API.
 
-Compute credits are a **simulated ledger**. They are not money, not a token, and they cannot be transferred, sold, or redeemed. There is no wallet and no chain in the cryptocurrency sense. Receipts are a hash chain so a contribution can be replayed offline, in the same canonical-JSON style as [ASIN-HHC](https://github.com/dbottrader/ASIN-HHC-Agent-Mesh).
+Compute credits are integer claims on a hash-chained ledger. The default backend is simulated. A verified credit settles to the Base work token once the on-chain backend is enabled. Switching backends is `GPU_MESH_LEDGER_BACKEND`. This build does not deploy a contract. Receipts are canonical JSON plus SHA-256 and an Ed25519 signature, in the same style as [ASIN-HHC](https://github.com/dbottrader/ASIN-HHC-Agent-Mesh). The format is written down in [docs/RECEIPT_FORMAT.md](docs/RECEIPT_FORMAT.md).
 
 ```
 client  --OpenAI /v1/chat/completions-->  coordinator  <--pull jobs--  node (your GPU)
@@ -124,7 +124,7 @@ Backends:
 - `llamacpp` — llama.cpp on CPU. Default model id `SmolLM2-360M-Instruct`. Weights download into `GPU_MESH_MODEL_CACHE` (default `data/models`) and are not committed. Canary-shaped exact-token prompts are answered literally; every other prompt is the GGUF. No TOPLOC hidden-state proof.
 - `cpu` — deterministic `mock-tiny` only. Not an open-weight model.
 
-The ledger unit is HHC, a simulated utility credit for verified contribution. The software stores it as an integer kudos balance. It is not sold, and it pays no return. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. The simulated ledger is the default. `GPU_MESH_LEDGER_BACKEND=onchain` is refused and does not mint anything.
+The ledger unit is HHC, a simulated utility credit for verified contribution. The software stores it as an integer kudos balance. It is not sold, and it pays no return. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. The simulated ledger is the default. `GPU_MESH_LEDGER_BACKEND=onchain` selects the Base settlement backend. That backend is not enabled in this build, so the process refuses the write and does not submit a transaction. A verified credit settles to the Base work token once the on-chain backend is enabled.
 
 ## Join with one command
 
@@ -182,7 +182,7 @@ CI is [`.github/workflows/gpu-mesh.yml`](../.github/workflows/gpu-mesh.yml) in t
 - A spot-check compares text. It cannot prove the weights that produced it. A node that behaves only on canary-shaped prompts can still cheat ordinary traffic until a temperature-0 re-run disagrees. That disagreement is recorded and, when temperature was 0, penalized.
 - Prompts are stored until `GPU_MESH_PROMPT_RETENTION_SEC` (default one day) so a spot-check can replay them, then the message body is cleared. Receipts never contained the prompt.
 - The node does not execute the prompt in a shell. It forwards chat messages to Ollama, vLLM, or a local llama.cpp GGUF. The `cpu` backend does not run a model at all.
-- HHC is a simulated utility credit for verified contribution. The amounts are integers. The on-chain backend refuses to mint. Do not describe the credit as a payout, a sale, or a return.
+- HHC is an integer credit for verified contribution. The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Do not describe the credit as a payout, a sale, or a return.
 - One worker process. Do not mount the Docker socket, the coordinator database, or host paths into the node. The Compose node runs as uid 10001, read-only, with every capability dropped.
 - Install `torch==2.5.1` (CPU index is enough) and `toploc==0.1.6` before a public launch if you want proof-of-inference enforced. Without that library the coordinator still spot-checks text and records the proof as unavailable.
 

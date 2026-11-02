@@ -2,7 +2,7 @@
 
 One image runs the GPU Mesh worker from `gpumesh_node`. The default backend is llama.cpp with SmolLM2-360M-Instruct, the same worker as `gpu-mesh/gpumesh_node/llamacpp.py`. `--backend ollama` uses the official `ollama/ollama:0.12.6` image and the worker's existing Ollama client.
 
-HHC is a simulated utility credit for verified contribution.
+HHC is a simulated utility credit for verified contribution. It settles to the Base work token once the on-chain backend is enabled.
 
 The image installs the pinned CPU wheel `llama-cpp-python` 0.3.36 from the upstream `v0.3.36` release (the asset with no CUDA, HIP, or Vulkan suffix). PyPI only publishes a source tarball for that version.
 
