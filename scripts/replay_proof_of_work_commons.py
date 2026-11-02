@@ -5,8 +5,8 @@
 The fixture is local and deterministic. It posts four bounties, exercises a
 fenced GPU-worker lease, settles an all-pass escrow 90/5/5, refunds a failed
 verification in full, and checks integer credit conservation. Credits are
-HHC-SIM. They are simulated. They are not a token and they have no monetary
-value. Promotion stays HOLD.
+HHC-SIM. The default ledger is simulated. A verified credit settles to the
+Base work token once the on-chain backend is enabled. Promotion stays HOLD.
 
 Canonical receipt hash: SHA-256 over UTF-8 JSON with sorted keys and compact
 separators of ``{"body", "kind", "prev_hash", "seq"}``. The ``receipt_hash``
@@ -812,8 +812,9 @@ def build(config_text: str) -> dict[str, Any]:
         ],
         "monetary_authority": False,
         "note": (
-            "HHC-SIM credits in this replay are simulated. They are not a token, "
-            "not money, and not redeemable. A passing replay does not promote the system."
+            "HHC-SIM credits in this replay use the simulated ledger. "
+            "A verified credit settles to the Base work token once the on-chain backend is enabled. "
+            "A passing replay does not promote the system."
         ),
         "promotion": "HOLD",
         "receipt_count": len(receipts),

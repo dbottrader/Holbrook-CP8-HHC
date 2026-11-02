@@ -178,6 +178,29 @@ function database() {
     cp8_moltbook_rooms: [
       { room_id: ROOM, slug: "cp8-ops", title: "CP8 Ops" },
     ],
+    cp8_inference_receipts: [
+      {
+        receipt_id: "99999999-9999-4999-8999-999999999999",
+        seq: 1,
+        ts: 1,
+        actor: "groq-fallback",
+        kind: "groq_inference_receipt",
+        payload: "{}",
+        prev_hash: "0".repeat(64),
+        hash: "ab".repeat(32),
+        canon: "v1",
+        body_json: "{}",
+        signature: "cd".repeat(64),
+        signer: "ef".repeat(32),
+        typed_json: { primaryType: "WorkClaim" },
+        amount: 0,
+        verification: { ok: true, method: "exact_match" },
+        output_text: "GROQ_MESH_OK",
+        output_sha256: "11".repeat(32),
+        request_id: "req_1",
+        created_at: "2026-11-02T05:13:00Z",
+      },
+    ],
     cp8_moltbook_receipts: [
       {
         receipt_id: HUMAN_RECEIPT,
@@ -274,6 +297,19 @@ test("thread and search keep the human post", async () => {
   assert.equal(found.body.posts[0].post_id, HUMAN_POST);
 });
 
+test("GET /inference-receipts/{id} returns one signed receipt", async () => {
+  const db = database();
+  const res = await handlePublicRead(get("/inference-receipts/99999999-9999-4999-8999-999999999999"), db);
+  assert.equal(res.status, 200);
+  assert.equal(res.body.receipt.actor, "groq-fallback");
+  assert.equal(res.body.receipt.amount, 0);
+  assert.equal(res.body.promotion, "HOLD");
+  const missing = await handlePublicRead(get("/inference-receipts/88888888-8888-4888-8888-888888888888"), db);
+  assert.equal(missing.status, 404);
+  const bad = await handlePublicRead(get("/inference-receipts/not-a-uuid"), db);
+  assert.equal(bad.status, 404);
+});
+
 test("a missing post is 404 and an unknown route is not claimed", async () => {
   const db = database();
   const missing = await handlePublicRead(get("/posts/99999999-9999-4999-8999-999999999999"), db);
@@ -286,7 +322,8 @@ test("a missing post is 404 and an unknown route is not claimed", async () => {
 test("the Deno entry calls the read model and keeps identity routes", () => {
   const source = readFileSync(new URL("../supabase/functions/moltbook-api/index.ts", import.meta.url), "utf8");
   assert.match(source, /handlePublicRead/);
-  assert.match(source, /version: "0\.3\.4"/);
+  assert.match(source, /version: "0\.3\.5"/);
+  assert.match(source, /inference-receipts/);
   assert.match(source, /agents\/identities/);
   assert.equal(source.includes("slug,name"), false);
   assert.equal(source.includes(".eq('agent_id', post.author_agent_id)"), false);

@@ -5,7 +5,7 @@
 #   GPU_MESH_BACKEND=ollama docker compose --profile ollama up --build
 #
 # Ollama's image is the official ollama/ollama image, pinned by tag.
-# This file does not mint a token and does not open a chain connection.
+# The coordinator ledger defaults to simulated. It settles to the Base work token once the on-chain backend is enabled. This file does not deploy a contract.
 
 services:
   worker:

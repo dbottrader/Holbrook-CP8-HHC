@@ -1,0 +1,102 @@
+{
+  "seq": 2,
+  "ts": 1793599284743,
+  "actor": "groq-fallback",
+  "kind": "groq_inference_receipt",
+  "payload": "{\"amount\":0,\"completion_tokens\":4,\"credits\":0,\"duration_ms\":1,\"job_id\":\"job_a9e239643a14\",\"max_tokens\":16,\"model\":\"openai/gpt-oss-20b\",\"output_hash\":\"97443e6bb4107cb1bc8fd31a071a343d5237572ea3ac2b02dd83ff1f9576818a\",\"promotion\":\"HOLD\",\"prompt_sha256\":\"79fea34fd23bcebda729af0c694e921684447e3afe84057c91e37377a7c5f41a\",\"prompt_tokens\":12,\"provider\":\"groq\",\"request_id\":\"specimen-local\",\"runtime\":\"groq\",\"schema\":\"gpumesh.groq_fallback.v1\",\"settlement_id\":\"job_a9e239643a14:groq\",\"state\":\"OBSERVED\",\"temperature_milli\":0,\"verification_method\":\"exact_match\",\"verifier_decision\":\"agree\",\"verifier_ids\":\"exact-match\",\"worker_id\":\"groq:openai/gpt-oss-20b\"}",
+  "prev_hash": "17ee258bb690ac702ea7ab7fd2a0ed17e3ff617b11a7048399ac56a9c0ccb923",
+  "hash": "1dccd423eed58772231c0ae47102b399c667cb9af09b4ec3ae4005938eefb746",
+  "canon": "v1",
+  "body_json": "{\"actor\":\"groq-fallback\",\"kind\":\"groq_inference_receipt\",\"payload\":\"{\\\"amount\\\":0,\\\"completion_tokens\\\":4,\\\"credits\\\":0,\\\"duration_ms\\\":1,\\\"job_id\\\":\\\"job_a9e239643a14\\\",\\\"max_tokens\\\":16,\\\"model\\\":\\\"openai/gpt-oss-20b\\\",\\\"output_hash\\\":\\\"97443e6bb4107cb1bc8fd31a071a343d5237572ea3ac2b02dd83ff1f9576818a\\\",\\\"promotion\\\":\\\"HOLD\\\",\\\"prompt_sha256\\\":\\\"79fea34fd23bcebda729af0c694e921684447e3afe84057c91e37377a7c5f41a\\\",\\\"prompt_tokens\\\":12,\\\"provider\\\":\\\"groq\\\",\\\"request_id\\\":\\\"specimen-local\\\",\\\"runtime\\\":\\\"groq\\\",\\\"schema\\\":\\\"gpumesh.groq_fallback.v1\\\",\\\"settlement_id\\\":\\\"job_a9e239643a14:groq\\\",\\\"state\\\":\\\"OBSERVED\\\",\\\"temperature_milli\\\":0,\\\"verification_method\\\":\\\"exact_match\\\",\\\"verifier_decision\\\":\\\"agree\\\",\\\"verifier_ids\\\":\\\"exact-match\\\",\\\"worker_id\\\":\\\"groq:openai/gpt-oss-20b\\\"}\",\"prev_hash\":\"17ee258bb690ac702ea7ab7fd2a0ed17e3ff617b11a7048399ac56a9c0ccb923\",\"seq\":2,\"ts\":1793599284743}",
+  "amount": 0,
+  "signature": "24ea7cb598531c65b8510b5d299a36bb22147540e3cbf5b9c1413dcbab7c3683cd2c18d716d15b40bcb5a84e49eca5ed52ad9739074b7c96b6ecdf9f75dbae0d",
+  "signer": "961ba2e921f56f9b7effdc35c82f3e75aae62b3bad76a964afe1a2b7af07740e",
+  "typed_data": {
+    "domain": {
+      "chainId": 0,
+      "name": "GPU-MESH",
+      "verifyingContract": "0x0000000000000000000000000000000000000000",
+      "version": "1"
+    },
+    "hash": "sha256",
+    "message": {
+      "actor": "groq-fallback",
+      "amount": 0,
+      "kind": "groq_inference_receipt",
+      "ledgerSeq": 2,
+      "payloadHash": "7345bd05e53148e0c68572d7e096d99862b3ec74c7fe95d7e6ccfae379b51ac4",
+      "prevHash": "17ee258bb690ac702ea7ab7fd2a0ed17e3ff617b11a7048399ac56a9c0ccb923",
+      "settlementId": "job_a9e239643a14:groq",
+      "ts": 1793599284743,
+      "verifierIds": "exact-match",
+      "workerId": "groq:openai/gpt-oss-20b"
+    },
+    "note": "EIP-712-style typed data. SHA-256 stands in for keccak256. chainId 0 is not a network.",
+    "primaryType": "WorkClaim",
+    "types": {
+      "EIP712Domain": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "chainId",
+          "type": "uint256"
+        },
+        {
+          "name": "verifyingContract",
+          "type": "address"
+        }
+      ],
+      "WorkClaim": [
+        {
+          "name": "actor",
+          "type": "string"
+        },
+        {
+          "name": "amount",
+          "type": "int256"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "ledgerSeq",
+          "type": "uint256"
+        },
+        {
+          "name": "payloadHash",
+          "type": "bytes32"
+        },
+        {
+          "name": "prevHash",
+          "type": "bytes32"
+        },
+        {
+          "name": "settlementId",
+          "type": "string"
+        },
+        {
+          "name": "ts",
+          "type": "uint256"
+        },
+        {
+          "name": "verifierIds",
+          "type": "string"
+        },
+        {
+          "name": "workerId",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "specimen": true,
+  "output_text": "GROQ_MESH_OK",
+  "note": "Format specimen signed with the published receipt key. It is not a live Groq response. POST /groq-test produces the live receipt."
+}
