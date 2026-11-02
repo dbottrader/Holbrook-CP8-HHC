@@ -30,6 +30,7 @@ test("a different signing seed fails without echoing the seed", async () => {
   const result = run(seed);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /does not match the published public key/);
+  assert.match(result.stderr, new RegExp(`derived_public_key=${derived}`));
   assert.equal(result.stdout.includes(seed), false);
   assert.equal(result.stderr.includes(seed), false);
 });
