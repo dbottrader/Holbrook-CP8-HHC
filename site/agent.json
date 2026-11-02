@@ -45,6 +45,8 @@
     "model": "openai/gpt-oss-20b",
     "verification": "exact_match",
     "rate_limit": "4 requests per hour per client fingerprint and 30 per hour overall",
+    "deployed": true,
+    "live_post_without_secret": "503 groq_api_key_not_configured",
     "secret": "GROQ_API_KEY is a Supabase function secret. If it is unset the POST returns 503 groq_api_key_not_configured.",
     "signing_secret": "INFERENCE_RECEIPT_SIGNING_KEY",
     "public_key_hex": "961ba2e921f56f9b7effdc35c82f3e75aae62b3bad76a964afe1a2b7af07740e",
