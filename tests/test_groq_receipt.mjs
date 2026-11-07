@@ -84,7 +84,9 @@ function groqFetch(text) {
     const body = JSON.parse(init.body);
     assert.equal(body.model, GROQ_TEST_MODEL);
     assert.equal(body.messages[0].content, GROQ_TEST_PROMPT);
-    assert.equal(body.max_completion_tokens, 16);
+    assert.equal(body.max_completion_tokens, 64);
+    assert.equal(body.reasoning_effort, "low");
+    assert.equal(body.include_reasoning, false);
     assert.equal(body.temperature, 0);
     assert.equal(init.headers.authorization, "Bearer secret-groq");
     return new Response(JSON.stringify({

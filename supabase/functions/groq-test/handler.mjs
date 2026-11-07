@@ -205,6 +205,10 @@ export async function handleGroqTest(req, deps) {
         messages: [{ role: "user", content: GROQ_TEST_PROMPT }],
         max_completion_tokens: GROQ_TEST_MAX_TOKENS,
         temperature: 0,
+        // gpt-oss is a reasoning model: keep reasoning short and out of the reply
+        // so the bounded token budget still yields visible text.
+        reasoning_effort: "low",
+        include_reasoning: false,
       }),
     });
   } catch {

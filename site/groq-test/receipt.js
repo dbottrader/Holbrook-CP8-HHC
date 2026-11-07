@@ -9,7 +9,7 @@
 export const GENESIS_PREV = "0".repeat(64);
 export const GROQ_TEST_PROMPT = "Reply with exactly the token: GROQ_MESH_OK";
 export const GROQ_TEST_EXPECTED = "GROQ_MESH_OK";
-export const GROQ_TEST_MAX_TOKENS = 16;
+export const GROQ_TEST_MAX_TOKENS = 64;
 export const GROQ_TEST_MODEL = "openai/gpt-oss-20b";
 
 const DOMAIN_TYPE = "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)";
