@@ -1,7 +1,8 @@
 """Job lifecycle: register, schedule, complete, spot-check, and credit.
 
-Credits are a simulated ledger. They are not money, not a token, and they
-cannot be transferred. A completed inference appends one hash-chained receipt.
+Credits are integer claims on the configured ledger. The default backend is
+simulated. A verified credit settles to the Base work token once the on-chain
+backend is enabled. A completed inference appends one hash-chained receipt.
 A sample of those jobs is run again on a different node. Canaries (known
 answers) run against whoever is online, including a network of one.
 """
@@ -33,7 +34,8 @@ from gpumesh.db import (
     Usage,
 )
 from gpumesh.errors import MeshError
-from gpumesh.ledger import append, entry_public, tip_status, verify_session
+from gpumesh.ledger import entry_public, tip_status, verify_session
+from gpumesh.ledger_backend import append_current as append
 from gpumesh.settings import Settings
 from gpumesh.textutil import canon_answer, judge_outputs
 
@@ -326,6 +328,10 @@ def heartbeat(session: Session, node: Node, spec: dict, ip: str) -> Node:
     return node
 
 
+def model_online(session: Session, model: str) -> bool:
+    return bool(_capable_online(session, model))
+
+
 def _capable_online(session: Session, model: str, exclude: set[str] | None = None) -> list[Node]:
     exclude = exclude or set()
     nodes = session.scalars(select(Node).where(Node.status == "online")).all()
@@ -437,6 +443,69 @@ def enqueue_inference(
     session.add(job)
     session.flush()
     return job
+
+
+def complete_groq_fallback(
+    session: Session,
+    *,
+    model: str,
+    messages: list[dict],
+    temperature: float,
+    max_tokens: int,
+    client_key: str,
+    primary: dict[str, Any],
+    verification: dict[str, Any],
+    duration_ms: int,
+) -> dict[str, Any]:
+    """Record a Groq fallback that ran because no volunteer was online.
+
+    The amount is 0. The receipt is still signed and chained through the
+    active ledger backend.
+    """
+    from gpumesh.groq_provider import fallback_payload
+
+    now = time.time()
+    text = str(primary.get("output") or "")
+    job = Job(
+        id=new_id("job"),
+        kind="inference",
+        status="verified" if verification.get("ok") else "disputed",
+        model=model[:128],
+        messages_json=json.dumps(messages),
+        temperature=float(temperature),
+        max_tokens=int(max_tokens),
+        client_key=client_key[:80],
+        created_at=now,
+        completed_at=now,
+        output_text=text,
+        output_hash=output_hash(text),
+        prompt_tokens=int(primary.get("prompt_tokens") or 0),
+        completion_tokens=int(primary.get("completion_tokens") or 0),
+        duration_ms=int(duration_ms),
+        finish_reason="stop",
+        verdict=("pass" if verification.get("ok") else "fail"),
+        credits_awarded=0,
+        model_digest="groq-unpinned",
+    )
+    session.add(job)
+    session.flush()
+    payload = fallback_payload(
+        job_id=job.id,
+        model=model,
+        primary=primary,
+        verification=verification,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        duration_ms=duration_ms,
+    )
+    entry = append(session, actor="groq-fallback", kind="groq_inference_receipt", payload=payload)
+    job.receipt_hash = entry.hash
+    return {
+        "snapshot": job_snapshot(job),
+        "receipt": entry_public(entry),
+        "verification": verification,
+    }
 
 
 def enqueue_canary(session: Session, settings: Settings, model: str | None = None) -> Job | None:
@@ -1507,7 +1576,7 @@ def set_node_status(session: Session, node_id: str, status: str) -> Node:
     return node
 
 
-def list_public_models(session: Session) -> list[dict[str, Any]]:
+def list_public_models(session: Session, settings: Settings | None = None) -> list[dict[str, Any]]:
     nodes = list(session.scalars(select(Node).where(Node.status == "online")))
     merged: dict[str, dict[str, Any]] = {}
     for node in nodes:
@@ -1539,6 +1608,19 @@ def list_public_models(session: Session) -> list[dict[str, Any]]:
                 slot["gpumesh"]["backends"].append(node.backend)
             if node.backend == "cpu":
                 slot["gpumesh"]["notice"] = "deterministic CPU fallback, not a neural model"
+    if settings is not None and settings.groq_api_key and settings.groq_model not in merged:
+        merged[settings.groq_model] = {
+            "id": settings.groq_model,
+            "object": "model",
+            "created": int(time.time()),
+            "owned_by": "groq",
+            "gpumesh": {
+                "online_nodes": 0,
+                "resident_nodes": 0,
+                "backends": ["groq"],
+                "notice": "Fallback when no volunteer worker is online. Checked by an exact-match prompt or a second Groq model.",
+            },
+        }
     return sorted(merged.values(), key=lambda row: row["id"])
 
 
@@ -1573,8 +1655,8 @@ def stats(session: Session, settings: Settings) -> dict[str, Any]:
     return {
         "network": "gpu-mesh",
         "version": "0.1.0",
-        "notice": "Integer kudos on the simulated ledger. Escrowed until a worker is trusted. Nothing is minted or sold.",
-        "ledger_backend": "simulated",
+        "notice": "Integer credits on the configured ledger. Escrowed until a worker is trusted. A verified credit settles to the Base work token once the on-chain backend is enabled.",
+        "ledger_backend": settings.ledger_backend,
         "online_nodes": len(online),
         "total_nodes": len(nodes),
         "quarantined_nodes": sum(1 for n in nodes if n.status == "quarantined"),
@@ -1588,7 +1670,7 @@ def stats(session: Session, settings: Settings) -> dict[str, Any]:
         "inflight": inflight,
         "ledger": chain,
         "public_base_url": settings.public_base_url,
-        "models": list_public_models(session),
+        "models": list_public_models(session, settings),
         "top_contributors": [_node_public(n) for n in nodes[:8]],
         "nodes": [_node_public(n, now) for n in nodes],
         "recent_jobs": [
@@ -1720,7 +1802,7 @@ def ledger_export(session: Session) -> dict[str, Any]:
         "canon": CANON,
         "algorithm": ALGORITHM,
         "hashed_fields": ["actor", "kind", "payload", "prev_hash", "seq", "ts"],
-        "note": "Simulated integer credits. Signed claims. Nothing is minted.",
+        "note": "Signed integer credits on the configured ledger. The default backend is simulated. A verified credit settles to the Base work token once the on-chain backend is enabled.",
         "entries": [entry_public(row) for row in rows],
     }
 

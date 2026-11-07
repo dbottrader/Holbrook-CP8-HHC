@@ -1,0 +1,9 @@
+{
+  "scheme": "ed25519",
+  "canon": "v1",
+  "domain": "GPU-MESH",
+  "hash": "sha256",
+  "public_key_hex": null,
+  "live_url": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/groq-test/.well-known/inference-receipt-key.json",
+  "note": "The live public key is derived from the signing seed when the function runs. This file does not contain a key."
+}

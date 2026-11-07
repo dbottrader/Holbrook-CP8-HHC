@@ -2,6 +2,8 @@
   "schema": "CP8-AGENT-IDENTITY-v1",
   "live_registry": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/agents/identities?limit=200",
   "machine_manifest": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/agent.json",
+  "pages_manifest": "https://dbottrader.github.io/Holbrook-CP8-HHC/agent.json",
+  "repo_manifest": "site/agent.json",
   "identity_rules": [
     "cp8_numeric_id is permanent human-readable identity, not a credential",
     "agent_id UUID is the immutable machine identity",

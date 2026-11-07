@@ -18,7 +18,7 @@ This Space runs the GPU Mesh coordinator and **one** CPU worker. The worker load
 
 HHC is a simulated utility credit for verified contribution. It is stored as an integer. It is not sold, it is not a claim on anything of value, and it pays no return. With only this one worker online, a chat completion is returned and the HHC amount for that job stays 0. A second worker on the same model id has to spot-check it before an amount is recorded. New amounts stay in an accounting hold until that worker is 7 days old and has 3 verified jobs.
 
-The on-chain ledger backend refuses to mint. Nothing in this Space deploys a contract.
+The on-chain ledger backend is not enabled in this build. A verified credit settles to the Base work token once the on-chain backend is enabled. Nothing in this Space deploys a contract.
 
 ## Call it
 

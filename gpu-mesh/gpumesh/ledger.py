@@ -120,7 +120,9 @@ def append(session: Session, *, actor: str, kind: str, payload: dict[str, Any]) 
 
 
 def append_genesis(session: Session) -> LedgerEntry:
-    return append(
+    from gpumesh.ledger_backend import append_current, current_backend
+
+    return append_current(
         session,
         actor="genesis",
         kind="genesis",
@@ -128,8 +130,8 @@ def append_genesis(session: Session) -> LedgerEntry:
             "network": "GPU-MESH",
             "mesh": "0.1.0",
             "signer": signer_public_hex(),
-            "ledger_backend": "simulated",
-            "note": "Integer simulated utility credits. Nothing is minted.",
+            "ledger_backend": current_backend(),
+            "note": "Integer credits on the configured ledger. The default backend is simulated. A verified credit settles to the Base work token once the on-chain backend is enabled.",
             "amount": 0,
             "credits": 0,
         },
@@ -146,6 +148,7 @@ def entry_public(entry: LedgerEntry) -> dict[str, Any]:
         "prev_hash": entry.prev_hash,
         "hash": entry.hash,
         "canon": entry.canon,
+        "body_json": entry.body_json,
         "amount": entry.amount,
         "signature": entry.signature,
         "signer": entry.signer,

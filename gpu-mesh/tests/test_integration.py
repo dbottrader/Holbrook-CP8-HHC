@@ -269,7 +269,7 @@ async def test_rate_limit_admin_key_and_pages(tmp_path):
             page = await client.get("/")
             assert page.status_code == 200
             assert "GPU Mesh" in page.text
-            assert "not a token" in page.text
+            assert "settles to the Base work token once the on-chain backend is enabled" in page.text
             contribute = await client.get("/contribute")
             assert "Put a GPU on the mesh" in contribute.text
             body = {"model": "missing", "messages": [{"role": "user", "content": "hi"}]}
