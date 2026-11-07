@@ -1,12 +1,26 @@
 # Coordinator and worker on a free machine
 
-HHC is a simulated utility credit for verified contribution. The software stores it as an integer kudos balance. It is not sold, it is not a claim on anything of value, and it pays no return.
+HHC is a work token and a utility credit for verified contribution. The software stores it as an integer kudos balance.
 
 This network does not speak the AI Horde worker protocol. A Horde worker cannot join. Use the GPU Mesh worker below.
 
 `mock-tiny` is a deterministic stub for proving the path. It is not an open-weight model.
 
 `GPU_MESH_BACKEND=llamacpp` is the CPU worker that serves a real open-weight model. The default is SmolLM2-360M-Instruct Q8_0 (Apache-2.0), downloaded from `HuggingFaceTB/SmolLM2-360M-Instruct-GGUF` on first start and checked against a pinned SHA-256. The GGUF is not committed. That worker does not attach a TOPLOC hidden-state proof.
+
+## Public coordinator
+
+Strangers join the hosted coordinator without an account and without an invite:
+
+```text
+https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh
+```
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash
+```
+
+Details are in [PUBLIC_COORDINATOR.md](PUBLIC_COORDINATOR.md). The Hugging Face Space steps below are the alternate always-on CPU demo. They are not required for this public coordinator.
 
 ## Coordinator
 

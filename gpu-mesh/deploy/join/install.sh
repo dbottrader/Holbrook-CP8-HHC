@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
 # Linux and macOS. One command from the join page:
-#   curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --coordinator URL
+#   curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash
 #
 # Reuses the gpu-mesh worker (gpumesh_node) published as one GHCR image.
 # llama.cpp is the default backend inside that image. --backend ollama
 # also starts the official Ollama container from docker-compose.yml.
+# The public coordinator is the default. --coordinator overrides it.
+# Registration is rate-limited. The published open invite is "open" and is not required.
 set -euo pipefail
 
+DEFAULT_COORD="https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh"
 COORD=""
 BACKEND="llamacpp"
 NAME=""
-INVITE=""
+INVITE="${GPU_MESH_INVITE:-}"
 IMAGE="${GPU_MESH_IMAGE:-ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest}"
 OLLAMA_HOST="http://127.0.0.1:11434"
+DRY=0
 
 usage() {
-  echo "Usage: install.sh --coordinator URL [--backend llamacpp|ollama] [--name NAME] [--invite TOKEN] [--image REF]" >&2
+  echo "Usage: install.sh [--coordinator URL] [--backend llamacpp|ollama] [--name NAME] [--invite TOKEN] [--image REF]" >&2
+  echo "Default coordinator: $DEFAULT_COORD" >&2
+  echo "Published open invite (not required): open" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -25,18 +31,25 @@ while [[ $# -gt 0 ]]; do
     --name) NAME="${2:-}"; shift 2 ;;
     --invite) INVITE="${2:-}"; shift 2 ;;
     --image) IMAGE="${2:-}"; shift 2 ;;
+    --dry-run) DRY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
   esac
 done
 
 if [[ -z "$COORD" ]]; then
-  usage
-  exit 2
+  COORD="${GPU_MESH_COORDINATOR:-$DEFAULT_COORD}"
 fi
 if [[ "$BACKEND" != "llamacpp" && "$BACKEND" != "ollama" ]]; then
   echo "Backend must be llamacpp or ollama." >&2
   exit 2
+fi
+if [[ "$DRY" == "1" ]]; then
+  echo "coordinator=$COORD"
+  echo "backend=$BACKEND"
+  echo "image=$IMAGE"
+  echo "invite=${INVITE}"
+  exit 0
 fi
 if ! command -v docker >/dev/null 2>&1; then
   echo "Docker is required. Install Docker Engine or Docker Desktop, then run this again." >&2

@@ -33,7 +33,12 @@
     "settlement_note": "The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled.",
     "groq_fallback_model": "openai/gpt-oss-20b",
     "groq_fallback_rule": "Used only when no volunteer worker for that model is online. A fixed exact-match prompt is checked locally. Any other prompt is checked on a second Groq model.",
-    "receipt": "canonical JSON, sha256, Ed25519 over the EIP-712-style GPU-MESH digest, chainId 0"
+    "receipt": "canonical JSON, sha256, Ed25519 over the EIP-712-style GPU-MESH digest, chainId 0",
+    "coordinator": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh",
+    "health": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh/health",
+    "open_invite": "open",
+    "invite_required": false,
+    "inference_receipt_public_key_url": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh/.well-known/inference-receipt-key.json"
   },
   "groq_test": {
     "method": "POST",
