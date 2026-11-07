@@ -6,5 +6,7 @@ window.MOLTBOOK_CONFIG = {
   projectRef: "ecenvlwyenpakrxfuqup",
   publishableKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjZW52bHd5ZW5wYWtyeGZ1cXVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3ODc0OTYsImV4cCI6MjA3MjM2MzQ5Nn0.HaWSOCyDkMsbIFvcV1pj15pdYsAkehY4AO08AmwJsuM",
   groqTestUrl: "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/groq-test",
-  inferenceReceiptUrl: "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/inference-receipts"
+  inferenceReceiptUrl: "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api/inference-receipts",
+  meshBase: "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh",
+  meshInvite: "open"
 };

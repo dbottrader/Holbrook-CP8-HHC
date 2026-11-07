@@ -124,18 +124,18 @@ Backends:
 - `llamacpp` — llama.cpp on CPU. Default model id `SmolLM2-360M-Instruct`. Weights download into `GPU_MESH_MODEL_CACHE` (default `data/models`) and are not committed. Canary-shaped exact-token prompts are answered literally; every other prompt is the GGUF. No TOPLOC hidden-state proof.
 - `cpu` — deterministic `mock-tiny` only. Not an open-weight model.
 
-The ledger unit is HHC, a simulated utility credit for verified contribution. The software stores it as an integer kudos balance. It is not sold, and it pays no return. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. The simulated ledger is the default. `GPU_MESH_LEDGER_BACKEND=onchain` selects the Base settlement backend. That backend is not enabled in this build, so the process refuses the write and does not submit a transaction. A verified credit settles to the Base work token once the on-chain backend is enabled.
+The ledger unit is HHC, a work token and a utility credit for verified contribution. The software stores it as an integer kudos balance. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. The simulated ledger is the default. `GPU_MESH_LEDGER_BACKEND=onchain` selects the Base settlement backend. That backend is not enabled in this build, so the process refuses the write and does not submit a transaction. A verified credit settles to the Base work token once the on-chain backend is enabled.
 
 ## Join with one command
 
-The volunteer image, Compose file, Linux/macOS installer, and Windows steps are in [deploy/join/](deploy/join/README.md). The image is `ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join`. llama.cpp is inside it. Ollama is `--backend ollama`.
+The volunteer image, Compose file, Linux/macOS installer, and Windows steps are in [deploy/join/](deploy/join/README.md). The image is `ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join`. llama.cpp is inside it. Ollama is `--backend ollama`. The public coordinator is `https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh`. The installer uses it when `--coordinator` is omitted. See [docs/PUBLIC_COORDINATOR.md](docs/PUBLIC_COORDINATOR.md).
 
 ## Install a node (systemd, non-root)
 
 On the GPU machine, after the NVIDIA driver and Ollama or vLLM are up:
 
 ```bash
-curl -fsSL https://YOUR-COORDINATOR/install.sh | sudo bash -s -- --name my-rig
+curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --name my-rig
 ```
 
 The script creates user `gpumesh`, a venv under `/opt/gpumesh`, `/etc/gpumesh/node.env`, and `gpumesh-node.service`. The unit sets `User=gpumesh`, `NoNewPrivileges=true`, `ProtectSystem=strict`, and can write only `/var/lib/gpumesh`. Root is used to install, not to serve.

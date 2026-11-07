@@ -12,10 +12,16 @@ def test_installer_and_entrypoint_parse():
         subprocess.run(["bash", "-n", str(JOIN / name)], check=True)
 
 
-def test_installer_requires_a_coordinator():
-    done = subprocess.run(["bash", str(JOIN / "install.sh")], capture_output=True, text=True)
-    assert done.returncode == 2
-    assert "coordinator" in done.stderr.lower()
+def test_installer_defaults_to_the_public_coordinator():
+    url = "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh"
+    text = (JOIN / "install.sh").read_text(encoding="utf-8")
+    assert url in text
+    assert "open" in text
+    done = subprocess.run(["bash", str(JOIN / "install.sh"), "--dry-run"], capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    assert f"coordinator={url}" in done.stdout
+    for name in ("docker-compose.yml", "Dockerfile", "entrypoint.sh"):
+        assert url in (JOIN / name).read_text(encoding="utf-8")
 
 
 def test_compose_pins_one_image_and_ollama():
