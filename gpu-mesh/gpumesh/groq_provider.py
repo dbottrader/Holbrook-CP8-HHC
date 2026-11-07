@@ -18,7 +18,7 @@ from gpumesh.textutil import canon_answer, exact_reply, judge_outputs
 
 GROQ_TEST_PROMPT = "Reply with exactly the token: GROQ_MESH_OK"
 GROQ_TEST_EXPECTED = "GROQ_MESH_OK"
-GROQ_TEST_MAX_TOKENS = 16
+GROQ_TEST_MAX_TOKENS = 64
 GROQ_TEST_MODEL = "openai/gpt-oss-20b"
 ACTOR = "groq-fallback"
 KIND = "groq_inference_receipt"
@@ -52,6 +52,13 @@ async def _complete(
                 "messages": messages,
                 "max_completion_tokens": max_tokens,
                 "temperature": temperature,
+                # gpt-oss models reason first; keep it short and out of the reply
+                # so a small token budget still returns visible text.
+                **(
+                    {"reasoning_effort": "low", "include_reasoning": False}
+                    if str(model).startswith("openai/gpt-oss")
+                    else {}
+                ),
             },
         )
     except httpx.HTTPError as exc:
