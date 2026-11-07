@@ -1,6 +1,6 @@
 -- Named Vault lookup for edge functions, and retirement of the unused signer.
 --
--- cp8_private is not a Data API schema until PostgREST is told about it below.
+-- cp8_private is not added to the Data API schemas by this migration.
 -- The helper is SECURITY DEFINER so it can read vault.decrypted_secrets, and
 -- EXECUTE is granted only to service_role. The body also rejects every JWT
 -- role other than service_role. It returns the secret text to that role and
@@ -62,31 +62,11 @@ grant execute on function cp8_private.read_named_secret(text) to service_role;
 comment on function cp8_private.read_named_secret(text) is
   'Returns one Vault secret by name. Executable only by service_role.';
 
--- Let the service-role Data API see this one function. anon and authenticated
--- still have no privilege on the schema. Hosted projects can also add
--- cp8_private under Settings > API > Exposed schemas if this role setting is
--- reset by the platform.
-do $$
-declare
-  schemas text := 'public, graphql_public, cp8_private';
-  existing text;
-begin
-  select split_part(cfg, '=', 2)
-    into existing
-  from pg_roles as r
-  cross join lateral unnest(coalesce(r.rolconfig, array[]::text[])) as cfg
-  where r.rolname = 'authenticator'
-    and cfg like 'pgrst.db_schemas=%'
-  limit 1;
-  if existing is not null and position('cp8_private' in existing) = 0 then
-    schemas := existing || ', cp8_private';
-  elsif existing is not null then
-    schemas := existing;
-  end if;
-  execute format('alter role authenticator set pgrst.db_schemas = %L', schemas);
-end $$;
-
-notify pgrst, 'reload config';
+-- cp8_private stays out of the Data API. The edge function calls this helper
+-- with the service-role JWT when the schema is exposed, and otherwise through
+-- the function's database connection after setting request.jwt.claim.role.
+-- Dennis can add cp8_private under Settings > API > Exposed schemas. anon and
+-- authenticated have no privilege on the schema either way.
 
 delete from public.cp8_inference_signer
 where id = 1
