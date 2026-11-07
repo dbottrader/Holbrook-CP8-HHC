@@ -6,7 +6,6 @@ import { handleGroqTest } from "../supabase/functions/groq-test/handler.mjs";
 import {
   GROQ_TEST_MODEL,
   GROQ_TEST_PROMPT,
-  PUBLISHED_PUBLIC_KEY,
   canonDumps,
   publicKeyHexFromPrivate,
   signDigest,
@@ -15,28 +14,48 @@ import {
 
 const siteReceipt = readFileSync(new URL("../site/groq-test/receipt.js", import.meta.url), "utf8");
 const fnReceipt = readFileSync(new URL("../supabase/functions/groq-test/receipt.mjs", import.meta.url), "utf8");
+const RETIRED_PUBLIC_KEY = "c30d2e6d53443bede57190391a61738dba6fc491c098cc1ac38e07d17eade905";
 
-test("the published specimen verifies in the browser module", async () => {
-  const specimen = JSON.parse(readFileSync(new URL("../site/groq-test/example-receipt.json", import.meta.url), "utf8"));
-  const result = await verifyReceipt(specimen, PUBLISHED_PUBLIC_KEY);
-  assert.equal(result.ok, true, result.error);
-  assert.equal(specimen.signer, PUBLISHED_PUBLIC_KEY);
-  assert.equal(specimen.amount, 0);
+test("runtime files do not publish the retired public key", () => {
+  const files = [
+    "../supabase/functions/groq-test/handler.mjs",
+    "../supabase/functions/groq-test/receipt.mjs",
+    "../supabase/functions/groq-test/secrets.mjs",
+    "../site/groq-test/receipt.js",
+    "../site/groq-test/app.js",
+    "../site/groq-test/pubkey.json",
+    "../site/agent.json",
+    "../site/.well-known/inference-receipt-key.json",
+  ];
+  for (const file of files) {
+    const text = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.equal(text.includes(RETIRED_PUBLIC_KEY), false, file);
+  }
 });
 
 test("groq-test reads the same secret name as cp8-groq-inference", () => {
   const handler = readFileSync(new URL("../supabase/functions/groq-test/handler.mjs", import.meta.url), "utf8");
-  assert.match(handler, /const GROQ_API_KEY_NAME = "GROQ_API_KEY"/);
+  const secrets = readFileSync(new URL("../supabase/functions/groq-test/secrets.mjs", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20261107194600_named_secret_and_retire_signer.sql", import.meta.url), "utf8");
+  assert.match(secrets, /export const ENV_GROQ = "GROQ_API_KEY"/);
+  assert.match(secrets, /export const VAULT_GROQ = "groq_api_key"/);
+  assert.match(secrets, /export const VAULT_SIGNING = "inference_receipt_signing_key"/);
   assert.match(handler, /cp8-groq-inference/);
+  assert.match(sql, /create schema if not exists cp8_private/);
+  assert.match(sql, /security definer/);
+  assert.match(sql, /revoke all on function cp8_private.read_named_secret\(text\) from public, anon, authenticated/);
+  assert.match(sql, /grant execute on function cp8_private.read_named_secret\(text\) to service_role/);
+  assert.equal(sql.includes("create or replace function public."), false);
 });
 
 test("the browser verifier is the function receipt module", () => {
   assert.equal(siteReceipt, fnReceipt);
 });
 
-test("published public key matches pubkey.json", () => {
+test("pubkey.json points at the live key and does not embed one", () => {
   const pub = JSON.parse(readFileSync(new URL("../site/groq-test/pubkey.json", import.meta.url), "utf8"));
-  assert.equal(pub.public_key_hex, PUBLISHED_PUBLIC_KEY);
+  assert.equal(pub.public_key_hex, null);
+  assert.match(pub.live_url, /groq-test\/\.well-known\/inference-receipt-key\.json$/);
 });
 
 function memoryDb() {
@@ -118,7 +137,9 @@ test("a bounded call signs, chains, and ignores the caller prompt", async () => 
     env: { GROQ_API_KEY: "secret-groq", INFERENCE_RECEIPT_SIGNING_KEY: secret },
     fetchImpl: groqFetch("GROQ_MESH_OK"),
     db,
-    publishedPublicKey: pub,
+    readVault: async () => {
+      throw new Error("vault should not be read when the environment is set");
+    },
   });
   assert.equal(first.status, 200);
   assert.equal(first.body.state, "OBSERVED");
@@ -135,7 +156,6 @@ test("a bounded call signs, chains, and ignores the caller prompt", async () => 
     env: { GROQ_API_KEY: "secret-groq", INFERENCE_RECEIPT_SIGNING_KEY: secret },
     fetchImpl: groqFetch("not the token"),
     db,
-    publishedPublicKey: pub,
   });
   assert.equal(second.status, 200);
   assert.equal(second.body.verification.ok, false);
@@ -144,13 +164,12 @@ test("a bounded call signs, chains, and ignores the caller prompt", async () => 
   const again = await handleGroqTest(new Request(`https://example.test/groq-test/receipts/${second.body.ledger_receipt_id}`), {
     env: {},
     db,
-    publishedPublicKey: pub,
   });
   assert.equal(again.status, 200);
   assert.equal(again.body.receipt.hash, second.body.receipt.hash);
 });
 
-test("health is 200 without secrets", async () => {
+test("health is 200 without secrets and does not invent a public key", async () => {
   const res = await handleGroqTest(new Request("https://example.test/groq-test/health"), {
     env: {},
     db: memoryDb(),
@@ -158,7 +177,61 @@ test("health is 200 without secrets", async () => {
   assert.equal(res.status, 200);
   assert.equal(res.body.ok, true);
   assert.equal(res.body.groq_configured, false);
-  assert.equal(res.body.public_key_hex, PUBLISHED_PUBLIC_KEY);
+  assert.equal(res.body.signer_configured, false);
+  assert.equal(res.body.public_key_hex, null);
+});
+
+test("health reads Vault when the environment is empty and does not echo secrets", async () => {
+  const { secret, pub } = await ephemeralEnv();
+  const seen = [];
+  const res = await handleGroqTest(new Request("https://example.test/groq-test/.well-known/inference-receipt-key.json"), {
+    env: {},
+    db: memoryDb(),
+    readVault: async (name) => {
+      seen.push(name);
+      if (name === "groq_api_key") return "vault-groq-secret";
+      if (name === "inference_receipt_signing_key") return secret;
+      return "";
+    },
+  });
+  assert.equal(res.status, 200);
+  assert.deepEqual(seen.sort(), ["groq_api_key", "inference_receipt_signing_key"]);
+  assert.equal(res.body.public_key_hex, pub);
+  assert.equal(res.body.signer_configured, true);
+  const encoded = JSON.stringify(res.body);
+  assert.equal(encoded.includes(secret), false);
+  assert.equal(encoded.includes("vault-groq-secret"), false);
+
+  const health = await handleGroqTest(new Request("https://example.test/groq-test/health"), {
+    env: {},
+    db: memoryDb(),
+    readVault: async (name) => (name === "groq_api_key" ? "vault-groq-secret" : secret),
+  });
+  assert.equal(health.body.groq_configured, true);
+  assert.equal(health.body.signer_configured, true);
+  assert.equal(health.body.public_key_hex, pub);
+  assert.equal(health.body.vault_reachable, true);
+  assert.equal(JSON.stringify(health.body).includes("vault-groq-secret"), false);
+  assert.equal(JSON.stringify(health.body).includes(secret), false);
+});
+
+test("a Vault failure is not configured and does not call Groq", async () => {
+  let called = false;
+  const res = await handleGroqTest(new Request("https://example.test/groq-test", { method: "POST" }), {
+    env: {},
+    fetchImpl: async () => {
+      called = true;
+      return new Response("{}", { status: 200 });
+    },
+    db: memoryDb(),
+    readVault: async () => {
+      throw new Error("connection refused");
+    },
+  });
+  assert.equal(res.status, 503);
+  assert.equal(res.body.error, "groq_api_key_not_configured");
+  assert.equal(called, false);
+  assert.equal(JSON.stringify(res.body).includes("connection refused"), false);
 });
 
 test("canon matches a Python json.dumps vector", () => {

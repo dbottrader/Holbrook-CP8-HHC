@@ -4,26 +4,28 @@ import {
   GROQ_TEST_MAX_TOKENS,
   GROQ_TEST_MODEL,
   GROQ_TEST_PROMPT,
-  PUBLISHED_PUBLIC_KEY,
   buildSignedReceipt,
   canonAnswer,
   publicKeyHexFromPrivate,
   sha256Hex,
 } from "./receipt.mjs";
+import {
+  ENV_GROQ,
+  ENV_SIGNING,
+  VAULT_GROQ,
+  VAULT_SIGNING,
+  readConfiguredSecret,
+} from "./secrets.mjs";
 
-// Same edge secret the live cp8-groq-inference function reads.
-const GROQ_API_KEY_NAME = "GROQ_API_KEY";
+// Same edge secret name the live cp8-groq-inference function reads.
+// This function does not share that function's source. cp8-groq-inference
+// still reads its own environment and is not in this repository.
+const GROQ_API_KEY_NAME = ENV_GROQ;
 const FINGERPRINT_LIMIT = 4;
 const GLOBAL_LIMIT = 30;
 const WINDOW_SECONDS = 3600;
 const ACTOR = "groq-fallback";
 const KIND = "groq_inference_receipt";
-
-function envGet(env, name) {
-  if (!env) return "";
-  if (typeof env.get === "function") return env.get(name) || "";
-  return env[name] || "";
-}
 
 function segments(url) {
   const parts = new URL(url).pathname.split("/").filter(Boolean);
@@ -71,45 +73,55 @@ export function receiptView(row) {
   };
 }
 
-async function signingMaterial(env, published) {
-  const secret = envGet(env, "INFERENCE_RECEIPT_SIGNING_KEY").trim();
-  if (!secret) {
-    return {
-      error: result(503, {
-        ok: false,
-        error: "signing_key_not_configured",
-        message: "INFERENCE_RECEIPT_SIGNING_KEY is not set on this Supabase function. Dennis needs to set that secret before receipts can be signed.",
-      }),
-    };
+async function resolveSecrets(deps) {
+  const groq = await readConfiguredSecret(deps.env, ENV_GROQ, VAULT_GROQ, deps.readVault);
+  const signing = await readConfiguredSecret(deps.env, ENV_SIGNING, VAULT_SIGNING, deps.readVault);
+  let publicKey = null;
+  let signerConfigured = false;
+  let signingKeyInvalid = false;
+  if (signing.value) {
+    try {
+      publicKey = await publicKeyHexFromPrivate(signing.value);
+      signerConfigured = true;
+    } catch {
+      signingKeyInvalid = true;
+    }
   }
-  let derived = "";
-  try {
-    derived = await publicKeyHexFromPrivate(secret);
-  } catch {
-    return {
-      error: result(503, {
-        ok: false,
-        error: "signing_key_invalid",
-        message: "INFERENCE_RECEIPT_SIGNING_KEY is not a 32-byte Ed25519 seed.",
-      }),
-    };
-  }
-  if (derived !== published) {
-    return {
-      error: result(503, {
-        ok: false,
-        error: "signing_key_not_published",
-        message: "The signing secret does not match the published public key. Refusing to sign.",
-      }),
-    };
-  }
-  return { secret };
+  const vaultFlags = [groq.vaultReachable, signing.vaultReachable].filter((flag) => flag !== null);
+  return {
+    groqKey: groq.value,
+    groqConfigured: Boolean(groq.value),
+    signingKey: signerConfigured ? signing.value : "",
+    signerConfigured,
+    signingKeyInvalid,
+    publicKey,
+    vaultReachable: vaultFlags.length === 0 ? null : vaultFlags.every(Boolean),
+  };
+}
+
+function keyDocument(secrets) {
+  return {
+    scheme: "ed25519",
+    public_key_hex: secrets.publicKey,
+    signer_configured: secrets.signerConfigured,
+    canon: "v1",
+    domain: "GPU-MESH",
+    hash: "sha256",
+  };
 }
 
 export async function handleGroqTest(req, deps) {
-  const published = deps.publishedPublicKey || PUBLISHED_PUBLIC_KEY;
   const parts = segments(req.url);
-  if (req.method === "GET" && (parts.length === 0 || parts[0] === "health")) {
+  const wantsKey = req.method === "GET" && (
+    parts.length === 0
+    || parts[0] === "health"
+    || parts[0] === "pubkey"
+    || (parts[0] === ".well-known" && parts[1] === "inference-receipt-key.json")
+  );
+  if (wantsKey) {
+    const secrets = await resolveSecrets(deps);
+    const key = keyDocument(secrets);
+    if (parts[0] === "pubkey" || parts[0] === ".well-known") return result(200, key);
     return result(200, {
       ok: true,
       service: "groq-test",
@@ -117,20 +129,14 @@ export async function handleGroqTest(req, deps) {
       model: GROQ_TEST_MODEL,
       prompt: GROQ_TEST_PROMPT,
       max_tokens: GROQ_TEST_MAX_TOKENS,
-      groq_configured: Boolean(envGet(deps.env, GROQ_API_KEY_NAME)),
+      groq_configured: secrets.groqConfigured,
       groq_secret_name: GROQ_API_KEY_NAME,
-      signer_configured: Boolean(envGet(deps.env, "INFERENCE_RECEIPT_SIGNING_KEY")),
-      public_key_hex: published,
+      signer_configured: secrets.signerConfigured,
+      signing_key_invalid: secrets.signingKeyInvalid,
+      public_key_hex: secrets.publicKey,
+      vault_reachable: secrets.vaultReachable,
       ledger_backend: "simulated",
       settlement_note: "The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled.",
-    });
-  }
-  if (req.method === "GET" && parts[0] === "pubkey") {
-    return result(200, {
-      scheme: "ed25519",
-      public_key_hex: published,
-      canon: "v1",
-      domain: "GPU-MESH",
     });
   }
   if (req.method === "GET" && parts[0] === "receipts" && parts[1]) {
@@ -142,18 +148,34 @@ export async function handleGroqTest(req, deps) {
     return result(405, { ok: false, error: "method_not_allowed" });
   }
 
-  const apiKey = envGet(deps.env, GROQ_API_KEY_NAME).trim();
-  if (!apiKey) {
+  const secrets = await resolveSecrets(deps);
+  if (!secrets.groqConfigured) {
     return result(503, {
       ok: false,
       error: "groq_api_key_not_configured",
       state: "HOLD",
       promotion: "HOLD",
-      message: "GROQ_API_KEY is not set for this function. cp8-groq-inference reads that same secret name.",
+      groq_configured: false,
+      signer_configured: secrets.signerConfigured,
+      message: "GROQ_API_KEY is not set for this function and Vault has no groq_api_key. cp8-groq-inference reads that same environment name.",
     });
   }
-  const signing = await signingMaterial(deps.env, published);
-  if (signing.error) return signing.error;
+  if (secrets.signingKeyInvalid) {
+    return result(503, {
+      ok: false,
+      error: "signing_key_invalid",
+      signer_configured: false,
+      message: "The receipt signing seed is not a 32-byte Ed25519 seed.",
+    });
+  }
+  if (!secrets.signerConfigured) {
+    return result(503, {
+      ok: false,
+      error: "signing_key_not_configured",
+      signer_configured: false,
+      message: "Set INFERENCE_RECEIPT_SIGNING_KEY or Vault secret inference_receipt_signing_key before receipts can be signed.",
+    });
+  }
 
   const fp = await fingerprint(req);
   const personal = await deps.db.rateAllow(`fp:${fp}`, FINGERPRINT_LIMIT, WINDOW_SECONDS);
@@ -175,7 +197,7 @@ export async function handleGroqTest(req, deps) {
     upstream = await fetchImpl("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        authorization: `Bearer ${apiKey}`,
+        authorization: `Bearer ${secrets.groqKey}`,
         "content-type": "application/json",
       },
       body: JSON.stringify({
@@ -240,6 +262,9 @@ export async function handleGroqTest(req, deps) {
     worker_id: `groq:${GROQ_TEST_MODEL}`,
   };
 
+  if (typeof deps.db.publishSigner === "function") {
+    await deps.db.publishSigner(secrets.publicKey);
+  }
   let receiptId = "";
   let signed = null;
   let lastError = "";
@@ -248,7 +273,7 @@ export async function handleGroqTest(req, deps) {
     const seq = head && Number.isFinite(Number(head.seq)) ? Number(head.seq) + 1 : 1;
     const prev = head && head.hash ? head.hash : GENESIS_PREV;
     signed = await buildSignedReceipt({
-      privateKeyHex: signing.secret,
+      privateKeyHex: secrets.signingKey,
       actor: ACTOR,
       kind: KIND,
       payload,
@@ -298,6 +323,6 @@ export async function handleGroqTest(req, deps) {
     verification,
     ledger_receipt_id: String(receiptId),
     receipt: view,
-    public_key_hex: published,
+    public_key_hex: secrets.publicKey,
   });
 }

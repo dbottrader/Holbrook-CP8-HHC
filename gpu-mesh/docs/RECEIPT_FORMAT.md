@@ -14,7 +14,7 @@ The default ledger is simulated. It settles to the Base work token once the on-c
 | `canon` | `v1`. |
 | `amount` | Integer. Groq fallback receipts use `0` until a settlement attestation assigns a value. `credits` inside the payload matches `amount`. |
 | `signature` | Ed25519 hex over the 32-byte typed digest, not over `hash`. |
-| `signer` | Raw Ed25519 public key, hex. The public Groq test key is `site/groq-test/pubkey.json`. |
+| `signer` | Raw Ed25519 public key, hex. The live Groq test key is derived at runtime and served at `GET /functions/v1/groq-test/.well-known/inference-receipt-key.json`. |
 | `typed_data` | EIP-712-style document. Domain name `GPU-MESH`, version `1`, `chainId` 0, zero `verifyingContract`. The hash function is SHA-256 standing in for keccak256. `chainId` 0 is not a network and this digest is not a transaction. |
 
 Canonical JSON is `json.dumps` with `sort_keys=True`, `separators=(",", ":")`, and `ensure_ascii=True`. The same function is `canonDumps` in `supabase/functions/groq-test/receipt.mjs` and `site/groq-test/receipt.js` (those two files are copies).

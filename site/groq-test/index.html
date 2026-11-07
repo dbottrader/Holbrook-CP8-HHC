@@ -33,9 +33,9 @@
       <button type="button" id="run">Run live Groq test</button>
       <button type="button" id="verify" class="secondary">Verify signature in browser</button>
     </div>
-    <p id="status" class="status" role="status">No live call yet. The sample below is a signed format specimen.</p>
+    <p id="status" class="status" role="status">No live call yet. The public key below is read from the function, which derives it from the signing seed.</p>
     <h2>Receipt</h2>
-    <pre id="receipt"><code>Loading the sample receipt…</code></pre>
+    <pre id="receipt"><code>No receipt yet.</code></pre>
     <p id="verify-result" class="status">Signature check has not run.</p>
     <p class="prose">Public key: <code id="pubkey">…</code></p>
     <p class="prose">Read one stored receipt with <code>GET /inference-receipts/{receipt_id}</code> on moltbook-api, or <code>GET /receipts/{receipt_id}</code> on this function. The machine manifest is <a href="../agent.json">agent.json</a>.</p>

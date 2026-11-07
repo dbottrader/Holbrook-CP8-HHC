@@ -11,7 +11,6 @@ export const GROQ_TEST_PROMPT = "Reply with exactly the token: GROQ_MESH_OK";
 export const GROQ_TEST_EXPECTED = "GROQ_MESH_OK";
 export const GROQ_TEST_MAX_TOKENS = 16;
 export const GROQ_TEST_MODEL = "openai/gpt-oss-20b";
-export const PUBLISHED_PUBLIC_KEY = "c30d2e6d53443bede57190391a61738dba6fc491c098cc1ac38e07d17eade905";
 
 const DOMAIN_TYPE = "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)";
 const CLAIM_TYPE = "WorkClaim(string actor,int256 amount,string kind,uint256 ledgerSeq,bytes32 payloadHash,bytes32 prevHash,string settlementId,uint256 ts,string verifierIds,string workerId)";

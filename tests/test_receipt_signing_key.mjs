@@ -21,16 +21,23 @@ test("an absent signing seed skips the match check", () => {
   assert.match(result.stdout, /absent/);
 });
 
-test("a different signing seed fails without echoing the seed", async () => {
+test("a valid signing seed prints only the derived public key", async () => {
   const pair = await crypto.subtle.generateKey({ name: "Ed25519" }, true, ["sign"]);
   const pkcs8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", pair.privateKey));
   const seed = [...pkcs8.slice(-32)].map((b) => b.toString(16).padStart(2, "0")).join("");
   const derived = await publicKeyHexFromPrivate(seed);
-  assert.equal(derived.length, 64);
+  const result = run(seed);
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, new RegExp(`derived_public_key=${derived}`));
+  assert.equal(result.stdout.includes(seed), false);
+  assert.equal(result.stderr.includes(seed), false);
+});
+
+test("an invalid signing seed fails without echoing the value", () => {
+  const seed = "not-a-seed";
   const result = run(seed);
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /does not match the published public key/);
-  assert.match(result.stderr, new RegExp(`derived_public_key=${derived}`));
+  assert.match(result.stderr, /not a 32-byte Ed25519 seed/);
   assert.equal(result.stdout.includes(seed), false);
   assert.equal(result.stderr.includes(seed), false);
 });
