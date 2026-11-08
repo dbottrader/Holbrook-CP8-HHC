@@ -1,0 +1,164 @@
+name: checker-node
+
+# Physically separate verifier for the public GPU mesh hub.
+# Manual only, so pull requests do not download Ollama or the GGUF.
+# The hub registers this node without an invite. No repository secret is used.
+# The minted node token stays in the runner temp directory for this run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: Minutes to wait for one verification job before stopping
+        required: false
+        default: 30
+        type: number
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpu-mesh-checker-node
+  cancel-in-progress: false
+
+jobs:
+  checker:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.minutes + 60 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the node agent
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ./gpu-mesh
+          python -c "import gpumesh_node, gpumesh_node.runtime"
+
+      - name: Install Ollama v0.40.15
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y zstd
+          archive="$RUNNER_TEMP/ollama-linux-amd64.tar.zst"
+          url="https://github.com/ollama/ollama/releases/download/v0.40.15/ollama-linux-amd64.tar.zst"
+          echo "downloading Ollama v0.40.15 from the GitHub release archive"
+          curl -fsSL --retry 5 --retry-delay 2 -o "$archive" "$url"
+          echo "628c018404a4206493efd38e46251c154ede5141b8b8dc85c659b3b027c47379  $archive" | sha256sum -c -
+          zstd -d -c "$archive" | sudo tar -xf - -C /usr
+          command -v ollama
+          ollama --version
+
+      - name: Download the pinned GGUF
+        run: |
+          set -euo pipefail
+          dest="$RUNNER_TEMP/asin-model"
+          mkdir -p "$dest"
+          file="$dest/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+          url="https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+          echo "downloading qwen2.5-0.5b-instruct-q4_k_m.gguf"
+          curl -fL --retry 5 --retry-delay 2 -A "gpumesh-checker" -o "$file" "$url"
+          echo "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db  $file" | sha256sum -c -
+          cp gpu-mesh/models/asin-qwen0.5b.Modelfile "$dest/Modelfile"
+          cmp gpu-mesh/models/asin-qwen0.5b.Modelfile "$dest/Modelfile"
+
+      # ollama serve has to live in this step. Actions stops background
+      # processes when a step ends, and the checker needs the same server.
+      - name: Create asin-qwen0.5b and run the checker
+        env:
+          OLLAMA_HOST: 127.0.0.1:11434
+          GPU_MESH_COORDINATOR: https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh
+          GPU_MESH_NAME: gh-actions-checker
+          GPU_MESH_BACKEND: ollama
+          GPU_MESH_OLLAMA_HOST: http://127.0.0.1:11434
+          GPU_MESH_PAYOUT_ADDRESS: "0x99334f7e733Ca137dc6665106cA6dF96dD97b563"
+          GPU_MESH_STATE: ${{ runner.temp }}/gh-actions-checker.json
+          GPUMESH_COMMIT: ${{ github.sha }}
+          CHECKER_MINUTES: ${{ inputs.minutes }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -euo pipefail
+          ollama serve >"$RUNNER_TEMP/ollama.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/ollama.pid"
+          ready=0
+          for _ in $(seq 1 90); do
+            if curl -fs -o "$RUNNER_TEMP/ollama-version.json" "http://127.0.0.1:11434/api/version"; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then
+            echo "ollama serve did not open /api/version" >&2
+            cat "$RUNNER_TEMP/ollama.log" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          body = json.load(open(os.environ["RUNNER_TEMP"] + "/ollama-version.json", encoding="utf-8"))
+          got = str(body.get("version") or "")
+          print(f"ollama /api/version {got}")
+          if got != "0.40.15":
+              print(f"expected ollama 0.40.15, actual {got}", file=sys.stderr)
+              sys.exit(1)
+          PY
+          ollama create asin-qwen0.5b -f "$RUNNER_TEMP/asin-model/Modelfile"
+          python3 - <<'PY'
+          import json
+          import sys
+          import urllib.request
+          expected = "29ef26c5cf7d3d68a20fdeb8664ef48f1f32386d2ba09ddb4b19f4c7dc89d5de"
+          with urllib.request.urlopen("http://127.0.0.1:11434/api/tags", timeout=30) as response:
+              tags = json.load(response)
+          actual = ""
+          names = []
+          for item in tags.get("models") or []:
+              if not isinstance(item, dict):
+                  continue
+              name = str(item.get("name") or item.get("model") or "")
+              names.append(name)
+              if name == "asin-qwen0.5b:latest":
+                  actual = str(item.get("digest") or "").strip()
+          print("ollama tags:", ", ".join(names) or "(none)")
+          print(f"actual digest: {actual}")
+          if actual != expected:
+              print(f"expected digest: {expected}", file=sys.stderr)
+              print(f"actual digest: {actual}", file=sys.stderr)
+              sys.exit(1)
+          PY
+          curl -fsS "http://127.0.0.1:11434/api/chat" \
+            -H "content-type: application/json" \
+            --max-time 180 \
+            -o "$RUNNER_TEMP/warmup.json" \
+            -d '{"model":"asin-qwen0.5b:latest","messages":[{"role":"user","content":"hi"}],"stream":false,"options":{"num_predict":1,"temperature":0,"top_k":1}}'
+          echo "warmup ok"
+          log="$RUNNER_TEMP/checker-node.log"
+          python -m gpumesh_node \
+            --coordinator "$GPU_MESH_COORDINATOR" \
+            --name "$GPU_MESH_NAME" \
+            --backend ollama \
+            --ollama-host "$GPU_MESH_OLLAMA_HOST" \
+            --payout-address "$GPU_MESH_PAYOUT_ADDRESS" \
+            --state "$GPU_MESH_STATE" \
+            --heartbeat 10 \
+            --claim-wait 15 \
+            --job-timeout 100 \
+            >"$log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/checker-node.pid"
+          set +e
+          python3 gpu-mesh/scripts/checker_node_wait.py \
+            --log "$log" \
+            --coordinator "$GPU_MESH_COORDINATOR" \
+            --minutes "$CHECKER_MINUTES" \
+            --pid "$(cat "$RUNNER_TEMP/checker-node.pid")"
+          code=$?
+          set -e
+          wait "$(cat "$RUNNER_TEMP/checker-node.pid")" || true
+          echo "----- node log -----"
+          sed -E 's/gmt_[A-Za-z0-9]+/[redacted]/g' "$log"
+          exit "$code"

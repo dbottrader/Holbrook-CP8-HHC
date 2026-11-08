@@ -166,6 +166,8 @@ pytest -q
 
 CI is [`.github/workflows/gpu-mesh.yml`](../.github/workflows/gpu-mesh.yml) in the Holbrook repo. It runs Ruff and pytest on Python 3.12, scoped to `gpu-mesh/`. The integration test drives the real node agent against the FastAPI app in-process, including a dishonest node that gets slashed and quarantined. No GPU and no GGUF download are required. The llama.cpp extra is not installed in CI.
 
+A separate checker runs on a GitHub-hosted machine from [`.github/workflows/checker-node.yml`](../.github/workflows/checker-node.yml). It is `workflow_dispatch` only and uses no repository secret. The run installs Ollama v0.40.15 from the GitHub release archive, builds `asin-qwen0.5b` from [`models/asin-qwen0.5b.Modelfile`](models/asin-qwen0.5b.Modelfile), and runs `python -m gpumesh_node` as `gh-actions-checker` until one verification receipt or the minute limit. The dispatch command and the digest pins are in [`docs/LAUNCH_DEMOS.md`](../docs/LAUNCH_DEMOS.md).
+
 ## Limits worth knowing
 
 - One coordinator process. Rate-limit buckets live in memory and reset on restart. Bans and the ledger are in the database.
