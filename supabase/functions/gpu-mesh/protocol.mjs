@@ -70,6 +70,11 @@ const TRUST_AGE = 7 * 24 * 3600;
 const TRUST_JOBS = 3;
 const VERIFIER_PAY = 2;
 const MAX_ATTEMPTS = 3;
+// Sent on every volunteer job. Ollama defaults and Modelfile params must not differ.
+export const DET_TOP_K = 1;
+export const DET_TOP_P = 1;
+export const DET_REPEAT_PENALTY = 1;
+export const DET_NUM_CTX = 2048;
 const CANNED_BACKENDS = new Set(["cpu", "cpu-fallback", "mock", "mock-tiny"]);
 const CANNED_MARKERS = new Set(["cpu-fallback", "mock", "mock-tiny"]);
 const CANNED_MESSAGE = "cpu-fallback and mock nodes cannot register or claim work";
@@ -129,7 +134,87 @@ function callerReady(job) {
   if (CALLER_TERMINAL.has(job.status)) return true;
   // The worker has stored text. A second node may still verify; that must not
   // hold the HTTP call until the wait deadline (the old path waited ~45s).
-  return job.status === "verifying" && Boolean(job.output_text);
+  // `completed` is a stored reply that has no eligible verifier.
+  return (job.status === "verifying" || job.status === "completed") && Boolean(job.output_text);
+}
+
+export function knownDigest(value) {
+  const text = String(value ?? "").trim();
+  const norm = text.toLowerCase();
+  if (!norm || norm === "unpinned" || norm.endsWith("-unpinned")) return "";
+  return text.slice(0, 128);
+}
+
+export function digestsMatch(left, right) {
+  const recorded = knownDigest(left);
+  const advertised = knownDigest(right);
+  if (!recorded || !advertised) return false;
+  return recorded.toLowerCase() === advertised.toLowerCase();
+}
+
+function pinNum(value, fallback) {
+  if (value == null || value === "") return fallback;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function provenance(job, node) {
+  return {
+    agent_commit: String(job?.agent_commit || node?.agent_commit || node?.version || ""),
+    runtime_name: String(job?.runtime_name || node?.runtime_name || node?.backend || ""),
+    runtime_version: String(job?.runtime_version || node?.runtime_version || ""),
+    temperature: pinNum(job?.temperature, 0),
+    top_k: pinNum(job?.top_k, DET_TOP_K),
+    top_p: pinNum(job?.top_p, DET_TOP_P),
+    seed: job?.seed == null ? 0 : pinNum(job.seed, 0),
+    num_ctx: pinNum(job?.num_ctx, DET_NUM_CTX),
+    repeat_penalty: pinNum(job?.repeat_penalty, DET_REPEAT_PENALTY),
+    model_digest: String(job?.model_digest || ""),
+  };
+}
+
+function parentRun(parent) {
+  const out = {};
+  for (const [key, value] of Object.entries(provenance(parent, null))) out[`parent_${key}`] = value;
+  return out;
+}
+
+function reportedGeneration(spec) {
+  const reported = spec?.generation;
+  if (!reported || typeof reported !== "object" || Array.isArray(reported)) return {};
+  const generation = {};
+  for (const key of ["temperature", "top_k", "top_p", "seed", "num_ctx", "repeat_penalty"]) {
+    generation[key] = reported[key];
+  }
+  return { reported_generation: generation };
+}
+
+function applyRunnerIdentity(job, node, spec) {
+  if (spec?.agent_commit) job.agent_commit = String(spec.agent_commit).slice(0, 64);
+  else if (!job.agent_commit) job.agent_commit = String(node?.agent_commit || node?.version || "").slice(0, 64);
+  if (spec?.runtime_name) job.runtime_name = String(spec.runtime_name).slice(0, 32);
+  else if (!job.runtime_name) job.runtime_name = String(node?.runtime_name || node?.backend || "").slice(0, 32);
+  if (spec?.runtime_version) job.runtime_version = String(spec.runtime_version).slice(0, 64);
+  else if (!job.runtime_version) job.runtime_version = String(node?.runtime_version || "").slice(0, 64);
+}
+
+function verificationPayload(job, parent, node, judged, spec, extra = {}) {
+  return {
+    schema: "gpumesh.verification.v1",
+    job_id: job.id,
+    parent_job_id: parent.id,
+    model: job.model,
+    output_hash: job.output_hash,
+    parent_output_hash: parent.output_hash,
+    verifier_ids: node.id,
+    verifier_decision: judged.verdict,
+    match_rule: judged.match_rule,
+    toploc: "unavailable",
+    ...provenance(job, node),
+    ...parentRun(parent),
+    ...reportedGeneration(spec),
+    ...extra,
+  };
 }
 
 function bearer(req) {
@@ -485,6 +570,13 @@ function blankJob(partial) {
     lease_generation: 0,
     lease_expires_at: 0,
     model_digest: "",
+    agent_commit: "",
+    runtime_name: "",
+    runtime_version: "",
+    top_k: DET_TOP_K,
+    top_p: DET_TOP_P,
+    repeat_penalty: DET_REPEAT_PENALTY,
+    num_ctx: DET_NUM_CTX,
     priority: 0,
     ...partial,
   };
@@ -644,6 +736,10 @@ function jobForNode(job) {
     lease_generation: job.lease_generation,
     lease_expires_at: job.lease_expires_at,
     model_digest: job.model_digest || "",
+    top_k: pinNum(job.top_k, DET_TOP_K),
+    top_p: pinNum(job.top_p, DET_TOP_P),
+    repeat_penalty: pinNum(job.repeat_penalty, DET_REPEAT_PENALTY),
+    num_ctx: pinNum(job.num_ctx, DET_NUM_CTX),
   };
 }
 
@@ -746,6 +842,9 @@ async function register(req, store, ctx) {
     last_ip: ip.slice(0, 64),
     created_at: now,
     version: String(spec.version || "").slice(0, 32),
+    agent_commit: String(spec.agent_commit || spec.version || "").slice(0, 64),
+    runtime_name: String(spec.runtime_name || backend).slice(0, 32),
+    runtime_version: String(spec.runtime_version || "").slice(0, 64),
     payout_address: parsePayout(spec.payout_address),
   };
   await store.insertNode(node);
@@ -761,6 +860,10 @@ async function register(req, store, ctx) {
       vram_mb: node.vram_mb,
       accelerator: node.accelerator,
       models: models.map((model) => model.id),
+      model_digests: models.map((model) => model.digest),
+      agent_commit: node.agent_commit,
+      runtime_name: node.runtime_name,
+      runtime_version: node.runtime_version,
       amount: 0,
       credits: 0,
     });
@@ -796,6 +899,11 @@ async function heartbeat(req, store, ctx) {
   node.last_ip = clientIp(req).slice(0, 64);
   if (node.status === "offline") node.status = "online";
   node.version = String(spec.version || node.version || "").slice(0, 32);
+  if (spec.agent_commit || spec.version) {
+    node.agent_commit = String(spec.agent_commit || spec.version).slice(0, 64);
+  }
+  if (spec.runtime_name) node.runtime_name = String(spec.runtime_name).slice(0, 32);
+  if (spec.runtime_version) node.runtime_version = String(spec.runtime_version).slice(0, 64);
   await store.saveNode(node);
   await sweep(store, clock(ctx));
   return json({ ok: true, node_id: node.id, status: node.status });
@@ -823,9 +931,11 @@ async function claimOnce(store, ctx, node) {
     const generation = (job.lease_generation || 0) + 1;
     const deadline = now + JOB_TIMEOUT;
     const model = (current.models || []).find((item) => item.id === job.model);
-    const nodeDigest = String(model?.digest || "");
-    if (job.kind === "verification" && job.model_digest && nodeDigest !== job.model_digest) continue;
-    const digest = job.kind === "verification" && job.model_digest ? job.model_digest : nodeDigest;
+    const nodeDigest = model?.digest;
+    if (job.kind === "verification" && !digestsMatch(job.model_digest, nodeDigest)) continue;
+    const digest = job.kind === "verification"
+      ? String(job.model_digest || "").slice(0, 128)
+      : (knownDigest(nodeDigest) || "unpinned");
     const leased = await store.leaseJob(job.id, {
       assigned_node_id: current.id,
       assigned_at: now,
@@ -834,6 +944,13 @@ async function claimOnce(store, ctx, node) {
       lease_generation: generation,
       attempt: (job.attempt || 0) + 1,
       model_digest: digest,
+      agent_commit: String(current.agent_commit || current.version || "").slice(0, 64),
+      runtime_name: String(current.runtime_name || current.backend || "").slice(0, 32),
+      runtime_version: String(current.runtime_version || "").slice(0, 64),
+      top_k: DET_TOP_K,
+      top_p: DET_TOP_P,
+      repeat_penalty: DET_REPEAT_PENALTY,
+      num_ctx: DET_NUM_CTX,
     });
     if (!leased) continue;
     current.inflight = (current.inflight || 0) + 1;
@@ -869,6 +986,7 @@ async function claim(req, store, ctx) {
 }
 
 async function enqueueVerification(store, parent, options = {}) {
+  if (!knownDigest(parent.model_digest)) return null;
   const excluded = new Set(parent.assigned_node_id ? [parent.assigned_node_id] : []);
   for (const id of options.extraExcluded || []) if (id) excluded.add(id);
   const job = blankJob({
@@ -882,6 +1000,13 @@ async function enqueueVerification(store, parent, options = {}) {
     max_tokens: parent.max_tokens,
     seed: parent.seed == null ? 0 : parent.seed,
     model_digest: parent.model_digest || "",
+    top_k: pinNum(parent.top_k, DET_TOP_K),
+    top_p: pinNum(parent.top_p, DET_TOP_P),
+    repeat_penalty: pinNum(parent.repeat_penalty, DET_REPEAT_PENALTY),
+    num_ctx: pinNum(parent.num_ctx, DET_NUM_CTX),
+    agent_commit: "",
+    runtime_name: "",
+    runtime_version: "",
     stop: parent.stop,
     origin_node_id: parent.assigned_node_id,
     parent_job_id: parent.id,
@@ -923,7 +1048,7 @@ async function openChainSettlement(store, parent, origin, verifier, award) {
   return row;
 }
 
-async function finishSecondVerification(store, ctx, node, job) {
+async function finishSecondVerification(store, ctx, node, job, spec = {}) {
   const parent = job.parent_job_id ? await store.getJob(job.parent_job_id) : null;
   const row = parent ? await store.getChainSettlement(`mesh:${parent.id}`) : null;
   if (!parent?.output_text || !row || row.status !== "awaiting_second_verifier") {
@@ -941,19 +1066,7 @@ async function finishSecondVerification(store, ctx, node, job) {
     node,
     kind,
     amount: verdict === "child_empty" ? 0 : VERIFIER_PAY,
-    payload: {
-      schema: "gpumesh.verification.v1",
-      job_id: job.id,
-      parent_job_id: parent.id,
-      model: job.model,
-      output_hash: job.output_hash,
-      parent_output_hash: parent.output_hash,
-      verifier_ids: node.id,
-      verifier_decision: verdict,
-      match_rule: judged.match_rule,
-      toploc: "unavailable",
-      check: "duplicate",
-    },
+    payload: verificationPayload(job, parent, node, judged, spec, { check: "duplicate" }),
   });
   job.receipt_hash = verifierReceipt.hash;
   job.verdict = verdict;
@@ -1004,8 +1117,8 @@ async function finishSecondVerification(store, ctx, node, job) {
   await store.saveJob(job);
 }
 
-async function finishVerification(store, ctx, node, job) {
-  if (job.client_key === "verify2") return finishSecondVerification(store, ctx, node, job);
+async function finishVerification(store, ctx, node, job, spec = {}) {
+  if (job.client_key === "verify2") return finishSecondVerification(store, ctx, node, job, spec);
   const parent = job.parent_job_id ? await store.getJob(job.parent_job_id) : null;
   if (!parent?.output_text) {
     job.status = "rejected";
@@ -1022,18 +1135,7 @@ async function finishVerification(store, ctx, node, job) {
     node,
     kind,
     amount: verdict === "child_empty" ? 0 : VERIFIER_PAY,
-    payload: {
-      schema: "gpumesh.verification.v1",
-      job_id: job.id,
-      parent_job_id: parent.id,
-      model: job.model,
-      output_hash: job.output_hash,
-      parent_output_hash: parent.output_hash,
-      verifier_ids: node.id,
-      verifier_decision: verdict,
-      match_rule: judged.match_rule,
-      toploc: "unavailable",
-    },
+    payload: verificationPayload(job, parent, node, judged, spec),
   });
   job.receipt_hash = verifierReceipt.hash;
   job.verdict = verdict;
@@ -1055,12 +1157,10 @@ async function finishVerification(store, ctx, node, job) {
           node_id: origin.id,
           worker_id: origin.id,
           model: parent.model,
-          model_digest: parent.model_digest || "",
           runtime: origin.backend,
           backend: origin.backend,
-          temperature: parent.temperature,
+          ...provenance(parent, origin),
           max_tokens: parent.max_tokens,
-          seed: parent.seed || 0,
           prompt_tokens: parent.prompt_tokens,
           completion_tokens: parent.completion_tokens,
           duration_ms: parent.duration_ms,
@@ -1132,12 +1232,13 @@ async function submitResult(req, store, ctx, jobId) {
   job.finish_reason = finish;
   job.completed_at = clock(ctx);
   job.error = "";
+  applyRunnerIdentity(job, node, spec);
   node.consecutive_failures = 0;
   node.jobs_completed = (node.jobs_completed || 0) + 1;
   await store.saveNode(node);
   if (job.kind === "verification") {
     await store.saveJob(job);
-    await finishVerification(store, ctx, node, job);
+    await finishVerification(store, ctx, node, job, spec);
     const done = await store.getJob(job.id);
     return json(resultBody(done));
   }
@@ -1158,14 +1259,16 @@ async function submitResult(req, store, ctx, jobId) {
       verifier_ids: "",
       amount: 0,
       credits: 0,
+      ...provenance(job, node),
+      ...reportedGeneration(spec),
     },
   });
   job.receipt_hash = execution.hash;
   job.verdict = "pending";
   job.credits_awarded = 0;
-  job.status = "verifying";
+  const verification = await enqueueVerification(store, job);
+  job.status = verification ? "verifying" : "completed";
   await store.saveJob(job);
-  await enqueueVerification(store, job);
   return json(resultBody(job));
 }
 

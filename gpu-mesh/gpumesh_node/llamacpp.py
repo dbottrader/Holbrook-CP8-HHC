@@ -21,7 +21,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from gpumesh_node.runtime import InferenceResult, exact_reply
+from gpumesh_node.pins import DET_NUM_CTX
+from gpumesh_node.runtime import InferenceResult, exact_reply, generation_controls
 
 log = logging.getLogger("gpumesh.node")
 
@@ -32,6 +33,7 @@ DEFAULT_MODEL_ID = "SmolLM2-360M-Instruct"
 DEFAULT_GGUF_SHA256 = "48ab3034d0dd401fbc721eb1df3217902fee7dab9078992d66431f09b7750201"
 _REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 _FILE = re.compile(r"[A-Za-z0-9_.-]+\.gguf")
+_SHA = re.compile(r"[0-9a-f]{64}")
 
 
 def sha256_file(path: Path) -> str:
@@ -42,6 +44,26 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _sidecar(path: Path) -> Path:
+    return path.with_name(path.name + ".sha256")
+
+
+def cached_sha256(path: Path) -> str:
+    """SHA-256 of a GGUF, reused while the file's size and mtime are unchanged."""
+
+    st = path.stat()
+    sidecar = _sidecar(path)
+    size = str(st.st_size)
+    mtime = str(st.st_mtime_ns)
+    if sidecar.is_file():
+        parts = sidecar.read_text(encoding="utf-8").strip().split()
+        if len(parts) == 3 and parts[1] == size and parts[2] == mtime and _SHA.fullmatch(parts[0]):
+            return parts[0]
+    digest = sha256_file(path)
+    sidecar.write_text(f"{digest} {size} {mtime}\n", encoding="utf-8")
+    return digest
+
+
 def ensure_gguf(repo: str, filename: str, cache: Path, expected: str | None) -> Path:
     if not _REPO.fullmatch(repo):
         raise SystemExit(f"GGUF repo must look like org/name, got {repo!r}")
@@ -50,12 +72,13 @@ def ensure_gguf(repo: str, filename: str, cache: Path, expected: str | None) -> 
     cache.mkdir(parents=True, exist_ok=True)
     dest = cache / filename
     if dest.is_file():
-        digest = sha256_file(dest)
+        digest = cached_sha256(dest)
         if expected is None or digest == expected:
             log.info("using cached %s sha256 %s", dest.name, digest)
             return dest
         log.warning("cached %s sha256 %s does not match the pin; downloading again", dest.name, digest)
         dest.unlink()
+        _sidecar(dest).unlink(missing_ok=True)
     partial = cache / f".{filename}.partial"
     url = f"https://huggingface.co/{repo}/resolve/main/{filename}"
     log.info("downloading %s", url)
@@ -77,6 +100,7 @@ def ensure_gguf(repo: str, filename: str, cache: Path, expected: str | None) -> 
             f"sha256 of {filename} is {digest}, pinned value is {expected}. Refusing to load it."
         )
     partial.replace(dest)
+    digest = cached_sha256(dest)
     log.info("gguf sha256 %s", digest)
     return dest
 
@@ -102,11 +126,22 @@ class LlamaCppRuntime:
 
     name = "llamacpp"
 
-    def __init__(self, *, model_id: str, digest: str, llm, source: str = "llama.cpp") -> None:
+    def __init__(
+        self,
+        *,
+        model_id: str,
+        digest: str,
+        llm,
+        source: str = "llama.cpp",
+        num_ctx: int = DET_NUM_CTX,
+        version: str = "",
+    ) -> None:
         self.model_id = model_id
         self._digest = digest
         self._llm = llm
         self._source = source
+        self.num_ctx = int(num_ctx)
+        self.version = version
 
     async def list_models(self) -> list[dict]:
         return [
@@ -117,6 +152,11 @@ class LlamaCppRuntime:
                 "digest": self._digest,
             }
         ]
+
+    def effective_generation(self, job: dict) -> dict:
+        options = generation_controls(job)
+        options["num_ctx"] = self.num_ctx
+        return options
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
         started = time.perf_counter()
@@ -129,18 +169,17 @@ class LlamaCppRuntime:
         if requested != self.model_id:
             raise RuntimeError(f"this worker serves {self.model_id}, not {requested}")
 
-        raw_seed = job.get("seed")
-        seed = 0 if raw_seed is None else int(raw_seed)
+        controls = self.effective_generation(job)
         max_tokens = int(job.get("max_tokens") or 256)
         kwargs: dict = {
             "messages": messages,
-            "temperature": 0.0,
+            "temperature": float(controls["temperature"]),
             "max_tokens": max_tokens,
-            "seed": seed,
+            "seed": int(controls["seed"]),
             "stream": False,
-            "top_p": 1.0,
-            "top_k": 1,
-            "repeat_penalty": 1.0,
+            "top_p": float(controls["top_p"]),
+            "top_k": int(controls["top_k"]),
+            "repeat_penalty": float(controls["repeat_penalty"]),
         }
         if job.get("stop"):
             kwargs["stop"] = job["stop"]
@@ -208,6 +247,17 @@ async def _generate(llm, kwargs: dict, on_delta) -> tuple[str, int, int, str]:
     return text, prompt_tokens, completion_tokens, finish
 
 
+def llama_cpp_version() -> str:
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+    except ImportError:
+        return ""
+    try:
+        return version("llama-cpp-python")[:64]
+    except PackageNotFoundError:
+        return ""
+
+
 def open_llamacpp(options: dict | None = None) -> LlamaCppRuntime:
     options = options or {}
     repo = str(options.get("repo") or DEFAULT_REPO)
@@ -215,7 +265,7 @@ def open_llamacpp(options: dict | None = None) -> LlamaCppRuntime:
     model_id = str(options.get("model_id") or DEFAULT_MODEL_ID)
     cache = Path(str(options.get("cache") or "data/models"))
     threads = max(1, int(options.get("threads") or 2))
-    n_ctx = max(512, int(options.get("n_ctx") or 2048))
+    n_ctx = max(512, int(options.get("n_ctx") or DET_NUM_CTX))
     pinned = str(options.get("sha256") or "").strip().lower()
     if not pinned and repo == DEFAULT_REPO and filename == DEFAULT_FILE:
         pinned = DEFAULT_GGUF_SHA256
@@ -241,4 +291,10 @@ def open_llamacpp(options: dict | None = None) -> LlamaCppRuntime:
         seed=0,
         verbose=False,
     )
-    return LlamaCppRuntime(model_id=model_id, digest=sha256_file(path), llm=llm)
+    return LlamaCppRuntime(
+        model_id=model_id,
+        digest=cached_sha256(path),
+        llm=llm,
+        num_ctx=n_ctx,
+        version=llama_cpp_version(),
+    )

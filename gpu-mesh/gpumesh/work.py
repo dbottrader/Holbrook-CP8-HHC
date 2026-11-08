@@ -38,7 +38,15 @@ from gpumesh.errors import MeshError
 from gpumesh.ledger import entry_public, tip_status, verify_session
 from gpumesh.ledger_backend import append_current as append
 from gpumesh.settings import Settings
-from gpumesh.textutil import canon_answer, compare_outputs, mesh_seed
+from gpumesh.textutil import (
+    DET_NUM_CTX,
+    DET_REPEAT_PENALTY,
+    DET_TOP_K,
+    DET_TOP_P,
+    canon_answer,
+    compare_outputs,
+    mesh_seed,
+)
 
 log = logging.getLogger("gpumesh.work")
 
@@ -240,6 +248,9 @@ def register_node(session: Session, settings: Settings, spec: dict, ip: str) -> 
         created_at=now,
         last_ip=ip[:64],
         version=str(spec.get("version") or "")[:32],
+        agent_commit=str(spec.get("agent_commit") or spec.get("version") or "")[:64],
+        runtime_name=str(spec.get("runtime_name") or backend)[:32],
+        runtime_version=str(spec.get("runtime_version") or "")[:64],
         **_gpu_fields(spec.get("gpu") if isinstance(spec.get("gpu"), dict) else None),
     )
     session.add(node)
@@ -259,6 +270,9 @@ def register_node(session: Session, settings: Settings, spec: dict, ip: str) -> 
             "accelerator": node.accelerator,
             "models": [m["id"] for m in clean_models],
             "model_digests": [m["digest"] for m in clean_models],
+            "agent_commit": node.agent_commit,
+            "runtime_name": node.runtime_name,
+            "runtime_version": node.runtime_version,
             "credits": 0,
             "amount": 0,
         },
@@ -355,15 +369,28 @@ def heartbeat(session: Session, node: Node, spec: dict, ip: str) -> Node:
         by_id = {item.get("id"): item for item in known if isinstance(item, dict) and item.get("id")}
         changed = False
         for item in spec["models"][:64]:
-            if not isinstance(item, dict) or "resident" not in item:
+            if not isinstance(item, dict):
                 continue
             current = by_id.get(str(item.get("id") or ""))
             if current is None:
                 continue
-            current["resident"] = bool(item.get("resident"))
-            changed = True
+            if "resident" in item:
+                current["resident"] = bool(item.get("resident"))
+                changed = True
+            incoming = str(item.get("digest") or "").strip()
+            if incoming and incoming[:128] != str(current.get("digest") or ""):
+                current["digest"] = incoming[:128]
+                changed = True
         if changed:
             node.models_json = json.dumps(list(by_id.values()))
+    if spec.get("agent_commit") or spec.get("version"):
+        node.agent_commit = str(spec.get("agent_commit") or spec.get("version") or "")[:64]
+    if spec.get("version"):
+        node.version = str(spec.get("version") or "")[:32]
+    if spec.get("runtime_name"):
+        node.runtime_name = str(spec.get("runtime_name") or "")[:32]
+    if spec.get("runtime_version"):
+        node.runtime_version = str(spec.get("runtime_version") or "")[:64]
     if node.status == "offline":
         node.status = "online"
     _maybe_uptime(session, node)
@@ -480,6 +507,10 @@ def enqueue_inference(
         max_tokens=max_tokens,
         seed=mesh_seed(job_id),
         stop_json=json.dumps(stop),
+        top_k=DET_TOP_K,
+        top_p=DET_TOP_P,
+        repeat_penalty=DET_REPEAT_PENALTY,
+        num_ctx=DET_NUM_CTX,
         max_attempts=settings.max_attempts,
         client_key=client_key,
         created_at=now,
@@ -615,8 +646,30 @@ def maybe_inject_canary(session: Session, settings: Settings) -> None:
         _meta_set(session, "last_canary_at", str(now))
 
 
+def known_digest(value: object) -> str:
+    """A digest that can be compared. Missing and ``unpinned`` are unknown."""
+
+    text = str(value or "").strip()
+    norm = text.lower()
+    if not norm or norm == "unpinned" or norm.endswith("-unpinned"):
+        return ""
+    return text[:128]
+
+
+def digests_match(left: object, right: object) -> bool:
+    """True only when both digests are known and equal. Two unknowns do not match."""
+
+    recorded = known_digest(left)
+    advertised = known_digest(right)
+    if not recorded or not advertised:
+        return False
+    return recorded.lower() == advertised.lower()
+
+
 def _maybe_enqueue_verification(session: Session, settings: Settings, parent: Job) -> Job | None:
     if parent.kind != "inference":
+        return None
+    if not known_digest(parent.model_digest):
         return None
     if settings.verify_sample_rate <= 0:
         return None
@@ -651,6 +704,10 @@ def _maybe_enqueue_verification(session: Session, settings: Settings, parent: Jo
         client_key="verify",
         created_at=now,
         model_digest=parent.model_digest or "",
+        top_k=DET_TOP_K if parent.top_k is None else int(parent.top_k),
+        top_p=DET_TOP_P if parent.top_p is None else float(parent.top_p),
+        repeat_penalty=DET_REPEAT_PENALTY if parent.repeat_penalty is None else float(parent.repeat_penalty),
+        num_ctx=DET_NUM_CTX if parent.num_ctx is None else int(parent.num_ctx),
     )
     session.add(job)
     session.flush()
@@ -686,9 +743,15 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
         if job.kind == "verification" and _skip_repeat_verifier(session, job, node):
             continue
         node_digest = _digest_for(node, job.model)
-        if job.kind == "verification" and job.model_digest and node_digest != job.model_digest:
-            continue
-        digest = job.model_digest if job.kind == "verification" and job.model_digest else node_digest
+        if job.kind == "verification":
+            if not digests_match(job.model_digest, node_digest):
+                continue
+            digest = str(job.model_digest or "")[:128]
+        else:
+            digest = str(node_digest or "").strip()[:128] or "unpinned"
+        agent_commit = (node.agent_commit or node.version or "")[:64]
+        runtime_name = (node.runtime_name or node.backend or "")[:32]
+        runtime_version = (node.runtime_version or "")[:64]
         new_attempt = job.attempt + 1
         new_gen = int(job.lease_generation or 0) + 1
         deadline = now + settings.job_timeout_sec
@@ -705,6 +768,13 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
                 attempt=new_attempt,
                 cancel_requested=0,
                 model_digest=digest,
+                agent_commit=agent_commit,
+                runtime_name=runtime_name,
+                runtime_version=runtime_version,
+                top_k=DET_TOP_K,
+                top_p=DET_TOP_P,
+                repeat_penalty=DET_REPEAT_PENALTY,
+                num_ctx=DET_NUM_CTX,
             )
         )
         if result.rowcount != 1:
@@ -718,6 +788,13 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
         job.attempt = new_attempt
         job.cancel_requested = 0
         job.model_digest = digest
+        job.agent_commit = agent_commit
+        job.runtime_name = runtime_name
+        job.runtime_version = runtime_version
+        job.top_k = DET_TOP_K
+        job.top_p = DET_TOP_P
+        job.repeat_penalty = DET_REPEAT_PENALTY
+        job.num_ctx = DET_NUM_CTX
         node.inflight += 1
         node.last_assigned = now
         session.flush()
@@ -772,6 +849,10 @@ def job_for_node(job: Job) -> dict[str, Any]:
         "lease_generation": job.lease_generation,
         "lease_expires_at": job.lease_expires_at,
         "model_digest": job.model_digest,
+        "top_k": DET_TOP_K if job.top_k is None else int(job.top_k),
+        "top_p": DET_TOP_P if job.top_p is None else float(job.top_p),
+        "repeat_penalty": DET_REPEAT_PENALTY if job.repeat_penalty is None else float(job.repeat_penalty),
+        "num_ctx": DET_NUM_CTX if job.num_ctx is None else int(job.num_ctx),
     }
 
 
@@ -1128,6 +1209,7 @@ def submit_result(session: Session, settings: Settings, node: Node, job_id: str,
     job.finish_reason = finish
     job.completed_at = time.time()
     job.error = ""
+    _apply_runner_identity(job, node, spec)
     _store_toploc(job, spec)
     _release_inflight(node)
     node.consecutive_failures = 0
@@ -1154,7 +1236,7 @@ def submit_result(session: Session, settings: Settings, node: Node, job_id: str,
             node=node,
             kind="execution_submitted",
             amount=0,
-            payload=_execution_payload(node, job, 0, "cancelled"),
+            payload=_execution_payload(node, job, 0, "cancelled", spec),
             settings=settings,
         )
         job.receipt_hash = receipt_hash
@@ -1175,7 +1257,7 @@ def submit_result(session: Session, settings: Settings, node: Node, job_id: str,
             node=node,
             kind="execution_submitted",
             amount=0,
-            payload=_execution_payload(node, job, 0, "pending"),
+            payload=_execution_payload(node, job, 0, "pending", spec),
             settings=settings,
         )
         credits = 0
@@ -1203,7 +1285,52 @@ def submit_result(session: Session, settings: Settings, node: Node, job_id: str,
     return _result_body(job)
 
 
-def _execution_payload(node: Node, job: Job, amount: int, decision: str) -> dict[str, Any]:
+def _apply_runner_identity(job: Job, node: Node, spec: dict) -> None:
+    if spec.get("agent_commit"):
+        job.agent_commit = str(spec["agent_commit"])[:64]
+    elif not job.agent_commit:
+        job.agent_commit = (node.agent_commit or node.version or "")[:64]
+    if spec.get("runtime_name"):
+        job.runtime_name = str(spec["runtime_name"])[:32]
+    elif not job.runtime_name:
+        job.runtime_name = (node.runtime_name or node.backend or "")[:32]
+    if spec.get("runtime_version"):
+        job.runtime_version = str(spec["runtime_version"])[:64]
+    elif not job.runtime_version:
+        job.runtime_version = (node.runtime_version or "")[:64]
+
+
+def _generation_fields(job: Job) -> dict[str, Any]:
+    return {
+        "agent_commit": job.agent_commit or "",
+        "runtime_name": job.runtime_name or "",
+        "runtime_version": job.runtime_version or "",
+        "temperature": float(job.temperature or 0),
+        "top_k": DET_TOP_K if job.top_k is None else int(job.top_k),
+        "top_p": DET_TOP_P if job.top_p is None else float(job.top_p),
+        "seed": 0 if job.seed is None else int(job.seed),
+        "num_ctx": DET_NUM_CTX if job.num_ctx is None else int(job.num_ctx),
+        "repeat_penalty": DET_REPEAT_PENALTY if job.repeat_penalty is None else float(job.repeat_penalty),
+        "model_digest": job.model_digest or "",
+    }
+
+
+def _reported_generation(spec: dict | None) -> dict[str, Any]:
+    if not spec:
+        return {}
+    reported = spec.get("generation")
+    if not isinstance(reported, dict):
+        return {}
+    keys = ("temperature", "top_k", "top_p", "seed", "num_ctx", "repeat_penalty")
+    return {"reported_generation": {key: reported.get(key) for key in keys}}
+
+
+def _parent_run(parent: Job) -> dict[str, Any]:
+    fields = _generation_fields(parent)
+    return {f"parent_{key}": value for key, value in fields.items()}
+
+
+def _execution_payload(node: Node, job: Job, amount: int, decision: str, spec: dict | None = None) -> dict[str, Any]:
     return {
         "schema": "gpumesh.execution.v1",
         "job_id": job.id,
@@ -1211,12 +1338,10 @@ def _execution_payload(node: Node, job: Job, amount: int, decision: str) -> dict
         "node_id": node.id,
         "worker_id": node.id,
         "model": job.model,
-        "model_digest": job.model_digest or "",
         "runtime": node.backend,
         "backend": node.backend,
-        "temperature": job.temperature,
+        **_generation_fields(job),
         "max_tokens": job.max_tokens,
-        "seed": 0 if job.seed is None else int(job.seed),
         "prompt_tokens": job.prompt_tokens,
         "completion_tokens": job.completion_tokens,
         "duration_ms": job.duration_ms,
@@ -1225,6 +1350,7 @@ def _execution_payload(node: Node, job: Job, amount: int, decision: str) -> dict
         "verifier_ids": "",
         "amount": amount,
         "credits": amount,
+        **_reported_generation(spec),
     }
 
 
@@ -1339,6 +1465,9 @@ def _settle_verification(session: Session, settings: Settings, node: Node, job: 
     base["verifier_decision"] = verdict
     base["match_rule"] = match_rule
     base["toploc"] = toploc["status"]
+    base.update(_generation_fields(job))
+    base.update(_parent_run(parent))
+    base.update(_reported_generation(spec))
     receipt, pay = settle_once(
         session,
         key=f"{job.id}:verifier_award",

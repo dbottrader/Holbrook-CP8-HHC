@@ -1,7 +1,9 @@
 """Inference backends: Ollama and vLLM.
 
-Volunteer jobs are temperature 0, top_k 1, and a hub-assigned seed. The seed
-is sent even when it is 0. This module does not serve a stand-in reply.
+Volunteer jobs are temperature 0, top_k 1, top_p 1, repeat_penalty 1,
+num_ctx 2048, and a hub-assigned seed. The seed is sent even when it is 0.
+Ollama tag digests are copied from /api/tags. This module does not serve a
+stand-in reply.
 """
 
 from __future__ import annotations
@@ -13,6 +15,8 @@ from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
+
+from gpumesh_node.pins import DET_NUM_CTX, DET_REPEAT_PENALTY, DET_TEMPERATURE, DET_TOP_K, DET_TOP_P
 
 _EXACT = (
     re.compile(r"reply with exactly(?: the token)?[:\s]+(\S+)", re.IGNORECASE),
@@ -54,11 +58,46 @@ def _words(text: str) -> int:
 
 
 def generation_controls(job: dict) -> dict:
-    """Temperature 0, top_k 1, and a seed. Seed 0 is included."""
+    """Pinned sampling options. Seed 0 is included.
+
+    top_p, repeat_penalty, and num_ctx are set here so Ollama does not fall
+    back to its defaults or to parameters baked into the Modelfile.
+    """
 
     raw_seed = job.get("seed")
     seed = 0 if raw_seed is None else int(raw_seed)
-    return {"temperature": 0, "seed": seed, "top_k": 1}
+    return {
+        "temperature": DET_TEMPERATURE,
+        "seed": seed,
+        "top_k": DET_TOP_K,
+        "top_p": DET_TOP_P,
+        "repeat_penalty": DET_REPEAT_PENALTY,
+        "num_ctx": DET_NUM_CTX,
+    }
+
+
+def ollama_model_rows(tags: dict, resident: set[str]) -> list[dict]:
+    """One row per /api/tags model. The digest is the tag's own digest."""
+
+    found = []
+    for item in tags.get("models") or []:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name") or item.get("model")
+        if not name:
+            continue
+        row = {"id": str(name), "resident": str(name) in resident, "source": "ollama"}
+        digest = str(item.get("digest") or "").strip()
+        if digest:
+            row["digest"] = digest[:128]
+        found.append(row)
+    return found
+
+
+def ollama_version(payload: object) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    return str(payload.get("version") or "").strip()[:64]
 
 
 def ollama_payload(job: dict) -> dict:
@@ -79,6 +118,8 @@ def vllm_payload(job: dict) -> dict:
         "temperature": controls["temperature"],
         "seed": controls["seed"],
         "top_k": controls["top_k"],
+        "top_p": controls["top_p"],
+        "repetition_penalty": controls["repeat_penalty"],
         "max_tokens": int(job.get("max_tokens") or 256),
         "stream": True,
         "stream_options": {"include_usage": True},
@@ -88,30 +129,50 @@ def vllm_payload(job: dict) -> dict:
     return payload
 
 
+def _http(timeout: httpx.Timeout | float, transport: httpx.BaseTransport | None) -> httpx.AsyncClient:
+    kwargs: dict = {"timeout": timeout}
+    if transport is not None:
+        kwargs["transport"] = transport
+    return httpx.AsyncClient(**kwargs)
+
+
 class OllamaRuntime:
     name = "ollama"
 
-    def __init__(self, host: str, timeout_sec: float = 120) -> None:
+    def __init__(
+        self,
+        host: str,
+        timeout_sec: float = 120,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
         self.host = host.rstrip("/")
         self.timeout = timeout_sec
+        self._transport = transport
+        self.version = ""
 
     async def list_models(self) -> list[dict]:
-        async with httpx.AsyncClient(timeout=5) as client:
+        async with _http(5, self._transport) as client:
             tags = await client.get(f"{self.host}/api/tags")
             tags.raise_for_status()
+            try:
+                version = await client.get(f"{self.host}/api/version")
+            except httpx.HTTPError:
+                version = None
+            if version is not None and version.status_code == 200:
+                try:
+                    self.version = ollama_version(version.json())
+                except ValueError:
+                    self.version = ""
             resident: set[str] = set()
             ps = await client.get(f"{self.host}/api/ps")
             if ps.status_code == 200:
                 for item in ps.json().get("models") or []:
+                    if not isinstance(item, dict):
+                        continue
                     name = item.get("name") or item.get("model")
                     if name:
-                        resident.add(name)
-            found = []
-            for item in tags.json().get("models") or []:
-                name = item.get("name") or item.get("model")
-                if name:
-                    found.append({"id": name, "resident": name in resident, "source": "ollama"})
-            return found
+                        resident.add(str(name))
+            return ollama_model_rows(tags.json(), resident)
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
         started = time.perf_counter()
@@ -120,7 +181,7 @@ class OllamaRuntime:
         prompt_tokens = 0
         completion_tokens = 0
         timeout = httpx.Timeout(10, read=self.timeout)
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        async with _http(timeout, self._transport) as client:
             async with client.stream("POST", f"{self.host}/api/chat", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
@@ -148,18 +209,39 @@ class OllamaRuntime:
 class VllmRuntime:
     name = "vllm"
 
-    def __init__(self, host: str, timeout_sec: float = 120) -> None:
+    def __init__(
+        self,
+        host: str,
+        timeout_sec: float = 120,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
         self.host = host.rstrip("/")
         self.timeout = timeout_sec
+        self._transport = transport
+        self.version = ""
 
     async def list_models(self) -> list[dict]:
-        async with httpx.AsyncClient(timeout=5) as client:
+        async with _http(5, self._transport) as client:
             response = await client.get(f"{self.host}/v1/models")
             response.raise_for_status()
+            try:
+                version = await client.get(f"{self.host}/version")
+            except httpx.HTTPError:
+                version = None
+            if version is not None and version.status_code == 200:
+                try:
+                    self.version = ollama_version(version.json())
+                except ValueError:
+                    self.version = ""
             found = []
             for item in response.json().get("data") or []:
-                if item.get("id"):
-                    found.append({"id": item["id"], "resident": True, "source": "vllm"})
+                if not isinstance(item, dict) or not item.get("id"):
+                    continue
+                row = {"id": item["id"], "resident": True, "source": "vllm"}
+                digest = str(item.get("digest") or item.get("sha256") or "").strip()
+                if digest:
+                    row["digest"] = digest[:128]
+                found.append(row)
             return found
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
@@ -169,7 +251,7 @@ class VllmRuntime:
         prompt_tokens = 0
         completion_tokens = 0
         timeout = httpx.Timeout(10, read=self.timeout)
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        async with _http(timeout, self._transport) as client:
             async with client.stream("POST", f"{self.host}/v1/chat/completions", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():

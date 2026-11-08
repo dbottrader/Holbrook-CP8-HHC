@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import time
 from pathlib import Path
 
@@ -15,7 +16,7 @@ import httpx
 
 from gpumesh_node import __version__
 from gpumesh_node.gpu import CPU_GPU, probe_gpu
-from gpumesh_node.runtime import InferenceResult, Runtime
+from gpumesh_node.runtime import InferenceResult, Runtime, generation_controls
 
 log = logging.getLogger("gpumesh.node")
 _PAYOUT = re.compile(r"^0x[0-9a-fA-F]{40}$")
@@ -23,6 +24,40 @@ _PAYOUT = re.compile(r"^0x[0-9a-fA-F]{40}$")
 # few hundred milliseconds inside that call. Shorter HTTP waits would multiply
 # Supabase edge invocations past the free-tier budget. The hub caps wait at 20s.
 CLAIM_WAIT_SEC = 15.0
+_REVISION: str | None = None
+
+
+def agent_revision() -> str:
+    """Git commit of this checkout, or the package version when git is absent."""
+
+    global _REVISION
+    if _REVISION is not None:
+        return _REVISION
+    for key in ("GPUMESH_COMMIT", "GIT_COMMIT", "SOURCE_COMMIT"):
+        value = os.environ.get(key, "").strip()
+        if value:
+            _REVISION = value[:64]
+            return _REVISION
+    start = Path(__file__).resolve()
+    for parent in start.parents:
+        if not (parent / ".git").exists():
+            continue
+        try:
+            out = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],
+                cwd=parent,
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            )
+        except (OSError, subprocess.SubprocessError):
+            break
+        text = out.decode().strip()
+        if text:
+            _REVISION = text[:64]
+            return _REVISION
+        break
+    _REVISION = __version__
+    return _REVISION
 
 
 def normalize_payout_address(value: str) -> str:
@@ -106,6 +141,9 @@ class NodeAgent:
             "gpu": self._gpu,
             "models": models,
             "version": __version__,
+            "agent_commit": agent_revision(),
+            "runtime_name": self.runtime.name,
+            "runtime_version": str(getattr(self.runtime, "version", "") or ""),
             "max_inflight": 1,
         }
         if self.payout_address:
@@ -193,6 +231,8 @@ class NodeAgent:
                 log.exception("TOPLOC proof was not built")
                 proofs = None
         client = await self._client()
+        custom = getattr(self.runtime, "effective_generation", None)
+        generation = custom(job) if custom is not None else generation_controls(job)
         body = {
             "output_text": result.text,
             "prompt_tokens": result.prompt_tokens,
@@ -200,6 +240,10 @@ class NodeAgent:
             "duration_ms": result.duration_ms,
             "finish_reason": result.finish_reason,
             "fencing_token": job.get("fencing_token"),
+            "agent_commit": agent_revision(),
+            "runtime_name": self.runtime.name,
+            "runtime_version": str(getattr(self.runtime, "version", "") or ""),
+            "generation": generation,
         }
         if proofs:
             body["toploc_proofs"] = proofs

@@ -6,9 +6,15 @@ import { createMemoryStore } from "../supabase/functions/gpu-mesh/memory_store.m
 import {
   CHAIN,
   CLAIM_POLL_MS,
+  DET_NUM_CTX,
+  DET_REPEAT_PENALTY,
+  DET_TOP_K,
+  DET_TOP_P,
   RESULT_POLL_MS,
+  digestsMatch,
   handle,
   independentVerifiers,
+  knownDigest,
   timingSafeEqualText,
   verifyMeshReceipt,
 } from "../supabase/functions/gpu-mesh/protocol.mjs";
@@ -178,12 +184,12 @@ test("seven days and three verified jobs release the hold", async () => {
   assert.equal((await call(store, "/api/nodes/heartbeat", {
     method: "POST",
     token: a.token,
-    body: { name: "worker-a", backend: "llamacpp", models: [{ id: "SmolLM2-360M-Instruct" }] },
+    body: { name: "worker-a", backend: "llamacpp", models: [{ id: "SmolLM2-360M-Instruct", digest: "pin" }] },
   }, {}, clock)).status, 200);
   assert.equal((await call(store, "/api/nodes/heartbeat", {
     method: "POST",
     token: b.token,
-    body: { name: "worker-b", backend: "llamacpp", models: [{ id: "SmolLM2-360M-Instruct" }] },
+    body: { name: "worker-b", backend: "llamacpp", models: [{ id: "SmolLM2-360M-Instruct", digest: "pin" }] },
   }, {}, clock)).status, 200);
 
   for (let n = 0; n < 3; n++) {
@@ -787,4 +793,260 @@ test("a sampled request is clamped and the verifier copies the parent seed", asy
   const receipt = follow.data.gpumesh.receipt;
   const payload = JSON.parse(receipt.payload);
   assert.equal(payload.verifier_decision, "agree");
+  assert.equal(payload.temperature, 0);
+  assert.equal(payload.top_k, DET_TOP_K);
+  assert.equal(payload.top_p, DET_TOP_P);
+  assert.equal(payload.repeat_penalty, DET_REPEAT_PENALTY);
+  assert.equal(payload.num_ctx, DET_NUM_CTX);
+  assert.equal(payload.model_digest, "pin");
+  assert.equal(payload.seed, served.seed);
+});
+
+test("unknown digests never match, including two unpinned values", () => {
+  assert.equal(knownDigest(""), "");
+  assert.equal(knownDigest("  "), "");
+  assert.equal(knownDigest("unpinned"), "");
+  assert.equal(knownDigest("Unpinned"), "");
+  assert.equal(knownDigest("groq-unpinned"), "");
+  assert.equal(digestsMatch("unpinned", "unpinned"), false);
+  assert.equal(digestsMatch("", ""), false);
+  assert.equal(digestsMatch("unpinned", ""), false);
+  assert.equal(digestsMatch("groq-unpinned", "groq-unpinned"), false);
+  assert.equal(digestsMatch("sha256:abc", "unpinned"), false);
+  assert.equal(digestsMatch("sha256:abc", "sha256:def"), false);
+  assert.equal(digestsMatch("sha256:AbC", "SHA256:abc"), true);
+});
+
+test("the claim query reads model_digest so an omitted column cannot look like a match", () => {
+  const store = readFileSync(new URL("../supabase/functions/gpu-mesh/supabase_store.mjs", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../supabase/migrations/20261108170000_gpu_mesh_digest_pin.sql", import.meta.url), "utf8");
+  assert.match(store, /lease_generation,attempt,model_digest/);
+  assert.match(migration, /add column if not exists agent_commit/);
+  assert.match(migration, /add column if not exists runtime_version/);
+  assert.match(migration, /add column if not exists num_ctx/);
+  assert.match(migration, /add column if not exists repeat_penalty/);
+});
+
+test("two unpinned digests are not a deterministic verification", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const models = [{ id: "SmolLM2-360M-Instruct", digest: "unpinned" }];
+  const a = await register(store, "origin", clock, { models });
+  const b = await register(store, "checker", clock, { models });
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "SmolLM2-360M-Instruct", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "hello", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(served);
+  assert.equal(served.model_digest, "unpinned");
+  const checked = await work(store, b.token, "hello", clock, env);
+  assert.equal(checked, null);
+  const response = await pending;
+  const body = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(body));
+  assert.equal(body.gpumesh.status, "completed");
+  assert.equal(body.gpumesh.credits, 0);
+  const jobs = await store.listJobs(["queued", "leased", "running", "verifying", "verified", "completed"]);
+  assert.equal(jobs.some((job) => job.kind === "verification"), false);
+});
+
+test("a verifier with a different digest is not matched", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "origin", clock, {
+    models: [{ id: "SmolLM2-360M-Instruct", digest: "sha256:aaa" }],
+  });
+  const b = await register(store, "checker", clock, {
+    models: [{ id: "SmolLM2-360M-Instruct", digest: "sha256:bbb" }],
+  });
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "SmolLM2-360M-Instruct", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "hello", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.equal(served.model_digest, "sha256:aaa");
+  const checked = await work(store, b.token, "other", clock, env);
+  assert.equal(checked, null);
+  await pending;
+  const queued = await store.listJobs(["queued"]);
+  const verification = queued.find((job) => job.kind === "verification");
+  assert.ok(verification);
+  assert.equal(verification.model_digest, "sha256:aaa");
+  assert.equal(verification.assigned_node_id, "");
+});
+
+test("a claim list that drops model_digest cannot verify", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "origin", clock);
+  const b = await register(store, "checker", clock);
+  const orig = store.listQueuedForClaim.bind(store);
+  store.listQueuedForClaim = async (models) => {
+    const rows = await orig(models);
+    return rows.map((row) => ({ ...row, model_digest: undefined }));
+  };
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "SmolLM2-360M-Instruct", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "hello", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(served);
+  const checked = await work(store, b.token, "hello", clock, env);
+  assert.equal(checked, null);
+  await pending;
+});
+
+test("matching digests record both runners and the pinned options", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "origin", clock, {
+    backend: "ollama",
+    agent_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    runtime_name: "ollama",
+    runtime_version: "0.6.3",
+    models: [{ id: "asin-qwen0.5b:latest", digest: "sha256:AbC", source: "ollama" }],
+  });
+  const b = await register(store, "checker", clock, {
+    backend: "ollama",
+    agent_commit: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    runtime_name: "ollama",
+    runtime_version: "0.6.4",
+    models: [{ id: "asin-qwen0.5b:latest", digest: "sha256:abc", source: "ollama" }],
+  });
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: {
+      model: "asin-qwen0.5b:latest",
+      temperature: 0.7,
+      max_tokens: 40,
+      messages: [{ role: "user", content: "Say hi" }],
+    },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    const claimed = await call(store, "/api/nodes/jobs/claim?wait=0", { method: "POST", token: a.token }, env, clock);
+    const job = claimed.data.job;
+    if (!job) {
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      continue;
+    }
+    assert.equal(job.top_k, DET_TOP_K);
+    assert.equal(job.top_p, DET_TOP_P);
+    assert.equal(job.repeat_penalty, DET_REPEAT_PENALTY);
+    assert.equal(job.num_ctx, DET_NUM_CTX);
+    assert.equal(job.temperature, 0);
+    const done = await call(store, `/api/nodes/jobs/${job.job_id}/result`, {
+      method: "POST",
+      token: a.token,
+      body: {
+        output_text: "same-words",
+        prompt_tokens: 8,
+        completion_tokens: 4,
+        duration_ms: 30,
+        finish_reason: "stop",
+        fencing_token: job.fencing_token,
+        agent_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        runtime_name: "ollama",
+        runtime_version: "0.6.3",
+        generation: {
+          temperature: 0,
+          top_k: 1,
+          top_p: 1,
+          seed: job.seed,
+          num_ctx: 2048,
+          repeat_penalty: 1,
+        },
+      },
+    }, env, clock);
+    assert.equal(done.status, 200, JSON.stringify(done.data));
+    served = job;
+  }
+  assert.ok(served);
+  let checked = null;
+  for (let i = 0; i < 20 && !checked; i++) {
+    const claimed = await call(store, "/api/nodes/jobs/claim?wait=0", { method: "POST", token: b.token }, env, clock);
+    const job = claimed.data.job;
+    if (!job) {
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      continue;
+    }
+    assert.equal(job.model_digest.toLowerCase(), "sha256:abc");
+    assert.equal(job.seed, served.seed);
+    const done = await call(store, `/api/nodes/jobs/${job.job_id}/result`, {
+      method: "POST",
+      token: b.token,
+      body: {
+        output_text: "same-words",
+        prompt_tokens: 8,
+        completion_tokens: 4,
+        duration_ms: 30,
+        finish_reason: "stop",
+        fencing_token: job.fencing_token,
+        agent_commit: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        runtime_name: "ollama",
+        runtime_version: "0.6.4",
+        generation: {
+          temperature: 0,
+          top_k: 1,
+          top_p: 1,
+          seed: job.seed,
+          num_ctx: 2048,
+          repeat_penalty: 1,
+        },
+      },
+    }, env, clock);
+    assert.equal(done.status, 200, JSON.stringify(done.data));
+    checked = job;
+  }
+  assert.ok(checked);
+  const response = await pending;
+  const early = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(early));
+  const follow = await call(store, `/v1/jobs/${early.gpumesh.job_id}`, {}, env, clock);
+  const award = JSON.parse(follow.data.gpumesh.receipt.payload);
+  assert.equal(award.agent_commit, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  assert.equal(award.runtime_name, "ollama");
+  assert.equal(award.runtime_version, "0.6.3");
+  assert.equal(award.top_p, 1);
+  assert.equal(award.repeat_penalty, 1);
+  assert.equal(award.num_ctx, 2048);
+  assert.equal(award.top_k, 1);
+  assert.equal(award.temperature, 0);
+  assert.equal(award.seed, served.seed);
+  const receipts = await call(store, "/api/receipts?limit=20", {}, env, clock);
+  const verification = receipts.data.receipts.map((row) => ({ kind: row.kind, payload: JSON.parse(row.payload) }))
+    .find((row) => row.kind === "verification_pass");
+  assert.ok(verification);
+  assert.equal(verification.payload.agent_commit, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+  assert.equal(verification.payload.runtime_name, "ollama");
+  assert.equal(verification.payload.runtime_version, "0.6.4");
+  assert.equal(verification.payload.parent_agent_commit, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  assert.equal(verification.payload.parent_runtime_version, "0.6.3");
+  assert.equal(verification.payload.parent_model_digest.toLowerCase(), "sha256:abc");
+  assert.equal(verification.payload.top_p, 1);
+  assert.equal(verification.payload.num_ctx, 2048);
+  assert.equal(verification.payload.repeat_penalty, 1);
+  assert.equal(verification.payload.reported_generation.num_ctx, 2048);
+  assert.equal(verification.payload.reported_generation.repeat_penalty, 1);
 });

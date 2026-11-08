@@ -16,6 +16,14 @@ _EXACT = (
     re.compile(r"repeat only this string[:\s]+(\S+)", re.IGNORECASE),
 )
 
+# Sent on every volunteer request. Ollama's defaults (top_p 0.9, repeat_penalty
+# 1.1) and a Modelfile num_ctx must not differ between hosts.
+DET_TEMPERATURE = 0
+DET_TOP_K = 1
+DET_TOP_P = 1.0
+DET_REPEAT_PENALTY = 1.0
+DET_NUM_CTX = 2048
+
 
 def normalize_text(text: str) -> str:
     return " ".join(text.lower().split())

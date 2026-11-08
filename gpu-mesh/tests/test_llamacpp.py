@@ -16,6 +16,7 @@ from gpumesh_node.llamacpp import (
     DEFAULT_MODEL_ID,
     DEFAULT_REPO,
     LlamaCppRuntime,
+    cached_sha256,
     ensure_gguf,
     sha256_file,
 )
@@ -45,6 +46,28 @@ def test_default_smollm_pin_matches_the_official_file():
     assert DEFAULT_MODEL_ID == "SmolLM2-360M-Instruct"
     assert DEFAULT_GGUF_SHA256 == "48ab3034d0dd401fbc721eb1df3217902fee7dab9078992d66431f09b7750201"
     assert len(DEFAULT_GGUF_SHA256) == 64
+
+
+def test_gguf_sha256_is_cached_until_the_file_changes(tmp_path: Path, monkeypatch):
+    path = tmp_path / "toy.gguf"
+    path.write_bytes(b"weights")
+    first = cached_sha256(path)
+    assert first == sha256_file(path)
+    calls = {"n": 0}
+    real = sha256_file
+
+    def counting(target):
+        calls["n"] += 1
+        return real(target)
+
+    monkeypatch.setattr("gpumesh_node.llamacpp.sha256_file", counting)
+    assert cached_sha256(path) == first
+    assert calls["n"] == 0
+    path.write_bytes(b"weights-changed")
+    again = cached_sha256(path)
+    assert calls["n"] == 1
+    assert again != first
+    assert again == sha256_file(path)
 
 
 def test_cached_gguf_is_reused_when_the_pin_matches(tmp_path: Path):
@@ -77,6 +100,7 @@ async def test_llamacpp_runtime_generates_and_answers_canaries_literally():
     models = await runtime.list_models()
     assert models[0]["source"] == "llama.cpp"
     assert models[0]["id"] == "SmolLM2-360M-Instruct"
+    assert models[0]["digest"] == "abc"
     deltas: list[str] = []
 
     async def on_delta(text: str) -> None:
@@ -99,6 +123,8 @@ async def test_llamacpp_runtime_generates_and_answers_canaries_literally():
     assert llm.calls[0]["stream"] is False
     assert llm.calls[0]["temperature"] == 0.0
     assert llm.calls[0]["top_k"] == 1
+    assert llm.calls[0]["top_p"] == 1.0
+    assert llm.calls[0]["repeat_penalty"] == 1.0
     assert llm.calls[0]["seed"] == 0
     canary = await runtime.complete(
         {
@@ -129,6 +155,8 @@ async def test_llamacpp_sends_seed_zero_and_forces_temperature_zero():
     )
     assert llm.calls[0]["temperature"] == 0.0
     assert llm.calls[0]["top_k"] == 1
+    assert llm.calls[0]["top_p"] == 1.0
+    assert llm.calls[0]["repeat_penalty"] == 1.0
     assert llm.calls[0]["seed"] == 0
     assert "seed" in llm.calls[0]
 

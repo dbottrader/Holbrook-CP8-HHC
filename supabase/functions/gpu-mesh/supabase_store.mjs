@@ -29,6 +29,9 @@ function fromNode(row) {
     created_at: num(row.created_at),
     payout_address: String(row.payout_address || ""),
     accelerator: String(row.accelerator || "cpu"),
+    agent_commit: String(row.agent_commit || ""),
+    runtime_name: String(row.runtime_name || ""),
+    runtime_version: String(row.runtime_version || ""),
   };
 }
 
@@ -62,6 +65,13 @@ function fromJob(row) {
     settlement_tx_hash: String(row.settlement_tx_hash || ""),
     settlement_tx_url: String(row.settlement_tx_url || ""),
     settlement_status: String(row.settlement_status || ""),
+    agent_commit: String(row.agent_commit || ""),
+    runtime_name: String(row.runtime_name || ""),
+    runtime_version: String(row.runtime_version || ""),
+    top_k: row.top_k == null || row.top_k === "" ? null : num(row.top_k),
+    top_p: row.top_p == null || row.top_p === "" ? null : num(row.top_p),
+    repeat_penalty: row.repeat_penalty == null || row.repeat_penalty === "" ? null : num(row.repeat_penalty),
+    num_ctx: row.num_ctx == null || row.num_ctx === "" ? null : num(row.num_ctx),
   };
 }
 
@@ -171,7 +181,7 @@ export function createSupabaseStore(sb) {
       if (!ids.length) return [];
       const data = await must(
         sb.from("gpumesh_jobs")
-          .select("id,kind,model,priority,created_at,excluded,origin_node_id,lease_generation,attempt")
+          .select("id,kind,model,priority,created_at,excluded,origin_node_id,lease_generation,attempt,model_digest")
           .eq("status", "queued")
           .in("model", ids)
           .order("priority", { ascending: false })
