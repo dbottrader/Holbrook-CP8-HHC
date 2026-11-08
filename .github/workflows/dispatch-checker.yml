@@ -1,0 +1,26 @@
+name: dispatch-checker
+
+# The cloud-agent token cannot call workflow_dispatch (HTTP 403).
+# This file's own push to main can. GITHUB_TOKEN is allowed to start
+# workflow_dispatch, unlike other events. The path filter means a later
+# edit of checker-node.yml does not start another run.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/dispatch-checker.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Dispatch checker-node on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run checker-node.yml --ref main -f minutes=30

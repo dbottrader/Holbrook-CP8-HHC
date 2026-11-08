@@ -58,6 +58,15 @@ def test_workflow_pins_the_free_checker_and_no_secret():
     assert "\n      - name:" not in between
 
 
+def test_dispatch_helper_calls_workflow_dispatch_once():
+    text = (ROOT / ".github" / "workflows" / "dispatch-checker.yml").read_text(encoding="utf-8")
+    assert "gh workflow run checker-node.yml --ref main -f minutes=30" in text
+    assert "actions: write" in text
+    assert "github.token" in text
+    assert "secrets." not in text
+    assert ".github/workflows/dispatch-checker.yml" in text
+
+
 def test_verification_receipt_is_the_stop_signal():
     module = _wait_module()
     node = "node_aabbccddeeff"
