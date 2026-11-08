@@ -4,7 +4,7 @@ This process runs on the operator's Linux box. It turns a verified GPU-mesh job 
 
 HHCW is a utility credit for verified contribution. The settler does not sell it and does not promise a return.
 
-The deployer key stays in a file on that box. The hub never receives it. Supabase stores only the settler bearer token `GPU_MESH_SETTLER_TOKEN` (environment or Vault, same name) and the public transaction hash.
+The deployer key stays in a file on that box. The hub never receives it. Supabase stores only the settler bearer token and the public transaction hash. The function environment name is `GPU_MESH_SETTLER_TOKEN`. The Vault name is `gpu_mesh_settler_token`.
 
 ## What it submits
 
