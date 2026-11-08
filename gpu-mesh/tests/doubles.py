@@ -13,6 +13,7 @@ class FixedTextRuntime:
 
     def __init__(self, text: str = "DETERMINISTIC_MESH_TEXT", model: str = MODEL, digest: str = DIGEST) -> None:
         self.name = "llamacpp"
+        self.prompt_proofs = True
         self.text = text
         self.model = model
         self.digest = digest

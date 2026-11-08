@@ -180,7 +180,10 @@ class NodeAgent:
             return None
         proofs = None
         source = ""
-        if self.runtime.name == "cpu":
+        # Prompt-trace proofs bind the job to the prompt. Real Ollama, vLLM, and
+        # llama.cpp workers do not set this. A test double can, so a machine
+        # with TOPLOC installed still credits an exact match.
+        if self.runtime.name == "cpu" or getattr(self.runtime, "prompt_proofs", False):
             try:
                 from gpumesh_node.toploc_proof import build_prompt_proofs
 
