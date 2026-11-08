@@ -24,7 +24,10 @@ concurrency:
 jobs:
   checker:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.minutes + 60 }}
+    # Literal 90. timeout-minutes rejected an arithmetic expression
+    # and failed workflow validation on main.
+    # The minutes input still bounds the node loop below.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
