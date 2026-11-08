@@ -23,4 +23,4 @@ jobs:
       - name: Dispatch checker-node on main
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run checker-node.yml --ref main -f minutes=30
+        run: gh workflow run checker-node.yml --repo dbottrader/Holbrook-CP8-HHC --ref main -f minutes=30
