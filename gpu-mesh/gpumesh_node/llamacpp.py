@@ -21,7 +21,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from gpumesh.textutil import DET_NUM_CTX
+from gpumesh_node.pins import DET_NUM_CTX
 from gpumesh_node.runtime import InferenceResult, exact_reply, generation_controls
 
 log = logging.getLogger("gpumesh.node")

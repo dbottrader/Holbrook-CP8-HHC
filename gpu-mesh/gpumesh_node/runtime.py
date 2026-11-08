@@ -16,7 +16,7 @@ from typing import Protocol
 
 import httpx
 
-from gpumesh.textutil import DET_NUM_CTX, DET_REPEAT_PENALTY, DET_TEMPERATURE, DET_TOP_K, DET_TOP_P
+from gpumesh_node.pins import DET_NUM_CTX, DET_REPEAT_PENALTY, DET_TEMPERATURE, DET_TOP_K, DET_TOP_P
 
 _EXACT = (
     re.compile(r"reply with exactly(?: the token)?[:\s]+(\S+)", re.IGNORECASE),
