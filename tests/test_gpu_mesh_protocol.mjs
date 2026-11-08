@@ -326,6 +326,26 @@ test("the coordinator does not store a private signing seed", () => {
   assert.equal(protocol.includes("SKIP_VERIFIER"), false);
   assert.equal(protocol.includes('ledger: "simulated"'), false);
   assert.equal(protocol.includes("GPU_MESH_SETTLER_TOKEN"), true);
+  const secrets = readFileSync(new URL("../supabase/functions/gpu-mesh/secrets.mjs", import.meta.url), "utf8");
+  assert.match(secrets, /export const ENV_SETTLER = "GPU_MESH_SETTLER_TOKEN"/);
+  assert.match(secrets, /export const VAULT_SETTLER = "gpu_mesh_settler_token"/);
+});
+
+test("an empty environment reads the settler token from the lowercase Vault name", async () => {
+  const seen = [];
+  const response = await handle(req("/api/settlements/pending", { token: "vault-settler" }), {
+    store: createMemoryStore(),
+    env: {},
+    readVault: async (name) => {
+      seen.push(name);
+      return name === "gpu_mesh_settler_token" ? "vault-settler" : "";
+    },
+  });
+  const data = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(data));
+  assert.deepEqual(data.settlements, []);
+  assert.deepEqual(seen, ["gpu_mesh_settler_token"]);
+  assert.equal(JSON.stringify(data).includes("vault-settler"), false);
 });
 
 test("verifier independence is two ids, neither of them the worker", async () => {

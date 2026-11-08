@@ -30,4 +30,4 @@ supabase functions deploy gpu-mesh --project-ref ecenvlwyenpakrxfuqup --no-verif
 supabase secrets set GROQ_API_KEY=... --project-ref ecenvlwyenpakrxfuqup
 ```
 
-`GPU_MESH_SIGNING_KEY` (64 hex characters, Ed25519 seed) pins the receipt key. `GPU_MESH_SETTLER_TOKEN` authenticates the box settler. The deployer key stays on the operator machine and is not a Supabase secret. HHC recorded here is a utility credit for verified contribution. Settlement is HHCW `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d` and Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA` on Base Sepolia. Promotion stays HOLD.
+`GPU_MESH_SIGNING_KEY` (64 hex characters, Ed25519 seed) pins the receipt key. `GPU_MESH_SETTLER_TOKEN` authenticates the box settler from the function environment. The Vault name is `gpu_mesh_settler_token`. The deployer key stays on the operator machine and is not a Supabase secret. HHC recorded here is a utility credit for verified contribution. Settlement is HHCW `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d` and Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA` on Base Sepolia. Promotion stays HOLD.
