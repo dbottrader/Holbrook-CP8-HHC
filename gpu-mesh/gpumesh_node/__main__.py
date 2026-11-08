@@ -38,6 +38,12 @@ def _config_from_env(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--llama-ctx", type=int, default=int(os.environ.get("GPU_MESH_LLAMA_CTX", "2048")))
     parser.add_argument("--gguf-sha256", default=os.environ.get("GPU_MESH_GGUF_SHA256", ""))
     parser.add_argument("--heartbeat", type=float, default=float(os.environ.get("GPU_MESH_HEARTBEAT_SEC", "10")))
+    parser.add_argument(
+        "--claim-wait",
+        type=float,
+        default=float(os.environ.get("GPU_MESH_CLAIM_WAIT_SEC", "15")),
+        help="seconds to hold one claim request open; the hub polls the queue inside it",
+    )
     parser.add_argument("--invite", default=os.environ.get("GPU_MESH_INVITE", ""))
     parser.add_argument(
         "--payout-address",
@@ -91,6 +97,7 @@ async def _async_main(args: argparse.Namespace) -> None:
             name=name,
             state_path=Path(args.state),
             heartbeat_sec=args.heartbeat,
+            claim_wait_sec=args.claim_wait,
             invite=args.invite,
             payout_address=args.payout_address,
         )

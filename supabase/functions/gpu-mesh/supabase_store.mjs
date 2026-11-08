@@ -164,6 +164,26 @@ export function createSupabaseStore(sb) {
       const data = await must(sb.from("gpumesh_jobs").select("*").in("status", statuses).limit(200));
       return (data || []).map(fromJob);
     },
+    async listQueuedForClaim(models) {
+      const ids = (models || []).filter((id) => typeof id === "string" && id).slice(0, 64);
+      if (!ids.length) return [];
+      const data = await must(
+        sb.from("gpumesh_jobs")
+          .select("id,kind,model,priority,created_at,excluded,origin_node_id,lease_generation,attempt")
+          .eq("status", "queued")
+          .in("model", ids)
+          .order("priority", { ascending: false })
+          .order("created_at", { ascending: true })
+          .limit(50),
+      );
+      return (data || []).map(fromJob);
+    },
+    async touchHeartbeat(id, now) {
+      const { error } = await sb.from("gpumesh_nodes").update({ last_heartbeat: now }).eq("id", id);
+      if (error) throw new Error(error.message);
+      const wake = await sb.from("gpumesh_nodes").update({ status: "online" }).eq("id", id).eq("status", "offline");
+      if (wake.error) throw new Error(wake.error.message);
+    },
     async tip() {
       const data = await must(sb.from("gpumesh_ledger").select("seq,hash").order("seq", { ascending: false }).limit(1).maybeSingle());
       if (!data) return null;

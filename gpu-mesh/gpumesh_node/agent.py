@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import time
 from pathlib import Path
 
 import httpx
@@ -18,6 +19,10 @@ from gpumesh_node.runtime import InferenceResult, Runtime
 
 log = logging.getLogger("gpumesh.node")
 _PAYOUT = re.compile(r"^0x[0-9a-fA-F]{40}$")
+# One claim HTTP call stays open this long. The hub checks the queue every
+# few hundred milliseconds inside that call. Shorter HTTP waits would multiply
+# Supabase edge invocations past the free-tier budget. The hub caps wait at 20s.
+CLAIM_WAIT_SEC = 15.0
 
 
 def normalize_payout_address(value: str) -> str:
@@ -41,6 +46,7 @@ class NodeAgent:
         http: httpx.AsyncClient | None = None,
         state_path: Path | None = None,
         heartbeat_sec: float = 10,
+        claim_wait_sec: float = CLAIM_WAIT_SEC,
         invite: str = "",
         payout_address: str = "",
     ) -> None:
@@ -51,11 +57,13 @@ class NodeAgent:
         self._owns = http is None
         self.state_path = state_path
         self.heartbeat_sec = heartbeat_sec
+        self.claim_wait_sec = claim_wait_sec
         self.invite = invite
         self.payout_address = normalize_payout_address(payout_address)
         self.token: str | None = None
         self.node_id: str | None = None
         self._gpu = probe_gpu() or dict(CPU_GPU)
+        self._last_heartbeat = 0.0
 
     async def _client(self) -> httpx.AsyncClient:
         if self.http is None:
@@ -217,11 +225,14 @@ class NodeAgent:
             self._gpu.get("model"),
             note,
         )
+        await self._safe_heartbeat()
         while not stop.is_set():
             try:
-                await self.heartbeat()
-                job = await self.claim(min(20.0, max(self.heartbeat_sec, 1)))
+                # Claim first. A heartbeat must not sit in front of the next job.
+                job = await self.claim(self.claim_wait_sec)
                 if not job:
+                    if self._heartbeat_due():
+                        await self._safe_heartbeat()
                     continue
                 beater = asyncio.create_task(self._beat_during(stop))
                 try:
@@ -234,18 +245,40 @@ class NodeAgent:
                 raise
             except Exception:
                 log.exception("node loop error")
+                if stop.is_set():
+                    break
                 try:
-                    await asyncio.wait_for(stop.wait(), timeout=3)
+                    await asyncio.wait_for(stop.wait(), timeout=0.5)
                 except TimeoutError:
                     pass
 
+    def _heartbeat_due(self) -> bool:
+        if self._last_heartbeat <= 0:
+            return True
+        return time.monotonic() - self._last_heartbeat >= self.heartbeat_sec
+
+    async def _safe_heartbeat(self) -> None:
+        try:
+            await self.heartbeat()
+        except Exception:
+            log.exception("heartbeat failed")
+            return
+        self._last_heartbeat = time.monotonic()
+
     async def _beat_during(self, stop: asyncio.Event) -> None:
         while not stop.is_set():
-            await asyncio.sleep(self.heartbeat_sec)
-            try:
-                await self.heartbeat()
-            except Exception:
-                log.exception("heartbeat during job failed")
+            elapsed = time.monotonic() - self._last_heartbeat if self._last_heartbeat else 0.0
+            delay = max(0.0, self.heartbeat_sec - elapsed)
+            if delay:
+                try:
+                    await asyncio.wait_for(stop.wait(), timeout=delay)
+                except TimeoutError:
+                    pass
+                else:
+                    return
+            if stop.is_set():
+                return
+            await self._safe_heartbeat()
 
     async def aclose(self) -> None:
         if self._owns and self.http is not None:
