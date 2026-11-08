@@ -20,6 +20,7 @@ services:
       GPU_MESH_OLLAMA_HOST: ${GPU_MESH_OLLAMA_HOST:-http://ollama:11434}
       GPU_MESH_INVITE: ${GPU_MESH_INVITE:-}
       GPU_MESH_NAME: ${GPU_MESH_NAME:-volunteer}
+      GPU_MESH_PAYOUT_ADDRESS: ${GPU_MESH_PAYOUT_ADDRESS:-}
       GPU_MESH_ALLOW_CPU: "1"
     volumes:
       - join-data:/var/lib/gpumesh

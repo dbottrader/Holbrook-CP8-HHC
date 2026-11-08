@@ -27,6 +27,7 @@ function fromNode(row) {
     max_inflight: num(row.max_inflight, 1),
     last_heartbeat: num(row.last_heartbeat),
     created_at: num(row.created_at),
+    payout_address: String(row.payout_address || ""),
   };
 }
 
@@ -56,6 +57,9 @@ function fromJob(row) {
     lease_generation: num(row.lease_generation),
     lease_expires_at: num(row.lease_expires_at),
     priority: num(row.priority),
+    settlement_tx_hash: String(row.settlement_tx_hash || ""),
+    settlement_tx_url: String(row.settlement_tx_url || ""),
+    settlement_status: String(row.settlement_status || ""),
   };
 }
 
@@ -65,6 +69,44 @@ function toJob(row) {
     messages: row.messages || [],
     excluded: row.excluded || [],
     stop: row.stop ?? null,
+  };
+}
+
+function fromChain(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    amount: num(row.amount),
+    mesh_credits: num(row.mesh_credits),
+    created_at: num(row.created_at),
+    updated_at: num(row.updated_at),
+    receipt: row.receipt && typeof row.receipt === "string" ? JSON.parse(row.receipt) : (row.receipt || null),
+    receipt_hash: String(row.receipt_hash || ""),
+    tx_hash: String(row.tx_hash || ""),
+    tx_url: String(row.tx_url || ""),
+    detail: String(row.detail || ""),
+    verifier1_id: String(row.verifier1_id || ""),
+    verifier2_id: String(row.verifier2_id || ""),
+  };
+}
+
+function toChain(row) {
+  return {
+    id: row.id,
+    job_id: row.job_id,
+    worker_id: row.worker_id,
+    verifier1_id: row.verifier1_id || "",
+    verifier2_id: row.verifier2_id || "",
+    amount: row.amount || 0,
+    mesh_credits: row.mesh_credits || 0,
+    status: row.status,
+    receipt: row.receipt || null,
+    receipt_hash: row.receipt_hash || "",
+    tx_hash: row.tx_hash || "",
+    tx_url: row.tx_url || "",
+    detail: row.detail || "",
+    created_at: row.created_at || 0,
+    updated_at: row.updated_at || 0,
   };
 }
 
@@ -167,6 +209,27 @@ export function createSupabaseStore(sb) {
     async addChunk(jobId, seq, text) {
       const { error } = await sb.from("gpumesh_chunks").upsert({ job_id: jobId, seq, text });
       if (error) throw new Error(error.message);
+    },
+    async getChainSettlement(id) {
+      return fromChain(await must(sb.from("gpumesh_chain_settlements").select("*").eq("id", id).maybeSingle()));
+    },
+    async chainSettlementByJob(jobId) {
+      return fromChain(await must(sb.from("gpumesh_chain_settlements").select("*").eq("job_id", jobId).maybeSingle()));
+    },
+    async insertChainSettlement(row) {
+      const { error } = await sb.from("gpumesh_chain_settlements").insert(toChain(row));
+      if (error && error.code === "23505") return false;
+      if (error) throw new Error(error.message);
+      return true;
+    },
+    async saveChainSettlement(row) {
+      await must(sb.from("gpumesh_chain_settlements").update(toChain(row)).eq("id", row.id));
+    },
+    async listChainSettlements(statuses) {
+      let query = sb.from("gpumesh_chain_settlements").select("*").order("created_at", { ascending: true }).limit(200);
+      if (statuses && statuses.length) query = query.in("status", statuses);
+      const data = await must(query);
+      return (data || []).map(fromChain);
     },
     async stats() {
       const nodes = await must(sb.from("gpumesh_nodes").select("status,credits,escrow_credits").limit(200));

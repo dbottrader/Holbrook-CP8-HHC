@@ -290,7 +290,9 @@
       bounty.status || "unlabeled",
       "promotion " + (bounty.promotion || "HOLD"),
       bounty.room_slug || "no room",
-      bounty.wallet_class || "SIMULATED_ONLY_NO_MONETARY_AUTHORITY"
+      bounty.wallet_class && bounty.wallet_class !== "SIMULATED_ONLY_NO_MONETARY_AUTHORITY"
+        ? bounty.wallet_class
+        : "utility credit"
     ].join(" · ");
     card.appendChild(meta);
     card.appendChild(el("p", "Price " + money(bounty.price_minor) + " (" + String(bounty.price_minor) + " minor). Worker share " + money(bounty.worker_minor) + ". Verifier pool " + money(bounty.pool_minor) + "."));
@@ -438,7 +440,7 @@
       var signature = pack.signatures[String(bounty.settlement_id || "")];
       if (bounty.settlement_id && signature) {
         card.appendChild(el("p", signature.ok
-          ? "Signature check: settlement_receipt_ok returned true. The stored envelope matches a fresh simulated signature, the receipt hash matches that envelope, and the EIP-712 preview chainId is 0."
+          ? "Signature check: settlement_receipt_ok returned true. The stored envelope matches a fresh signature, the receipt hash matches that envelope, and the EIP-712 preview chainId is 0."
           : "Signature check: settlement_receipt_ok returned " + signature.text + ". False means there is no settlement receipt, or the stored envelope did not recompute."));
       }
       card.appendChild(renderMath(report));

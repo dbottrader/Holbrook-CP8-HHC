@@ -7,6 +7,7 @@ export function createMemoryStore() {
   const settlements = new Map();
   const rates = new Map();
   const chunks = [];
+  const chain = new Map();
   let signer = null;
 
   return {
@@ -97,6 +98,33 @@ export function createMemoryStore() {
     },
     async addChunk(jobId, seq, text) {
       chunks.push({ job_id: jobId, seq, text });
+    },
+    async getChainSettlement(id) {
+      const row = chain.get(id);
+      return row ? structuredClone(row) : null;
+    },
+    async chainSettlementByJob(jobId) {
+      for (const row of chain.values()) {
+        if (row.job_id === jobId) return structuredClone(row);
+      }
+      return null;
+    },
+    async insertChainSettlement(row) {
+      if (chain.has(row.id)) return false;
+      for (const existing of chain.values()) {
+        if (existing.job_id === row.job_id) return false;
+      }
+      chain.set(row.id, structuredClone(row));
+      return true;
+    },
+    async saveChainSettlement(row) {
+      chain.set(row.id, structuredClone(row));
+    },
+    async listChainSettlements(statuses) {
+      return [...chain.values()]
+        .filter((row) => !statuses || statuses.includes(row.status))
+        .sort((a, b) => (a.created_at - b.created_at) || String(a.id).localeCompare(String(b.id)))
+        .map((row) => structuredClone(row));
     },
     async stats() {
       const nodeRows = [...nodes.values()];

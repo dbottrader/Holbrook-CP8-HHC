@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Join — Proof-of-Work Commons</title>
-  <meta name="description" content="One command starts an Ollama or llama.cpp worker for verified open-source AI work. HHC is a simulated utility credit.">
+  <meta name="description" content="One command starts an Ollama or llama.cpp worker for verified open-source AI work. HHC is a utility credit for verified contribution.">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles.css">
 </head>
@@ -27,7 +27,8 @@
   <main id="content" class="wrap">
     <h1>Run one command, do verified work for open AI</h1>
     <p class="lede">The command starts one Docker image. That image runs the GPU Mesh worker. llama.cpp is the default. Ollama is the other backend. The public coordinator is already filled in. No account and no invite are required.</p>
-    <p class="prose">HHC is a simulated utility credit for verified contribution.</p>
+    <p class="prose">HHC is a utility credit for verified contribution. A verified job settles on Base Sepolia as HHCW. Pass <code>--payout-address 0x…</code> to name the EVM address that receives this node's share. Two other workers have to agree, and a worker cannot verify its own job.</p>
+    <p class="prose">HHCW: <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a>. Settlement: <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA</a>.</p>
 
     <h2>Linux and macOS</h2>
     <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash</code></pre>
@@ -51,7 +52,7 @@
     <div class="wrap">
       <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
       <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
-      <p>The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Promotion remains HOLD.</p>
+      <p>Settlement runs on Base Sepolia. HHC is a utility credit for verified contribution. Promotion remains HOLD.</p>
     </div>
   </footer>
 </body>

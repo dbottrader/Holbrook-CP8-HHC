@@ -84,8 +84,8 @@
       "status": "PASS"
     },
     {
-      "detail": "HHC-SIM stays simulated, promotion stays HOLD, and site/config.js carries the public anon key for ecenvlwyenpakrxfuqup; the key signature was not re-checked.",
-      "id": "simulated_hold_boundary",
+      "detail": "HHC is a utility credit for verified contribution, promotion stays HOLD, and site/config.js carries the public anon key for ecenvlwyenpakrxfuqup; the key signature was not re-checked.",
+      "id": "hold_boundary",
       "status": "PASS"
     }
   ],
@@ -99,14 +99,14 @@
     "python3 scripts/replay_proof_of_work_commons.py --check site/proof"
   ],
   "monetary_authority": false,
-  "note": "HHC-SIM credits in this replay use the simulated ledger. A verified credit settles to the Base work token once the on-chain backend is enabled. A passing replay does not promote the system.",
+  "note": "HHC in this replay is a utility credit for verified contribution. GPU mesh settlement uses HHCW on Base Sepolia. A passing replay does not promote the system.",
   "promotion": "HOLD",
   "receipt_count": 20,
   "receipts_sha256": "0de5d8288faa7c1015a209b5d83d7123a410e7367359c29aaea0654c2d6b4e12",
   "schema": "powc-replay-v1",
   "settlement_rule": {
     "fail": "any fail among two verdicts refunds the publisher the full price; worker and verifiers receive 0",
-    "pass": "worker 90 percent, verifier A 5 percent, verifier B 5 percent, integer floor; undistributed remainder returns to the publisher",
+    "pass": "worker 90 percent, verifier A 5 percent, verifier B 5 percent, integer floor; the undistributed remainder goes back to the publisher",
     "unit": "milli-HHC-SIM; 1000 milli = 1.000 HHC-SIM"
   },
   "unit": "HHC-SIM"

@@ -39,6 +39,11 @@ def _config_from_env(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--gguf-sha256", default=os.environ.get("GPU_MESH_GGUF_SHA256", ""))
     parser.add_argument("--heartbeat", type=float, default=float(os.environ.get("GPU_MESH_HEARTBEAT_SEC", "10")))
     parser.add_argument("--invite", default=os.environ.get("GPU_MESH_INVITE", ""))
+    parser.add_argument(
+        "--payout-address",
+        default=os.environ.get("GPU_MESH_PAYOUT_ADDRESS", ""),
+        help="optional EVM address that receives this node's HHCW",
+    )
     parser.add_argument("--job-timeout", type=float, default=float(os.environ.get("GPU_MESH_JOB_TIMEOUT_SEC", "120")))
     parser.add_argument("--once", action="store_true", help="heartbeat, run at most one job, exit")
     return parser.parse_args(argv)
@@ -79,14 +84,18 @@ async def _async_main(args: argparse.Namespace) -> None:
             "serving open-weight GGUF %s via llama.cpp. No TOPLOC hidden-state proof is attached.",
             getattr(runtime, "model_id", ""),
         )
-    agent = NodeAgent(
-        base_url=coordinator,
-        runtime=runtime,
-        name=name,
-        state_path=Path(args.state),
-        heartbeat_sec=args.heartbeat,
-        invite=args.invite,
-    )
+    try:
+        agent = NodeAgent(
+            base_url=coordinator,
+            runtime=runtime,
+            name=name,
+            state_path=Path(args.state),
+            heartbeat_sec=args.heartbeat,
+            invite=args.invite,
+            payout_address=args.payout_address,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):

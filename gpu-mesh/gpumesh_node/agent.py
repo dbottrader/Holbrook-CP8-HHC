@@ -7,6 +7,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 from pathlib import Path
 
 import httpx
@@ -16,6 +17,18 @@ from gpumesh_node.gpu import CPU_GPU, probe_gpu
 from gpumesh_node.runtime import InferenceResult, Runtime
 
 log = logging.getLogger("gpumesh.node")
+_PAYOUT = re.compile(r"^0x[0-9a-fA-F]{40}$")
+
+
+def normalize_payout_address(value: str) -> str:
+    """Return a payout address, or empty when the worker has not set one."""
+
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if not _PAYOUT.match(text) or text.lower() == "0x" + ("0" * 40):
+        raise ValueError("payout address must be a non-zero 0x EVM address")
+    return text
 
 
 class NodeAgent:
@@ -29,6 +42,7 @@ class NodeAgent:
         state_path: Path | None = None,
         heartbeat_sec: float = 10,
         invite: str = "",
+        payout_address: str = "",
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.runtime = runtime
@@ -38,6 +52,7 @@ class NodeAgent:
         self.state_path = state_path
         self.heartbeat_sec = heartbeat_sec
         self.invite = invite
+        self.payout_address = normalize_payout_address(payout_address)
         self.token: str | None = None
         self.node_id: str | None = None
         self._gpu = probe_gpu() or dict(CPU_GPU)
@@ -77,7 +92,7 @@ class NodeAgent:
     async def _body(self) -> dict:
         models = await self.runtime.list_models()
         self._gpu = probe_gpu() or self._gpu
-        return {
+        body = {
             "name": self.name,
             "backend": self.runtime.name,
             "gpu": self._gpu,
@@ -85,6 +100,9 @@ class NodeAgent:
             "version": __version__,
             "max_inflight": 1,
         }
+        if self.payout_address:
+            body["payout_address"] = self.payout_address
+        return body
 
     async def register(self, force: bool = False) -> None:
         if self.token and not force:

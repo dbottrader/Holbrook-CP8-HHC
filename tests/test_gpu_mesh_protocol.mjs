@@ -3,7 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { createMemoryStore } from "../supabase/functions/gpu-mesh/memory_store.mjs";
-import { handle, verifyMeshReceipt } from "../supabase/functions/gpu-mesh/protocol.mjs";
+import {
+  CHAIN,
+  handle,
+  independentVerifiers,
+  timingSafeEqualText,
+  verifyMeshReceipt,
+} from "../supabase/functions/gpu-mesh/protocol.mjs";
 
 const COORD = "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh";
 
@@ -28,7 +34,7 @@ async function call(store, path, opts = {}, env = {}, clock) {
   return { status: response.status, data };
 }
 
-async function register(store, name, clock) {
+async function register(store, name, clock, extra = {}) {
   const { status, data } = await call(store, "/api/nodes/register", {
     method: "POST",
     body: {
@@ -36,6 +42,7 @@ async function register(store, name, clock) {
       backend: "llamacpp",
       models: [{ id: "SmolLM2-360M-Instruct", resident: true, digest: "pin" }],
       gpu: { model: "cpu", vram_mb: 0 },
+      ...extra,
     },
   }, {}, clock);
   assert.equal(status, 200, JSON.stringify(data));
@@ -308,7 +315,236 @@ test("the coordinator does not store a private signing seed", () => {
   const protocol = readFileSync(new URL("../supabase/functions/gpu-mesh/protocol.mjs", import.meta.url), "utf8");
   const store = readFileSync(new URL("../supabase/functions/gpu-mesh/supabase_store.mjs", import.meta.url), "utf8");
   const sql = readFileSync(new URL("../supabase/migrations/20261102143000_gpu_mesh_coordinator.sql", import.meta.url), "utf8");
+  const chain = readFileSync(new URL("../supabase/migrations/20261108013000_gpu_mesh_base_sepolia_settlement.sql", import.meta.url), "utf8");
   assert.equal(protocol.includes("private_hex"), false);
   assert.equal(store.includes("private_hex"), false);
   assert.equal(sql.includes("private_hex"), false);
+  assert.equal(chain.includes("private_hex"), false);
+  assert.equal(chain.includes("deployer"), true);
+  assert.match(chain, /enable row level security/i);
+  assert.equal(chain.includes("gpumesh_chain_settlements"), true);
+  assert.equal(protocol.includes("SKIP_VERIFIER"), false);
+  assert.equal(protocol.includes('ledger: "simulated"'), false);
+  assert.equal(protocol.includes("GPU_MESH_SETTLER_TOKEN"), true);
+});
+
+test("verifier independence is two ids, neither of them the worker", async () => {
+  assert.equal(independentVerifiers("worker", ["v1", "v2"]), true);
+  assert.equal(independentVerifiers("worker", ["worker", "v2"]), false);
+  assert.equal(independentVerifiers("worker", ["v1", "v1"]), false);
+  assert.equal(independentVerifiers("worker", ["v1"]), false);
+  assert.equal(await timingSafeEqualText("same-token", "same-token"), true);
+  assert.equal(await timingSafeEqualText("same-token", "other-token"), false);
+  assert.equal(await timingSafeEqualText("short", "much-longer-token"), false);
+});
+
+test("health and stats name Base Sepolia contracts", async () => {
+  const store = createMemoryStore();
+  const health = await call(store, "/health");
+  assert.equal(health.status, 200);
+  assert.equal(health.data.ledger, "base-sepolia");
+  assert.equal(health.data.chain_id, 84532);
+  assert.equal(health.data.hhcw, CHAIN.hhcw);
+  assert.equal(health.data.settlement, CHAIN.settlement);
+  assert.equal(health.data.hhcw_url, `https://sepolia.basescan.org/address/${CHAIN.hhcw}`);
+  assert.equal(health.data.settlement_url, `https://sepolia.basescan.org/address/${CHAIN.settlement}`);
+  const stats = await call(store, "/api/stats");
+  assert.equal(stats.data.ledger, "base-sepolia");
+  assert.equal(stats.data.hhcw, CHAIN.hhcw);
+  assert.equal(stats.data.settlement, CHAIN.settlement);
+});
+
+test("payout address is optional and must be a non-zero EVM address", async () => {
+  const store = createMemoryStore();
+  const bad = await call(store, "/api/nodes/register", {
+    method: "POST",
+    body: { name: "rig", backend: "cpu", models: ["mock-tiny"], payout_address: "not-an-address" },
+  });
+  assert.equal(bad.status, 400);
+  assert.equal(bad.data.error.code, "bad_payout_address");
+  const zero = await call(store, "/api/nodes/register", {
+    method: "POST",
+    body: { name: "rig", backend: "cpu", models: ["mock-tiny"], payout_address: "0x" + "0".repeat(40) },
+  });
+  assert.equal(zero.status, 400);
+  const clock = () => Date.now() / 1000;
+  const joined = await register(store, "rig", clock, {
+    payout_address: "0x1111111111111111111111111111111111111111",
+  });
+  const node = (await store.listNodes()).find((row) => row.id === joined.node_id);
+  assert.equal(node.payout_address, "0x1111111111111111111111111111111111111111");
+});
+
+test("settler routes require the bearer token and record a Base tx", async () => {
+  const store = createMemoryStore();
+  const locked = await call(store, "/api/settlements/pending");
+  assert.equal(locked.status, 503);
+  const env = {
+    INFERENCE_RECEIPT_SIGNING_KEY: freshSeed(),
+    GPU_MESH_SETTLER_TOKEN: "settler-test-token",
+  };
+  const wrong = await call(store, "/api/settlements/pending", { token: "nope" }, env);
+  assert.equal(wrong.status, 401);
+  assert.equal(JSON.stringify(wrong.data).includes("settler-test-token"), false);
+
+  const clock = () => Date.now() / 1000;
+  const payout = {
+    a: "0x1111111111111111111111111111111111111111",
+    b: "0x2222222222222222222222222222222222222222",
+    c: "0x3333333333333333333333333333333333333333",
+  };
+  const a = await register(store, "worker-a", clock, { payout_address: payout.a });
+  const b = await register(store, "worker-b", clock, { payout_address: payout.b });
+  const c = await register(store, "worker-c", clock, { payout_address: payout.c });
+  const pendingChat = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: {
+      model: "SmolLM2-360M-Instruct",
+      temperature: 0,
+      max_tokens: 16,
+      messages: [{ role: "user", content: "Reply with exactly the token: MESH_OK" }],
+    },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "MESH_OK", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(served, "primary worker did not receive the job");
+  const second = await store.listJobs(["queued"]);
+  assert.equal(second.some((job) => job.kind === "verification" && job.excluded.includes(a.node_id)), true);
+  let checked = null;
+  for (let i = 0; i < 20 && !checked; i++) {
+    checked = await work(store, b.token, "MESH_OK", clock, env);
+    if (!checked) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(checked, "first verifier did not receive the check");
+  const response = await pendingChat;
+  const data = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(data));
+  assert.equal(data.gpumesh.verdict, "agree");
+  assert.equal(data.gpumesh.receipt.amount, 4);
+  const waiting = await store.listChainSettlements(["awaiting_second_verifier"]);
+  assert.equal(waiting.length, 1);
+  assert.equal(waiting[0].worker_id, a.node_id);
+  assert.equal(waiting[0].verifier1_id, b.node_id);
+  assert.notEqual(waiting[0].verifier1_id, a.node_id);
+  const early = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.equal(early.status, 200);
+  assert.deepEqual(early.data.settlements, []);
+  const queued = await store.listJobs(["queued"]);
+  const verify2 = queued.find((job) => job.client_key === "verify2");
+  assert.ok(verify2, "second duplicate check was not queued");
+  assert.equal(verify2.excluded.includes(a.node_id), true);
+  assert.equal(verify2.excluded.includes(b.node_id), true);
+
+  let confirmed = null;
+  for (let i = 0; i < 20 && !confirmed; i++) {
+    confirmed = await work(store, c.token, "MESH_OK", clock, env);
+    if (!confirmed) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(confirmed, "second verifier did not receive the check");
+  const ready = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.equal(ready.status, 200, JSON.stringify(ready.data));
+  assert.equal(ready.data.settlements.length, 1);
+  const item = ready.data.settlements[0];
+  assert.equal(item.worker_id, a.node_id);
+  assert.deepEqual([item.verifier1_id, item.verifier2_id].sort(), [b.node_id, c.node_id].sort());
+  assert.equal(item.verifier1_id === a.node_id || item.verifier2_id === a.node_id, false);
+  assert.equal(item.worker_address, payout.a);
+  assert.equal(item.amount, 4000);
+  assert.equal(item.receipt.kind, "inference_receipt");
+  assert.equal(item.receipt.amount, 4000);
+  const claim = await verifyMeshReceipt(item.receipt);
+  assert.equal(claim.ok, true, claim.error);
+  assert.equal(claim.claim.payload.verifier_decision, "agree");
+  assert.deepEqual(claim.claim.verifier_ids.split(",").sort(), [b.node_id, c.node_id].sort());
+
+  const tx = "0x" + "ab".repeat(32);
+  const posted = await call(store, "/api/settlements/result", {
+    method: "POST",
+    token: "settler-test-token",
+    body: { id: item.id, tx_hash: tx, status: "settled" },
+  }, env, clock);
+  assert.equal(posted.status, 200, JSON.stringify(posted.data));
+  assert.equal(posted.data.tx_url, `https://sepolia.basescan.org/tx/${tx}`);
+  const again = await call(store, "/api/settlements/result", {
+    method: "POST",
+    token: "settler-test-token",
+    body: { id: item.id, tx_hash: "0x" + "cd".repeat(32), status: "settled" },
+  }, env, clock);
+  assert.equal(again.status, 409);
+  const job = await call(store, `/v1/jobs/${item.job_id}`);
+  assert.equal(job.data.gpumesh.settlement_tx_hash, tx);
+  assert.equal(job.data.gpumesh.settlement_tx_url, posted.data.tx_url);
+  const receipts = await call(store, "/api/receipts?limit=50");
+  assert.equal(receipts.data.receipts.some((row) => row.settlement_tx_hash === tx && row.settlement_tx_url.endsWith(tx.slice(2))), true);
+  const stats = await call(store, "/api/stats", {}, env, clock);
+  assert.equal(stats.data.ledger, "base-sepolia");
+  assert.equal(stats.data.settlements_settled, 1);
+  assert.equal(stats.data.settlement_txs[0].tx_hash, tx);
+  const drained = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.deepEqual(drained.data.settlements, []);
+});
+
+test("a settlement without payout addresses is skipped and can resume", async () => {
+  const store = createMemoryStore();
+  const env = {
+    INFERENCE_RECEIPT_SIGNING_KEY: freshSeed(),
+    GPU_MESH_SETTLER_TOKEN: "settler-test-token",
+  };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "worker-a", clock);
+  const b = await register(store, "worker-b", clock);
+  const c = await register(store, "worker-c", clock);
+  const pendingChat = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "auto", temperature: 0, messages: [{ role: "user", content: "ping" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "same", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  let checked = null;
+  for (let i = 0; i < 20 && !checked; i++) {
+    checked = await work(store, b.token, "same", clock, env);
+    if (!checked) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  const response = await pendingChat;
+  assert.equal(response.status, 200);
+  let confirmed = null;
+  for (let i = 0; i < 20 && !confirmed; i++) {
+    confirmed = await work(store, c.token, "same", clock, env);
+    if (!confirmed) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(confirmed);
+  const ready = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.equal(ready.data.settlements.length, 1);
+  assert.equal(ready.data.settlements[0].worker_address, "");
+  const skipped = await call(store, "/api/settlements/result", {
+    method: "POST",
+    token: "settler-test-token",
+    body: { id: ready.data.settlements[0].id, tx_hash: "", status: "skipped_missing_payout" },
+  }, env, clock);
+  assert.equal(skipped.status, 200);
+  const hidden = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.deepEqual(hidden.data.settlements, []);
+  const address = ["0x1111111111111111111111111111111111111111", "0x2222222222222222222222222222222222222222", "0x3333333333333333333333333333333333333333"];
+  for (const [node, payout] of [[a, address[0]], [b, address[1]], [c, address[2]]]) {
+    const beat = await call(store, "/api/nodes/heartbeat", {
+      method: "POST",
+      token: node.token,
+      body: { payout_address: payout },
+    }, env, clock);
+    assert.equal(beat.status, 200, JSON.stringify(beat.data));
+  }
+  const resumed = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.equal(resumed.status, 200, JSON.stringify(resumed.data));
+  assert.equal(resumed.data.settlements.length, 1);
+  assert.equal(resumed.data.settlements[0].worker_address, address[0]);
+  assert.equal(resumed.data.settlements[0].status, "pending");
 });

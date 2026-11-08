@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Proof replay — Proof-of-Work Commons</title>
-  <meta name="description" content="Replay the eight Proof-of-Work Commons launch gates and the 90/5/5 HHC-SIM settlement.">
+  <meta name="description" content="Replay the eight Proof-of-Work Commons launch gates and the 90/5/5 HHC settlement.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -26,10 +26,10 @@
   </header>
   <main id="content" class="wrap">
     <h1>Proof replay</h1>
-    <p class="lede">These files are the output of <code>scripts/replay_proof_of_work_commons.py</code>. GitHub Actions runs that script before publishing this site. The credits are simulated HHC-SIM. A green gate does not promote the system.</p>
+    <p class="lede">These files are the output of <code>scripts/replay_proof_of_work_commons.py</code>. GitHub Actions runs that script before publishing this site. HHC is a utility credit for verified contribution. A green gate does not promote the system.</p>
     <p class="notice"><strong>Demo data.</strong> The gates, settlements, and receipt chain on this page are the local fixture <code>powc-launch-v1</code>. They are not live bounties. The <a href="console/index.html">app console</a> reads project <code>ecenvlwyenpakrxfuqup</code>. When that project has no bounties, the console says so.</p>
-    <p class="prose">This demo returns an undistributed remainder to the publisher. The live escrow keeps that remainder in the verifier pool: the last verifier id receives <code>pool % n</code>. The <a href="console/index.html#ledger">console ledger</a> shows the live rule, and it labels this page as the demo.</p>
-    <p class="notice">Promotion remains HOLD. HHC-SIM is a simulated utility credit. It settles to the Base work token once the on-chain backend is enabled. It is not money, and it is not for sale.</p>
+    <p class="prose">This demo sends an undistributed remainder back to the publisher. The live escrow keeps that remainder in the verifier pool: the last verifier id receives <code>pool % n</code>. The <a href="console/index.html#ledger">console ledger</a> shows the live rule, and it labels this page as the demo.</p>
+    <p class="notice">Promotion remains HOLD. HHC is a utility credit for verified contribution. GPU mesh settlement is on Base Sepolia: HHCW <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a> and Settlement <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA</a>.</p>
 
     <h2>Replay it locally</h2>
     <pre><code>git clone https://github.com/dbottrader/Holbrook-CP8-HHC.git
@@ -47,7 +47,7 @@ python3 scripts/replay_proof_of_work_commons.py --check site/proof</code></pre>
       <li><code>fail_full_refund</code> — one fail refunds the publisher 4.000 HHC-SIM and pays a pass vote nothing.</li>
       <li><code>credit_conservation</code> — every settlement adds back to the escrowed price, including a 7 milli-credit remainder.</li>
       <li><code>receipt_chain</code> — every receipt hash recomputes and links to the previous receipt.</li>
-      <li><code>simulated_hold_boundary</code> — the fixture and the public config stay on simulated HHC-SIM, anon key only, promotion HOLD.</li>
+      <li><code>hold_boundary</code> — promotion stays HOLD, the public config is the anon key, and HHC in this fixture is a utility credit for verified contribution.</li>
     </ol>
 
     <p id="proof-status" class="status" role="status">Loading the replay artifacts…</p>
@@ -58,7 +58,7 @@ python3 scripts/replay_proof_of_work_commons.py --check site/proof</code></pre>
     <div class="wrap">
       <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
       <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
-      <p>The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Promotion remains HOLD.</p>
+      <p>GPU mesh settlement is on Base Sepolia. HHC is a utility credit for verified contribution. Promotion remains HOLD. <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">HHCW</a> · <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">Settlement</a></p>
     </div>
   </footer>
   <script src="proof.js"></script>

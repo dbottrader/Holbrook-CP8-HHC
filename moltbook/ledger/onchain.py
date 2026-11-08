@@ -103,6 +103,14 @@ class OnchainConfig:
     token_addr: str = ""
     address_book: dict[str, str] | None = None
 
+    def __repr__(self) -> str:
+        return (
+            "OnchainConfig("
+            f"rpc_url={self.rpc_url!r}, chain_id={self.chain_id}, "
+            f"settlement_addr={self.settlement_addr!r}, token_addr={self.token_addr!r}, "
+            "settler_key='[redacted]')"
+        )
+
     @classmethod
     def from_env(cls) -> "OnchainConfig":
         rpc = os.environ.get("HHCW_RPC_URL", "").strip()
