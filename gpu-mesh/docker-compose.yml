@@ -1,6 +1,6 @@
-# Local mesh: one coordinator and one CPU-fallback node.
-# The fallback is deterministic and is not a neural model.
-# Add a second node (so spot-checks can run) with: docker compose --profile verify up --build
+# Local coordinator plus two hardened node containers.
+# Those containers do not serve a stand-in reply. Point GPU_MESH_BACKEND at
+# ollama or llamacpp and a real model server before they can take jobs.
 services:
   coordinator:
     build: .
@@ -48,9 +48,7 @@ services:
       GPU_MESH_STATE: /tmp/node.json
       GPU_MESH_COORDINATOR: http://coordinator:8741
       GPU_MESH_NAME: compose-cpu-0
-      GPU_MESH_BACKEND: cpu
-      GPU_MESH_ALLOW_CPU: "1"
-      GPU_MESH_MODELS: mock-tiny
+      GPU_MESH_BACKEND: llamacpp
     depends_on:
       coordinator:
         condition: service_healthy
@@ -77,9 +75,7 @@ services:
       GPU_MESH_STATE: /tmp/node.json
       GPU_MESH_COORDINATOR: http://coordinator:8741
       GPU_MESH_NAME: compose-cpu-1
-      GPU_MESH_BACKEND: cpu
-      GPU_MESH_ALLOW_CPU: "1"
-      GPU_MESH_MODELS: mock-tiny
+      GPU_MESH_BACKEND: llamacpp
     depends_on:
       coordinator:
         condition: service_healthy

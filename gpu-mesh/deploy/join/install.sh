@@ -3,7 +3,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash
 #
 # Detects an NVIDIA or AMD GPU and starts Ollama with that device.
-# CPU llama.cpp is the fallback when no GPU is visible, or when --cpu is passed.
+# CPU llama.cpp runs when no GPU is visible, or when --cpu is passed.
 # --payout-address is the EVM address that receives this node's HHCW.
 # The public coordinator is the default. --coordinator overrides it.
 # Registration is rate-limited. The published open invite is "open" and is not required.
@@ -25,7 +25,7 @@ usage() {
   echo "Usage: install.sh [--coordinator URL] [--backend llamacpp|ollama] [--name NAME] [--invite TOKEN] [--payout-address 0x…] [--image REF] [--gpu] [--cpu]" >&2
   echo "Default coordinator: $DEFAULT_COORD" >&2
   echo "Published open invite (not required): open" >&2
-  echo "A visible NVIDIA or AMD GPU selects Ollama on that GPU. --cpu forces the CPU fallback. --gpu fails if no GPU is visible." >&2
+  echo "A visible NVIDIA or AMD GPU selects Ollama on that GPU. --cpu runs llama.cpp. --gpu fails if no GPU is visible." >&2
 }
 
 gpu_mesh_source_mode() {

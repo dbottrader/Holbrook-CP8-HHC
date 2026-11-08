@@ -106,12 +106,8 @@
       <h2>Installer</h2>
       <pre class="terminal" id="install-cmd"></pre>
       <div class="row-actions"><button type="button" data-copy="#install-cmd">Copy</button></div>
-      <h2>Dry run without a GPU</h2>
-      <p class="prose">This serves <span class="mono">mock-tiny</span>, a deterministic fallback that is not a neural model. Use it to prove the path. Do not point real traffic at it.</p>
-      <pre class="terminal" id="cpu-cmd"></pre>
-      <div class="row-actions"><button type="button" data-copy="#cpu-cmd">Copy</button></div>
-      <h2>CPU open-weight worker</h2>
-      <p class="prose">This serves <span class="mono">SmolLM2-360M-Instruct</span> (Apache-2.0) through llama.cpp. The pinned GGUF is downloaded on first start and is not <span class="mono">mock-tiny</span>. HHC is a utility credit for verified contribution. An amount is recorded only after a second worker spot-checks the same model id.</p>
+      <h2>CPU worker</h2>
+      <p class="prose">This serves <span class="mono">SmolLM2-360M-Instruct</span> (Apache-2.0) through llama.cpp. The pinned GGUF is downloaded on first start. HHC is a utility credit for verified contribution. An amount is recorded only after a second worker spot-checks the same model digest at temperature 0.</p>
       <pre class="terminal" id="llamacpp-cmd"></pre>
       <div class="row-actions"><button type="button" data-copy="#llamacpp-cmd">Copy</button></div>
       <h2>What you are not signing up for</h2>

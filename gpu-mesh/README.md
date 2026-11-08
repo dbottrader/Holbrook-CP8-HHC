@@ -18,36 +18,26 @@ client  --OpenAI /v1/chat/completions-->  coordinator  <--pull jobs--  node (you
 2. The coordinator queues the job if some online node advertises that model.
 3. A node heartbeats GPU name, VRAM, and loaded models, then long-polls for a job. It runs the chat on Ollama or vLLM and posts the text back. The node opens no inbound port.
 4. The coordinator stores the output and writes an `execution_submitted` receipt with amount 0. That is not a credit. A second node spot-checks the text and, when TOPLOC is installed, the worker's proof. Agreement writes one `inference_receipt`. The receipt hash covers the canonical JSON of `actor`, `kind`, `payload`, `prev_hash`, `seq`, and `ts` (Unix milliseconds). A separate EIP-712-style signature covers the integer amount, worker, verifiers, and settlement id. `hash` and `canon` sit beside the preimage.
-5. A sample of jobs is queued again for a **different** node. Temperature-0 disagreements and a failed TOPLOC proof go to `disputed` and do not credit the worker. The checker is paid either way. Sampled (temperature > 0) disagreements are disputed without a slash, because open models are not bitwise stable there.
+5. A sample of jobs is queued again for a **different** node that advertises the same model digest. The rerun uses the parent's messages, max tokens, temperature, and seed. Agreement is exact text, or a whitespace and Unicode normalization when that is the only difference. The receipt records `match_rule` as `exact` or `normalized`. A mismatch or a failed TOPLOC proof goes to `disputed` and does not credit the worker. The checker is paid either way.
 6. Canaries ("reply with exactly this token") run even when only one node is online. Three failures, or reputation under 40, quarantines the node. An admin can reinstate it.
 
-The CPU fallback (`mock-tiny`) is a deterministic stub for tests and for `docker compose` on a machine with no GPU. It is not a neural model, and the API says so.
+Every job a volunteer runs is temperature 0, `top_k` 1, and a seed derived from the job id (`gpumesh.seed.v1`). The response `gpumesh` object sets `deterministic: true` and `requested_temperature` to the value the client sent. A client seed is not the execution seed. The hub stores the derived seed on `gpumesh_jobs.seed`, which already existed.
 
-`GPU_MESH_BACKEND=llamacpp` serves a real open-weight model on CPU: SmolLM2-360M-Instruct Q8_0 (Apache-2.0), pulled at runtime from HuggingFaceTB and checked against a pinned SHA-256. The GGUF is not in git. That path does not attach a TOPLOC hidden-state proof. Install it with `pip install -e ".[cpu]"`.
+`GPU_MESH_BACKEND=llamacpp` serves SmolLM2-360M-Instruct Q8_0 (Apache-2.0) on CPU, pulled at runtime from HuggingFaceTB and checked against a pinned SHA-256. The GGUF is not in git. That path does not attach a TOPLOC hidden-state proof. Install it with `pip install -e ".[cpu]"`. There is no stand-in model. A node that registers as `cpu`, `cpu-fallback`, or `mock-tiny` is rejected.
 
 A free-tier coordinator and worker runbook, including the Hugging Face Space steps and the NVIDIA Ollama invite, is in [docs/FREE_TIER.md](docs/FREE_TIER.md). The Space bundle is [deploy/huggingface/](deploy/huggingface/).
 
 ## Local quickstart
 
-Docker Compose runs the coordinator and one CPU-fallback node:
+Docker Compose runs the coordinator. The node containers in that file do not answer chat until they have Ollama or llama.cpp:
 
 ```bash
-docker compose up --build
+docker compose up --build coordinator
 ```
 
 Board: http://localhost:8741
 
-```bash
-curl -s http://localhost:8741/v1/chat/completions \
-  -H 'content-type: application/json' \
-  -d '{"model":"mock-tiny","messages":[{"role":"user","content":"Say hello in one sentence."}],"temperature":0}'
-```
-
-Spot-checks need a second node. Compose starts one by default; the extra node is a profile:
-
-```bash
-docker compose --profile verify up --build
-```
+Ask for a model id a live worker advertises (`GET /v1/models`). A temperature above 0 is clamped to 0 and the response says so.
 
 The dev admin token in Compose is `dev-admin-change-me`. Do not use it on a public host.
 
@@ -60,12 +50,11 @@ pip install -e ".[dev]"
 GPU_MESH_ADMIN_TOKEN=dev GPU_MESH_PORT=8741 python -m gpumesh
 ```
 
-In another shell, a CPU node:
+In another shell, a CPU worker:
 
 ```bash
 GPU_MESH_COORDINATOR=http://127.0.0.1:8741 \
-GPU_MESH_ALLOW_CPU=1 \
-GPU_MESH_BACKEND=cpu \
+GPU_MESH_BACKEND=llamacpp \
 GPU_MESH_NAME=laptop-cpu \
 python -m gpumesh_node
 ```
@@ -120,9 +109,8 @@ Backends:
 
 - `ollama` — `OLLAMA_HOST` or `GPU_MESH_OLLAMA_HOST` (default `http://127.0.0.1:11434`). Models come from `ollama list`. Pull weights yourself: `ollama pull llama3.2:1b`.
 - `vllm` — OpenAI server on `GPU_MESH_VLLM_HOST` (default `http://127.0.0.1:8000`).
-- `auto` — Ollama, then vLLM, then CPU if `GPU_MESH_ALLOW_CPU=1`.
-- `llamacpp` — llama.cpp on CPU. Default model id `SmolLM2-360M-Instruct`. Weights download into `GPU_MESH_MODEL_CACHE` (default `data/models`) and are not committed. Canary-shaped exact-token prompts are answered literally; every other prompt is the GGUF. No TOPLOC hidden-state proof.
-- `cpu` — deterministic `mock-tiny` only. Not an open-weight model.
+- `auto` — Ollama, then vLLM. If neither answers, the process exits. It does not invent a reply.
+- `llamacpp` — llama.cpp on CPU. Default model id `SmolLM2-360M-Instruct`. Weights download into `GPU_MESH_MODEL_CACHE` (default `data/models`) and are not committed. Canary-shaped exact-token prompts are answered literally; every other prompt is the GGUF. No TOPLOC hidden-state proof. Generation is temperature 0, `top_k` 1, and the job seed (including 0).
 
 The ledger unit is HHC, a utility credit for verified contribution. The software stores the mesh amount as an integer. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. On the public hub, two distinct verifiers (neither of them the worker) move the job to the settler queue. The box settler then submits HHCW on Base Sepolia. One mesh credit is 1000 HHCW units, split 900 / 50 / 50. `GPU_MESH_LEDGER_BACKEND=onchain` on a self-hosted Python process still refuses the write and does not open a socket. That switch is not the live settler.
 
@@ -138,16 +126,16 @@ The public one-command path is the Docker installer in the section above. A self
 curl -fsSL https://gpu.example.com/install.sh | sudo bash -s -- --name my-rig --payout-address 0xYourEvmAddress
 ```
 
-`--gpu` requires a visible NVIDIA or AMD GPU and, with `--backend auto`, selects Ollama. `--cpu` forces the CPU fallback. The env file records `GPU_MESH_ACCELERATOR` as `cuda`, `rocm`, or `cpu`. The public edge function does not serve this unit or the node tarball; use the Docker join for that coordinator.
+`--gpu` requires a visible NVIDIA or AMD GPU and, with `--backend auto`, selects Ollama. `--cpu` selects llama.cpp. The env file records `GPU_MESH_ACCELERATOR` as `cuda`, `rocm`, or `cpu`. The public edge function does not serve this unit or the node tarball; use the Docker join for that coordinator.
 
 ```bash
 systemctl status gpumesh-node
 journalctl -u gpumesh-node -f
 ```
 
-On a box with no GPU, `--cpu` (or a machine where no GPU is detected) selects llama.cpp and SmolLM2-360M-Instruct. `--allow-cpu` still allows the deterministic `mock-tiny` fallback when the backend is `auto` and no model server answers. See [docs/FREE_TIER.md](docs/FREE_TIER.md).
+On a box with no GPU, `--cpu` (or a machine where no GPU is detected) selects llama.cpp and SmolLM2-360M-Instruct. See [docs/FREE_TIER.md](docs/FREE_TIER.md).
 
-The same agent is a Docker image (`node/Dockerfile`). It starts as root only to chown the state volume, then `setpriv` drops to uid 10001 (`gpumesh`). For a real GPU, install the NVIDIA container toolkit and run that image with `--gpus all`, `GPU_MESH_BACKEND=ollama` or `vllm`, and the runtime reachable from the container (host network, or an Ollama container on the same Docker network). Do not set `GPU_MESH_ALLOW_CPU` on a machine you intend to contribute for real.
+The same agent is a Docker image (`node/Dockerfile`). It starts as root only to chown the state volume, then `setpriv` drops to uid 10001 (`gpumesh`). For a real GPU, install the NVIDIA container toolkit and run that image with `--gpus all`, `GPU_MESH_BACKEND=ollama` or `vllm`, and the runtime reachable from the container (host network, or an Ollama container on the same Docker network).
 
 ## Deploy a public coordinator
 
@@ -155,7 +143,7 @@ One process. The ledger lock is in-process; do not run multiple uvicorn workers 
 
 1. A small VM is enough. GPUs stay on volunteer machines. Ubuntu 24.04 is the path this was written for.
 2. Install Docker and the Compose plugin.
-3. Clone this repo. Set a long `GPU_MESH_ADMIN_TOKEN` and `GPU_MESH_PUBLIC_BASE_URL=https://gpu.example.com` in `.env` (see `.env.example`). Leave the CPU node off if you do not want a public `mock-tiny`:
+3. Clone this repo. Set a long `GPU_MESH_ADMIN_TOKEN` and `GPU_MESH_PUBLIC_BASE_URL=https://gpu.example.com` in `.env` (see `.env.example`). Start the coordinator:
    ```bash
    docker compose up -d --build coordinator
    ```

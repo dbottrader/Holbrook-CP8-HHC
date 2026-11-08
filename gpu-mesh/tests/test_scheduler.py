@@ -15,7 +15,7 @@ from tests.conftest import make_settings
 def _spec(name: str, model: str, vram: int = 0) -> dict:
     return {
         "name": name,
-        "backend": "cpu" if vram == 0 else "ollama",
+        "backend": "llamacpp" if vram == 0 else "ollama",
         "gpu": {"vendor": "nvidia" if vram else "cpu", "model": "GPU" if vram else "cpu", "vram_mb": vram, "driver": "", "count": 1 if vram else 0},
         "models": [{"id": model, "resident": True, "source": "test"}],
         "version": "test",

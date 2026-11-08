@@ -5,12 +5,12 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: install.sh [--coordinator URL] [--name NAME] [--backend auto|ollama|vllm|llamacpp|cpu]
-                  [--gpu] [--cpu] [--allow-cpu] [--ollama-host URL] [--vllm-host URL]
+Usage: install.sh [--coordinator URL] [--name NAME] [--backend auto|ollama|vllm|llamacpp]
+                  [--gpu] [--cpu] [--ollama-host URL] [--vllm-host URL]
                   [--invite TOKEN] [--payout-address 0x…] [--uninstall] [--purge]
 
 --gpu requires a visible NVIDIA or AMD GPU and selects Ollama when --backend is auto.
---cpu forces the CPU fallback even when a GPU is visible. --payout-address is unchanged.
+--cpu selects llama.cpp and SmolLM2-360M-Instruct. --payout-address is unchanged.
 
 The coordinator URL is filled in when this script is downloaded from a coordinator.
 EOF
@@ -63,8 +63,8 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --allow-cpu)
-      ALLOW_CPU="1"
-      shift
+      echo "cpu-fallback and mock-tiny cannot serve or earn. Use --backend llamacpp." >&2
+      exit 2
       ;;
     --gpu)
       WANT_GPU="1"
@@ -72,7 +72,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --cpu)
       WANT_CPU="1"
-      ALLOW_CPU="1"
       shift
       ;;
     --ollama-host)
@@ -127,9 +126,13 @@ if [[ "$COORD" =~ [[:space:]\'\"] ]]; then
 fi
 
 case "$BACKEND" in
-  auto|ollama|vllm|llamacpp|cpu) ;;
+  auto|ollama|vllm|llamacpp) ;;
+  cpu|cpu-fallback|mock|mock-tiny)
+    echo "cpu-fallback and mock-tiny cannot serve or earn. Use --backend llamacpp." >&2
+    exit 2
+    ;;
   *)
-    echo "Backend must be auto, ollama, vllm, llamacpp, or cpu." >&2
+    echo "Backend must be auto, ollama, vllm, or llamacpp." >&2
     exit 2
     ;;
 esac
@@ -194,7 +197,7 @@ fi
 if [[ "$BACKEND" == "auto" ]]; then
   if [[ "$RUN_ACCEL" == "cpu" ]]; then
     BACKEND="llamacpp"
-    ALLOW_CPU="1"
+    ALLOW_CPU="0"
   else
     BACKEND="ollama"
   fi

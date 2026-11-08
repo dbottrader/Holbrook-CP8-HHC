@@ -2,7 +2,7 @@
 
 The weights are downloaded on first use and are not part of this repo.
 The default file is SmolLM2-360M-Instruct Q8_0 from HuggingFaceTB, Apache-2.0.
-``mock-tiny`` is a different backend and is not used here.
+This worker does not serve a stand-in reply.
 
 A prompt that demands an exact token (the coordinator's canary shape) is
 answered with that token. That is the known-answer check, not model output.
@@ -129,19 +129,17 @@ class LlamaCppRuntime:
         if requested != self.model_id:
             raise RuntimeError(f"this worker serves {self.model_id}, not {requested}")
 
-        temperature = float(job.get("temperature") or 0)
-        if temperature < 0:
-            temperature = 0.0
-        seed = 0 if job.get("seed") is None else int(job["seed"])
+        raw_seed = job.get("seed")
+        seed = 0 if raw_seed is None else int(raw_seed)
         max_tokens = int(job.get("max_tokens") or 256)
         kwargs: dict = {
             "messages": messages,
-            "temperature": 0.0 if temperature <= 0 else temperature,
+            "temperature": 0.0,
             "max_tokens": max_tokens,
             "seed": seed,
             "stream": False,
             "top_p": 1.0,
-            "top_k": 1 if temperature <= 0 else 40,
+            "top_k": 1,
             "repeat_penalty": 1.0,
         }
         if job.get("stop"):
@@ -229,7 +227,7 @@ def open_llamacpp(options: dict | None = None) -> LlamaCppRuntime:
             "llama-cpp-python is not installed. From gpu-mesh/: pip install -e '.[cpu]'"
         ) from exc
     log.info(
-        "loading %s as %s (%s threads, ctx %s). This is llama.cpp, not mock-tiny.",
+        "loading %s as %s (%s threads, ctx %s) via llama.cpp.",
         path.name,
         model_id,
         threads,

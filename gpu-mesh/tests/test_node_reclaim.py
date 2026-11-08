@@ -12,11 +12,11 @@ from httpx import ASGITransport
 
 from gpumesh.main import create_app
 from gpumesh_node.agent import NodeAgent
-from gpumesh_node.runtime import CpuFallbackRuntime
 from tests.conftest import make_settings
+from tests.doubles import MODEL, FixedTextRuntime
 
 CHAT = {
-    "model": "mock-tiny",
+    "model": MODEL,
     "messages": [{"role": "user", "content": "Say hello in one sentence."}],
     "temperature": 0,
     "max_tokens": 32,
@@ -31,7 +31,7 @@ async def test_reclaim_is_not_gated_on_the_heartbeat(tmp_path):
         async with httpx.AsyncClient(transport=transport, base_url="http://mesh", timeout=10) as client:
             agent = NodeAgent(
                 base_url="http://mesh",
-                runtime=CpuFallbackRuntime(["mock-tiny"]),
+                runtime=FixedTextRuntime(),
                 name="fast",
                 http=client,
                 state_path=None,

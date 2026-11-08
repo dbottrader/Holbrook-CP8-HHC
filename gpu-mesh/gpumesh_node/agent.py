@@ -212,9 +212,7 @@ class NodeAgent:
 
     async def run_forever(self, stop: asyncio.Event) -> None:
         await self.register()
-        if self.runtime.name == "cpu":
-            note = "CPU fallback is not a neural model."
-        elif self.runtime.name == "llamacpp":
+        if self.runtime.name == "llamacpp":
             note = "Open-weight GGUF via llama.cpp. No TOPLOC hidden-state proof is attached."
         else:
             note = "Local model server. No TOPLOC hidden-state proof is attached."

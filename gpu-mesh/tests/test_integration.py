@@ -11,33 +11,35 @@ from httpx import ASGITransport
 
 from gpumesh.main import create_app
 from gpumesh_node.agent import NodeAgent
-from gpumesh_node.runtime import CpuFallbackRuntime, InferenceResult, fallback_text
+from gpumesh_node.runtime import InferenceResult
 from tests.conftest import make_settings
+from tests.doubles import DIGEST, MODEL, FixedTextRuntime
 
 ADMIN = {"authorization": "Bearer admin-test"}
 CHAT = {
-    "model": "mock-tiny",
+    "model": MODEL,
     "messages": [{"role": "user", "content": "Say hello in one sentence."}],
-    "temperature": 0,
+    "temperature": 0.7,
     "max_tokens": 64,
 }
+ANSWER = "DETERMINISTIC_MESH_TEXT"
 
 
 def _spec(name: str) -> dict:
     return {
         "name": name,
-        "backend": "cpu",
+        "backend": "llamacpp",
         "gpu": {"vendor": "cpu", "model": "cpu", "vram_mb": 0, "driver": "", "count": 0},
-        "models": [{"id": "mock-tiny", "resident": True, "source": "cpu-fallback"}],
+        "models": [{"id": MODEL, "resident": True, "source": "llama.cpp", "digest": DIGEST}],
         "version": "test",
     }
 
 
 class EvilRuntime:
-    name = "cpu"
+    name = "llamacpp"
 
     async def list_models(self) -> list[dict]:
-        return [{"id": "mock-tiny", "resident": True, "source": "evil"}]
+        return [{"id": MODEL, "resident": True, "source": "llama.cpp", "digest": DIGEST}]
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
         text = "WRONG"
@@ -82,14 +84,18 @@ async def test_chat_stream_receipt_and_idempotent_result(mesh):
     _app, client = mesh
     stop = asyncio.Event()
     node_client = httpx.AsyncClient(transport=ASGITransport(app=_app), base_url="http://mesh")
-    agent = await _boot(node_client, CpuFallbackRuntime(["mock-tiny"]), "honest-0")
+    agent = await _boot(node_client, FixedTextRuntime(), "honest-0")
     task = asyncio.create_task(_pump(agent, stop))
     try:
         response = await client.post("/v1/chat/completions", json=CHAT)
         assert response.status_code == 200, response.text
         body = response.json()
-        expected = fallback_text(CHAT["messages"], 64)
+        expected = ANSWER
         assert body["choices"][0]["message"]["content"] == expected
+        assert body["gpumesh"]["deterministic"] is True
+        assert body["gpumesh"]["requested_temperature"] == 0.7
+        assert body["gpumesh"]["temperature"] == 0
+        assert isinstance(body["gpumesh"]["seed"], int)
         assert body["usage"]["total_tokens"] == body["usage"]["prompt_tokens"] + body["usage"]["completion_tokens"]
         assert len(body["gpumesh"]["receipt"]) == 64
         credits = (await client.get("/api/stats")).json()["nodes"][0]["credits"]
@@ -141,8 +147,8 @@ async def test_two_nodes_spot_check_agrees(mesh):
         httpx.AsyncClient(transport=ASGITransport(app=app), base_url="http://mesh"),
     ]
     agents = [
-        await _boot(clients[0], CpuFallbackRuntime(["mock-tiny"]), "honest-a"),
-        await _boot(clients[1], CpuFallbackRuntime(["mock-tiny"]), "honest-b"),
+        await _boot(clients[0], FixedTextRuntime(), "honest-a"),
+        await _boot(clients[1], FixedTextRuntime(), "honest-b"),
     ]
     tasks = [asyncio.create_task(_pump(agent, stop)) for agent in agents]
     try:
@@ -176,7 +182,7 @@ async def test_bad_spot_check_is_penalized(mesh):
         response = await client.post("/v1/chat/completions", json=CHAT)
         assert response.status_code == 200, response.text
         assert response.json()["choices"][0]["message"]["content"] == "WRONG"
-        honest = await _boot(honest_http, CpuFallbackRuntime(["mock-tiny"]), "checker")
+        honest = await _boot(honest_http, FixedTextRuntime(), "checker")
         honest_task = asyncio.create_task(_pump(honest, stop))
         await _wait_kinds(client, {"verification_fail", "credit_penalty"})
         stats = (await client.get("/api/stats")).json()

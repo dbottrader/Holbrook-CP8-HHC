@@ -65,11 +65,11 @@ def test_toploc_rejects_a_proof_for_a_different_prompt():
     pytest.importorskip("toploc")
     assert library_ready()
     messages = [{"role": "user", "content": "Say hello in one sentence."}]
-    proofs = build_prompt_proofs(messages, "mock-tiny")
+    proofs = build_prompt_proofs(messages, "SmolLM2-360M-Instruct")
     assert proofs
-    good = verify_prompt_proofs(messages, "mock-tiny", proofs)
+    good = verify_prompt_proofs(messages, "SmolLM2-360M-Instruct", proofs)
     assert good["ok"] is True
-    bad = verify_prompt_proofs([{"role": "user", "content": "a different prompt"}], "mock-tiny", proofs)
+    bad = verify_prompt_proofs([{"role": "user", "content": "a different prompt"}], "SmolLM2-360M-Instruct", proofs)
     assert bad["ok"] is False
 
 
