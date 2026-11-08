@@ -211,7 +211,7 @@
       check("verifier_order", sharesMatch, "Verifier shares follow id order. The last id receives pool % n.");
     }
     if (kind === "refund" && split) {
-      check("void_sum", voidSum === split.priceMinor, "The void leg returns the full price.");
+      check("void_sum", voidSum === split.priceMinor, "The void leg sends the full price back.");
       check("no_post", postSum === 0n, "A refunded bounty has no posted worker or verifier leg.");
     }
     if (kind === "mixed") {

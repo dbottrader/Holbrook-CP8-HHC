@@ -7,7 +7,7 @@ usage() {
   cat <<'EOF'
 Usage: install.sh [--coordinator URL] [--name NAME] [--backend auto|ollama|vllm|llamacpp|cpu]
                   [--allow-cpu] [--ollama-host URL] [--vllm-host URL]
-                  [--invite TOKEN] [--uninstall] [--purge]
+                  [--invite TOKEN] [--payout-address 0x…] [--uninstall] [--purge]
 
 The coordinator URL is filled in when this script is downloaded from a coordinator.
 EOF
@@ -33,6 +33,7 @@ VLLM_HOST="http://127.0.0.1:8000"
 UNINSTALL="0"
 PURGE="0"
 INVITE=""
+PAYOUT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -70,6 +71,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --invite)
       INVITE="${2:-}"
+      shift 2
+      ;;
+    --payout-address)
+      PAYOUT="${2:-}"
       shift 2
       ;;
     *)
@@ -114,6 +119,15 @@ case "$BACKEND" in
     exit 2
     ;;
 esac
+
+if [[ -n "$PAYOUT" && ! "$PAYOUT" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
+  echo "payout address must be a 0x EVM address." >&2
+  exit 2
+fi
+if [[ "$PAYOUT" =~ ^0x0{40}$ ]]; then
+  echo "payout address must not be the zero address." >&2
+  exit 2
+fi
 
 if [[ -n "$INVITE" && ! "$INVITE" =~ ^[A-Za-z0-9_.:@+-]{8,128}$ ]]; then
   echo "Invite must be 8-128 characters: letters, digits, and _ . : @ + -" >&2
@@ -208,6 +222,9 @@ PYTHONUNBUFFERED=1
 EOF
 if [[ -n "$INVITE" ]]; then
   printf 'GPU_MESH_INVITE=%s\n' "$INVITE" >> /etc/gpumesh/node.env
+fi
+if [[ -n "$PAYOUT" ]]; then
+  printf 'GPU_MESH_PAYOUT_ADDRESS=%s\n' "$PAYOUT" >> /etc/gpumesh/node.env
 fi
 if [[ "$BACKEND" == "llamacpp" ]]; then
   cat >> /etc/gpumesh/node.env <<'EOF'

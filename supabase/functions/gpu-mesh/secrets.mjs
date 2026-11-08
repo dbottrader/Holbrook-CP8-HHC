@@ -3,8 +3,10 @@
 
 export const ENV_GROQ = "GROQ_API_KEY";
 export const ENV_SIGNING = "INFERENCE_RECEIPT_SIGNING_KEY";
+export const ENV_SETTLER = "GPU_MESH_SETTLER_TOKEN";
 export const VAULT_GROQ = "groq_api_key";
 export const VAULT_SIGNING = "inference_receipt_signing_key";
+export const VAULT_SETTLER = "GPU_MESH_SETTLER_TOKEN";
 
 export function envGet(env, name) {
   if (!env || !name) return "";

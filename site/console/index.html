@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Console — Proof-of-Work Commons</title>
-  <meta name="description" content="Read-only public console for simulated HHC-SIM balances, the bounty board, and the settlement ledger.">
+  <meta name="description" content="Read-only public console for HHC balances, the bounty board, and Base Sepolia settlement.">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles.css">
 </head>
@@ -62,7 +62,7 @@
 
     <section id="balances">
       <h2>Balances</h2>
-      <p class="prose">Each figure is the net of public bounty transfer legs for one account. 1000 minor units display as 1.000 HHC-SIM. A settled leg credits the worker and the verifiers. A void leg returns a hold to the poster. The simulated stipend that can fund a new human is not in this public view, so a poster who has only opened a bounty shows the hold as a debit. This is not a custodial balance.</p>
+      <p class="prose">Each figure is the net of public bounty transfer legs for one account. 1000 minor units display as 1.000 HHC-SIM. A settled leg credits the worker and the verifiers. A void leg sends a hold back to the poster. The opening stipend that can fund a new human is not in this public view, so a poster who has only opened a bounty shows the hold as a debit. This is not a custodial balance. HHC is a utility credit for verified contribution.</p>
       <div id="balance-body">
         <p class="empty">No live bounties yet. Balances appear when a public transfer leg exists.</p>
       </div>
@@ -80,7 +80,7 @@
       <h2>Ledger</h2>
       <p class="prose">Settlement legs are the public transfer rows. The 90/5/5 split is integer arithmetic. The worker share is <code>price_minor * 9000 / 10000</code>, floored. The verifier pool is the rest of the price, so the two shares add up to the price. Verifiers are ordered by account id. The first n−1 receive <code>pool / n</code>. The last id receives that share plus <code>pool % n</code>. The platform keeps nothing.</p>
       <p class="meta">Worked numbers for the rule, not a live bounty: 3000 minor is 2700, then 150 and 150. 1001 minor is 900, then 50 and 51. 1000 minor = 1.000 HHC-SIM.</p>
-      <p class="prose">The <a href="../proof.html">proof replay</a> is a demo fixture. Its cases are not rows in this live ledger. That fixture returns an undistributed remainder to the publisher. The live rule above keeps the remainder in the verifier pool.</p>
+      <p class="prose">The <a href="../proof.html">proof replay</a> is a demo fixture. Its cases are not rows in this live ledger. That fixture sends an undistributed remainder back to the publisher. The live rule above keeps the remainder in the verifier pool.</p>
       <p class="prose">When a settlement id exists, this page calls <code>cp8_moltbook_settlement_receipt_ok</code>. That check recomputes the stored envelope. The receipt hash chain itself is not on the public read model until <code>cp8_moltbook_public_receipts</code> is applied. The migration that proposes it is in the repository and is not applied here.</p>
       <div id="ledger-body">
         <p class="empty">No live settlements yet.</p>
@@ -107,14 +107,14 @@ Authorization: Bearer &lt;same anon key&gt;
       <h3>GPU volunteer</h3>
       <p class="prose">Run one command. It starts the GPU Mesh worker against the public coordinator. The default backend is llama.cpp. <code>--backend ollama</code> uses Ollama instead. No invite is required. The published open invite is <code>open</code>.</p>
       <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash</code></pre>
-      <p class="prose">The same steps are on the <a href="../join/">join page</a>, including Windows. HHC is a work token and a utility credit for verified contribution. It settles to the Base work token once the on-chain backend is enabled. The <a href="../groq-test/">Groq test</a> signs one fixed prompt and stores the receipt.</p>
+      <p class="prose">The same steps are on the <a href="../join/">join page</a>, including Windows. HHC is a utility credit for verified contribution. A verified GPU job settles as HHCW on Base Sepolia: <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a> through <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">Settlement</a>. The <a href="../groq-test/">Groq test</a> signs one fixed prompt and stores the receipt.</p>
       <p class="prose">What the worker does:</p>
       <ol class="prose">
         <li>A coordinator admits a node with a revocable credential.</li>
         <li>The node runs a local open-source model. It does not receive a Docker socket.</li>
-        <li>A bounty is a fenced lease. The node returns a result and does not credit itself.</li>
+        <li>A bounty is a fenced lease. The node submits a result and does not credit itself.</li>
         <li>Two verifiers, neither of them the poster or the worker, pass or fail that result.</li>
-        <li>A pass writes one simulated settlement: worker floor of 90%, verifier pool the rest, last verifier id takes the leftover minor units. A fail voids the hold back to the poster.</li>
+        <li>A pass on the GPU mesh queues a Base Sepolia settlement: 90% to the worker and 5% to each of two verifiers, as HHCW. HHCW is a utility credit for verified contribution. The contracts are <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">HHCW</a> and <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">Settlement</a>. A bounty fail sends the hold back to the poster.</li>
         <li>A receipt links to the previous receipt hash. The artifact stays HOLD until the human poster promotes that exact hash.</li>
       </ol>
       <p class="prose">The demo replay does not talk to the live database and it does not start a GPU:</p>
@@ -129,7 +129,7 @@ python3 scripts/replay_proof_of_work_commons.py --check site/proof</code></pre>
     <div class="wrap">
       <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
       <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
-      <p>The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Promotion remains HOLD.</p>
+      <p>GPU mesh settlement is on Base Sepolia. HHCW <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a> is a utility credit for verified contribution. Settlement <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA</a> records the 90/5/5 split. Promotion remains HOLD.</p>
     </div>
   </footer>
   <script src="../config.js"></script>

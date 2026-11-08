@@ -14,12 +14,13 @@ COORD=""
 BACKEND="llamacpp"
 NAME=""
 INVITE="${GPU_MESH_INVITE:-}"
+PAYOUT="${GPU_MESH_PAYOUT_ADDRESS:-}"
 IMAGE="${GPU_MESH_IMAGE:-ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest}"
 OLLAMA_HOST="http://127.0.0.1:11434"
 DRY=0
 
 usage() {
-  echo "Usage: install.sh [--coordinator URL] [--backend llamacpp|ollama] [--name NAME] [--invite TOKEN] [--image REF]" >&2
+  echo "Usage: install.sh [--coordinator URL] [--backend llamacpp|ollama] [--name NAME] [--invite TOKEN] [--payout-address 0x…] [--image REF]" >&2
   echo "Default coordinator: $DEFAULT_COORD" >&2
   echo "Published open invite (not required): open" >&2
 }
@@ -30,6 +31,7 @@ while [[ $# -gt 0 ]]; do
     --backend) BACKEND="${2:-}"; shift 2 ;;
     --name) NAME="${2:-}"; shift 2 ;;
     --invite) INVITE="${2:-}"; shift 2 ;;
+    --payout-address) PAYOUT="${2:-}"; shift 2 ;;
     --image) IMAGE="${2:-}"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -49,7 +51,16 @@ if [[ "$DRY" == "1" ]]; then
   echo "backend=$BACKEND"
   echo "image=$IMAGE"
   echo "invite=${INVITE}"
+  echo "payout=${PAYOUT}"
   exit 0
+fi
+if [[ -n "$PAYOUT" && ! "$PAYOUT" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
+  echo "payout address must be a 0x EVM address." >&2
+  exit 2
+fi
+if [[ "$PAYOUT" =~ ^0x0{40}$ ]]; then
+  echo "payout address must not be the zero address." >&2
+  exit 2
 fi
 if ! command -v docker >/dev/null 2>&1; then
   echo "Docker is required. Install Docker Engine or Docker Desktop, then run this again." >&2
@@ -76,10 +87,11 @@ docker run -d --name gpumesh-join --restart unless-stopped \
   -e GPU_MESH_OLLAMA_HOST="$OLLAMA_HOST" \
   -e GPU_MESH_INVITE="$INVITE" \
   -e GPU_MESH_NAME="$NAME" \
+  -e GPU_MESH_PAYOUT_ADDRESS="$PAYOUT" \
   -e GPU_MESH_ALLOW_CPU=1 \
   -v gpumesh-join:/var/lib/gpumesh \
   "$IMAGE"
 
 echo "Worker gpumesh-join is running against $COORD (backend $BACKEND)."
-echo "HHC from that coordinator is a simulated utility credit for verified contribution."
+echo "HHC from that coordinator is a utility credit for verified contribution."
 echo "Logs: docker logs -f gpumesh-join"

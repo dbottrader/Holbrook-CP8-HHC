@@ -5,8 +5,8 @@
 The fixture is local and deterministic. It posts four bounties, exercises a
 fenced GPU-worker lease, settles an all-pass escrow 90/5/5, refunds a failed
 verification in full, and checks integer credit conservation. Credits are
-HHC-SIM. The default ledger is simulated. A verified credit settles to the
-Base work token once the on-chain backend is enabled. Promotion stays HOLD.
+HHC-SIM. HHC is a utility credit for verified contribution. GPU mesh
+settlement uses HHCW on Base Sepolia. Promotion stays HOLD.
 
 Canonical receipt hash: SHA-256 over UTF-8 JSON with sorted keys and compact
 separators of ``{"body", "kind", "prev_hash", "seq"}``. The ``receipt_hash``
@@ -52,7 +52,7 @@ GATE_IDS = (
     "fail_full_refund",
     "credit_conservation",
     "receipt_chain",
-    "simulated_hold_boundary",
+    "hold_boundary",
 )
 
 ARTIFACTS = ("replay.json", "receipts.json", "manifest.json")
@@ -665,14 +665,14 @@ def evaluate_gates(
         or genesis.get("promotion") != "HOLD"
         or genesis.get("unit") != "HHC-SIM"
     ):
-        problems["simulated_hold_boundary"].append(
-            "genesis does not keep HHC-SIM simulated and HOLD"
+        problems["hold_boundary"].append(
+            "genesis does not keep HHC-SIM at HOLD"
         )
     if boundary_problem:
-        problems["simulated_hold_boundary"].append(boundary_problem)
-    if not problems["simulated_hold_boundary"]:
-        notes["simulated_hold_boundary"].append(
-            "HHC-SIM stays simulated, promotion stays HOLD, and "
+        problems["hold_boundary"].append(boundary_problem)
+    if not problems["hold_boundary"]:
+        notes["hold_boundary"].append(
+            "HHC is a utility credit for verified contribution, promotion stays HOLD, and "
             + (boundary_note or "the public config was checked")
         )
 
@@ -812,8 +812,8 @@ def build(config_text: str) -> dict[str, Any]:
         ],
         "monetary_authority": False,
         "note": (
-            "HHC-SIM credits in this replay use the simulated ledger. "
-            "A verified credit settles to the Base work token once the on-chain backend is enabled. "
+            "HHC in this replay is a utility credit for verified contribution. "
+            "GPU mesh settlement uses HHCW on Base Sepolia. "
             "A passing replay does not promote the system."
         ),
         "promotion": "HOLD",
@@ -827,7 +827,7 @@ def build(config_text: str) -> dict[str, Any]:
             ),
             "pass": (
                 "worker 90 percent, verifier A 5 percent, verifier B 5 percent, "
-                "integer floor; undistributed remainder returns to the publisher"
+                "integer floor; the undistributed remainder goes back to the publisher"
             ),
             "unit": "milli-HHC-SIM; 1000 milli = 1.000 HHC-SIM",
         },
@@ -901,7 +901,7 @@ def print_summary(built: dict[str, Any]) -> None:
     passed = sum(1 for gate in built["gates"] if gate["status"] == "PASS")
     print(f"{passed}/{len(GATE_IDS)} {'PASS' if built['ok'] else 'FAIL'}")
     print("promotion HOLD")
-    print("unit HHC-SIM (simulated, no monetary authority)")
+    print("unit HHC-SIM (utility credit for verified contribution)")
 
 
 def main(argv: list[str] | None = None) -> int:

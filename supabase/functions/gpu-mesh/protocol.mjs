@@ -5,6 +5,9 @@
  * claim, chunks, result, fail. Public callers use OpenAI /v1/chat/completions.
  * A second online worker verifies. The award is a canon-v1 inference_receipt.
  * Credits stay in hold until the worker is 7 days old and has 3 verified jobs.
+ * A verified job enters the Base Sepolia settlement queue only after a second
+ * distinct verifier, who is not the worker, also agrees. This function never
+ * holds the deployer key. GPU_MESH_SETTLER_TOKEN authenticates the box settler.
  * With no online worker, Groq is the fallback when GROQ_API_KEY is set.
  */
 
@@ -18,8 +21,10 @@ import {
 } from "./canon.mjs";
 import {
   ENV_GROQ,
+  ENV_SETTLER,
   ENV_SIGNING,
   VAULT_GROQ,
+  VAULT_SETTLER,
   VAULT_SIGNING,
   envGet,
   readConfiguredSecret,
@@ -27,6 +32,23 @@ import {
 
 export const PUBLIC_COORDINATOR = "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh";
 export const OPEN_INVITE = "open";
+export const UNITS_PER_CREDIT = 1000;
+export const CHAIN = {
+  ledger: "base-sepolia",
+  chainId: 84532,
+  rpc: "https://sepolia.base.org",
+  hhcw: "0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d",
+  settlement: "0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA",
+};
+const RESULT_STATUSES = new Set([
+  "settled",
+  "already_settled",
+  "failed",
+  "skipped_missing_payout",
+  "skipped_indivisible",
+  "skipped_needs_two_verifiers",
+  "skipped_verifier_independence",
+]);
 
 const MAX_TOKENS = 256;
 const MAX_PROMPT = 4000;
@@ -84,6 +106,70 @@ function clock(ctx) {
 function bearer(req) {
   const header = req.headers.get("authorization") || "";
   return header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+}
+
+export function addressUrl(address) {
+  return `https://sepolia.basescan.org/address/${address}`;
+}
+
+export function txUrl(hash) {
+  return `https://sepolia.basescan.org/tx/${hash}`;
+}
+
+export function chainContracts() {
+  return {
+    ledger: CHAIN.ledger,
+    chain_id: CHAIN.chainId,
+    hhcw: CHAIN.hhcw,
+    hhcw_url: addressUrl(CHAIN.hhcw),
+    settlement: CHAIN.settlement,
+    settlement_url: addressUrl(CHAIN.settlement),
+  };
+}
+
+export function independentVerifiers(workerId, verifierIds) {
+  const ids = (verifierIds || []).map((id) => String(id || "").trim()).filter(Boolean);
+  if (ids.length !== 2 || new Set(ids).size !== 2) return false;
+  return !ids.includes(String(workerId || ""));
+}
+
+export function splitsClean(total) {
+  if (!Number.isInteger(total) || total <= 0) return false;
+  const worker = Math.floor((total * 9000) / 10000);
+  const each = Math.floor((total * 500) / 10000);
+  return worker + each + each === total;
+}
+
+export async function timingSafeEqualText(left, right) {
+  const enc = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest("SHA-256", enc.encode(String(left))),
+    crypto.subtle.digest("SHA-256", enc.encode(String(right))),
+  ]);
+  const x = new Uint8Array(a);
+  const y = new Uint8Array(b);
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
+  return diff === 0;
+}
+
+function parsePayout(raw) {
+  if (raw == null || String(raw).trim() === "") return "";
+  const value = String(raw).trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(value) || /^0x0{40}$/i.test(value)) {
+    throw mesh(400, "payout_address must be a non-zero EVM address", "bad_payout_address");
+  }
+  return value;
+}
+
+function parseTxHash(raw) {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  const body = value.startsWith("0x") || value.startsWith("0X") ? value.slice(2) : value;
+  if (!/^[0-9a-fA-F]{64}$/.test(body)) {
+    throw mesh(400, "tx_hash must be a 32-byte hex transaction hash", "bad_tx_hash");
+  }
+  return `0x${body.toLowerCase()}`;
 }
 
 async function readJson(req) {
@@ -230,8 +316,8 @@ async function ensureSeed(store, ctx) {
         network: "GPU-MESH",
         mesh: "public-edge",
         signer: mat.publicKey,
-        ledger_backend: "simulated",
-        note: "HHC is a work token and a utility credit for verified contribution.",
+        ledger_backend: "base-sepolia",
+        note: "HHC is a utility credit for verified contribution.",
         amount: 0,
         credits: 0,
       },
@@ -348,6 +434,9 @@ function blankJob(partial) {
     verdict: "",
     client_key: "",
     receipt_hash: "",
+    settlement_tx_hash: "",
+    settlement_tx_url: "",
+    settlement_status: "",
     assigned_at: 0,
     completed_at: 0,
     deadline_at: 0,
@@ -538,6 +627,10 @@ function completion(job, receipt, extra) {
       receipt,
       status: job.status,
       promotion: "HOLD",
+      ledger: CHAIN.ledger,
+      settlement_status: job.settlement_status || "",
+      settlement_tx_hash: job.settlement_tx_hash || "",
+      settlement_tx_url: job.settlement_tx_url || "",
     },
   };
 }
@@ -586,6 +679,7 @@ async function register(req, store, ctx) {
     last_ip: ip.slice(0, 64),
     created_at: now,
     version: String(spec.version || "").slice(0, 32),
+    payout_address: parsePayout(spec.payout_address),
   };
   await store.insertNode(node);
   let receipt = null;
@@ -621,6 +715,7 @@ async function heartbeat(req, store, ctx) {
   node.backend = ["cpu", "ollama", "vllm", "llamacpp"].includes(backend) ? backend : node.backend;
   if (Array.isArray(spec.models) && spec.models.length) node.models = cleanModels(spec.models, node.backend);
   Object.assign(node, gpuOf(spec.gpu || { model: node.gpu_name, vram_mb: node.vram_mb, count: node.gpu_count, driver: node.driver }));
+  if (spec.payout_address) node.payout_address = parsePayout(spec.payout_address);
   node.last_heartbeat = clock(ctx);
   node.last_ip = clientIp(req).slice(0, 64);
   if (node.status === "offline") node.status = "online";
@@ -678,7 +773,9 @@ async function claim(req, store, ctx) {
   return json({ job: job ? jobForNode(job) : null });
 }
 
-async function enqueueVerification(store, parent) {
+async function enqueueVerification(store, parent, options = {}) {
+  const excluded = new Set(parent.assigned_node_id ? [parent.assigned_node_id] : []);
+  for (const id of options.extraExcluded || []) if (id) excluded.add(id);
   const job = blankJob({
     id: hexId("job_", 6),
     kind: "verification",
@@ -691,8 +788,8 @@ async function enqueueVerification(store, parent) {
     stop: parent.stop,
     origin_node_id: parent.assigned_node_id,
     parent_job_id: parent.id,
-    excluded: parent.assigned_node_id ? [parent.assigned_node_id] : [],
-    client_key: "verify",
+    excluded: [...excluded],
+    client_key: options.clientKey || "verify",
     created_at: Date.now() / 1000,
     priority: 100,
   });
@@ -700,7 +797,116 @@ async function enqueueVerification(store, parent) {
   return job;
 }
 
+async function openChainSettlement(store, parent, origin, verifier, award) {
+  if (!origin?.id || !verifier?.id || origin.id === verifier.id) return null;
+  const id = `mesh:${parent.id}`;
+  const existing = await store.getChainSettlement(id);
+  if (existing) return existing;
+  const now = Date.now() / 1000;
+  const row = {
+    id,
+    job_id: parent.id,
+    worker_id: origin.id,
+    verifier1_id: verifier.id,
+    verifier2_id: "",
+    amount: 0,
+    mesh_credits: award,
+    status: "awaiting_second_verifier",
+    receipt: null,
+    receipt_hash: "",
+    tx_hash: "",
+    tx_url: "",
+    detail: "",
+    created_at: now,
+    updated_at: now,
+  };
+  const inserted = await store.insertChainSettlement(row);
+  if (!inserted) return store.getChainSettlement(id);
+  parent.settlement_status = row.status;
+  return row;
+}
+
+async function finishSecondVerification(store, ctx, node, job) {
+  const parent = job.parent_job_id ? await store.getJob(job.parent_job_id) : null;
+  const row = parent ? await store.getChainSettlement(`mesh:${parent.id}`) : null;
+  if (!parent?.output_text || !row || row.status !== "awaiting_second_verifier") {
+    job.status = "rejected";
+    job.verdict = "skip";
+    await store.saveJob(job);
+    return;
+  }
+  const verdict = judge(parent.output_text, job.output_text, parent.temperature);
+  const kind = verdict === "agree" ? "verification_pass" : (verdict === "disagree_sampling" ? "verification_disagree" : "verification_fail");
+  const verifierReceipt = await settle(store, ctx, {
+    key: `${job.id}:verifier_award`,
+    job,
+    node,
+    kind,
+    amount: verdict === "child_empty" ? 0 : VERIFIER_PAY,
+    payload: {
+      schema: "gpumesh.verification.v1",
+      job_id: job.id,
+      parent_job_id: parent.id,
+      model: job.model,
+      output_hash: job.output_hash,
+      parent_output_hash: parent.output_hash,
+      verifier_ids: node.id,
+      verifier_decision: verdict,
+      toploc: "unavailable",
+      check: "duplicate",
+    },
+  });
+  job.receipt_hash = verifierReceipt.hash;
+  job.verdict = verdict;
+  job.credits_awarded = verdict === "child_empty" ? 0 : VERIFIER_PAY;
+  const workerId = parent.assigned_node_id;
+  const ids = [row.verifier1_id, node.id];
+  if (verdict === "agree" && independentVerifiers(workerId, ids)) {
+    const credits = parent.credits_awarded || row.mesh_credits || 0;
+    const contribution = credits * UNITS_PER_CREDIT;
+    row.verifier2_id = node.id;
+    row.mesh_credits = credits;
+    if (!splitsClean(contribution)) {
+      row.status = "skipped_indivisible";
+      row.detail = "contribution does not divide into 9000/500/500";
+    } else {
+      const entry = await append(store, ctx, workerId, "inference_receipt", {
+        schema: "gpumesh.chain_settlement.v1",
+        job_id: parent.id,
+        worker_id: workerId,
+        verifier_ids: ids,
+        verifier_decision: "agree",
+        settlement_id: row.id,
+        amount: contribution,
+        credits: contribution,
+        mesh_credits: credits,
+        units_per_credit: UNITS_PER_CREDIT,
+        chain: CHAIN.ledger,
+      });
+      row.receipt = entry;
+      row.receipt_hash = entry.hash;
+      row.amount = contribution;
+      row.status = "pending";
+      row.detail = "";
+    }
+  } else if (verdict === "agree") {
+    row.verifier2_id = node.id;
+    row.status = "skipped_verifier_independence";
+    row.detail = "settlement needs two distinct verifiers other than the worker";
+  } else {
+    row.status = "verifier_disagreement";
+    row.detail = verdict;
+  }
+  row.updated_at = Date.now() / 1000;
+  parent.settlement_status = row.status;
+  await store.saveChainSettlement(row);
+  await store.saveJob(parent);
+  job.status = verdict === "agree" ? "verified" : "disputed";
+  await store.saveJob(job);
+}
+
 async function finishVerification(store, ctx, node, job) {
+  if (job.client_key === "verify2") return finishSecondVerification(store, ctx, node, job);
   const parent = job.parent_job_id ? await store.getJob(job.parent_job_id) : null;
   if (!parent?.output_text) {
     job.status = "rejected";
@@ -770,6 +976,8 @@ async function finishVerification(store, ctx, node, job) {
       parent.status = "verified";
       parent.verdict = "agree";
       job.status = "verified";
+      await openChainSettlement(store, parent, origin, node, award);
+      await enqueueVerification(store, parent, { clientKey: "verify2", extraExcluded: [node.id] });
     } else {
       parent.status = "disputed";
       parent.verdict = "agree";
@@ -1061,10 +1269,180 @@ function keyDocument(mat) {
   };
 }
 
+async function settlerToken(ctx) {
+  if (ctx._settlerToken !== undefined) return ctx._settlerToken;
+  const got = await readConfiguredSecret(ctx.env, ENV_SETTLER, VAULT_SETTLER, ctx.readVault);
+  ctx._settlerToken = got.value;
+  return got.value;
+}
+
+async function requireSettler(req, ctx) {
+  const expected = await settlerToken(ctx);
+  if (!expected) {
+    throw mesh(503, "GPU_MESH_SETTLER_TOKEN is not configured", "settler_not_configured", "server_error");
+  }
+  const presented = bearer(req);
+  if (!(await timingSafeEqualText(presented, expected))) {
+    throw mesh(401, "settler token required", "settler_required", "authentication_error");
+  }
+}
+
+function nodeAddress(nodes, id) {
+  const node = nodes.find((item) => item.id === id);
+  return node?.payout_address || "";
+}
+
+function publicSettlement(row, nodes) {
+  return {
+    id: row.id,
+    job_id: row.job_id,
+    status: row.status,
+    worker_id: row.worker_id,
+    verifier1_id: row.verifier1_id,
+    verifier2_id: row.verifier2_id,
+    worker_address: nodeAddress(nodes, row.worker_id),
+    verifier1_address: nodeAddress(nodes, row.verifier1_id),
+    verifier2_address: nodeAddress(nodes, row.verifier2_id),
+    amount: row.amount || 0,
+    mesh_credits: row.mesh_credits || 0,
+    units_per_credit: UNITS_PER_CREDIT,
+    receipt_hash: row.receipt_hash || "",
+    receipt: row.receipt || null,
+    tx_hash: row.tx_hash || "",
+    tx_url: row.tx_url || "",
+    chain: CHAIN.ledger,
+    chain_id: CHAIN.chainId,
+    hhcw: CHAIN.hhcw,
+    settlement: CHAIN.settlement,
+  };
+}
+
+async function pendingSettlements(store) {
+  const rows = await store.listChainSettlements(["pending", "skipped_missing_payout"]);
+  const nodes = await store.listNodes();
+  const ready = [];
+  for (const row of rows) {
+    if (!independentVerifiers(row.worker_id, [row.verifier1_id, row.verifier2_id])) continue;
+    if (!row.receipt) continue;
+    const view = publicSettlement(row, nodes);
+    const funded = view.worker_address && view.verifier1_address && view.verifier2_address;
+    if (row.status === "skipped_missing_payout") {
+      if (!funded) continue;
+      row.status = "pending";
+      row.detail = "";
+      row.updated_at = Date.now() / 1000;
+      await store.saveChainSettlement(row);
+      const job = await store.getJob(row.job_id);
+      if (job) {
+        job.settlement_status = "pending";
+        await store.saveJob(job);
+      }
+    }
+    ready.push(publicSettlement(row, nodes));
+  }
+  return ready;
+}
+
+async function settlementResult(req, store, ctx) {
+  await requireSettler(req, ctx);
+  const spec = await readJson(req);
+  const id = String(spec.id || "").trim();
+  if (!id) throw mesh(400, "id is required", "settlement_id_required");
+  const status = String(spec.status || "").trim();
+  if (!RESULT_STATUSES.has(status)) throw mesh(400, "status is not a settlement result", "bad_settlement_status");
+  const tx = parseTxHash(spec.tx_hash);
+  if (status === "settled" && !tx) throw mesh(400, "settled result needs a tx hash", "tx_hash_required");
+  const row = await store.getChainSettlement(id);
+  if (!row) throw mesh(404, "unknown settlement", "unknown_settlement");
+  if ((row.status === "settled" || row.status === "already_settled") && row.tx_hash && tx && row.tx_hash !== tx) {
+    throw mesh(409, "settlement already recorded", "settlement_replay");
+  }
+  if ((row.status === "settled" || row.status === "already_settled") && (!tx || tx === row.tx_hash)) {
+    return json(publicSettlement(row, await store.listNodes()));
+  }
+  row.status = status;
+  row.tx_hash = tx || row.tx_hash || "";
+  row.tx_url = row.tx_hash ? txUrl(row.tx_hash) : "";
+  row.detail = String(spec.detail || "").slice(0, 300);
+  row.updated_at = Date.now() / 1000;
+  await store.saveChainSettlement(row);
+  const job = await store.getJob(row.job_id);
+  if (job) {
+    job.settlement_status = row.status;
+    job.settlement_tx_hash = row.tx_hash;
+    job.settlement_tx_url = row.tx_url;
+    await store.saveJob(job);
+  }
+  if (row.tx_hash) {
+    try {
+      await append(store, ctx, "settlement", "chain_settlement", {
+        schema: "gpumesh.chain_settlement.v1",
+        job_id: row.job_id,
+        settlement_id: row.id,
+        worker_id: row.worker_id,
+        verifier_ids: [row.verifier1_id, row.verifier2_id].filter(Boolean),
+        tx_hash: row.tx_hash,
+        tx_url: row.tx_url,
+        status: row.status,
+        chain: CHAIN.ledger,
+        amount: 0,
+        credits: 0,
+      });
+    } catch {
+      // The tx hash is already on the job. A missing signer must not drop it.
+    }
+  }
+  return json(publicSettlement(row, await store.listNodes()));
+}
+
+function jobIdOfReceipt(row) {
+  try {
+    const payload = JSON.parse(row.payload);
+    return String(payload.job_id || "");
+  } catch {
+    return "";
+  }
+}
+
+function annotateReceipt(row, byJob, byHash) {
+  const match = byHash.get(row.hash) || byJob.get(jobIdOfReceipt(row)) || null;
+  return {
+    seq: row.seq,
+    ts: row.ts,
+    actor: row.actor,
+    kind: row.kind,
+    payload: row.payload,
+    prev_hash: row.prev_hash,
+    hash: row.hash,
+    canon: row.canon,
+    amount: row.amount,
+    signature: row.signature,
+    signer: row.signer,
+    typed_data: row.typed_data,
+    settlement_tx_hash: match?.tx_hash || "",
+    settlement_tx_url: match?.tx_url || "",
+    settlement_status: match?.status || "",
+  };
+}
+
+async function receiptAnnotations(store) {
+  const rows = await store.listChainSettlements();
+  const byJob = new Map();
+  const byHash = new Map();
+  for (const row of rows) {
+    if (row.job_id && !byJob.has(row.job_id)) byJob.set(row.job_id, row);
+    if (row.receipt_hash) byHash.set(row.receipt_hash, row);
+    if (row.tx_hash) byJob.set(row.job_id, row);
+  }
+  return { byJob, byHash };
+}
+
 async function stats(store, ctx) {
   await sweep(store, clock(ctx));
   const body = await store.stats();
   const mat = await material(ctx);
+  const chainRows = await store.listChainSettlements();
+  const settled = chainRows.filter((row) => row.tx_hash);
   return json({
     ok: true,
     ...body,
@@ -1077,7 +1455,17 @@ async function stats(store, ctx) {
     max_tokens: MAX_TOKENS,
     trust_days: 7,
     trust_verified_jobs: TRUST_JOBS,
-    ledger: "simulated",
+    ledger: CHAIN.ledger,
+    ...chainContracts(),
+    settlements_pending: chainRows.filter((row) => row.status === "pending").length,
+    settlements_settled: chainRows.filter((row) => row.status === "settled" || row.status === "already_settled").length,
+    settlement_txs: settled.slice(-20).map((row) => ({
+      id: row.id,
+      job_id: row.job_id,
+      status: row.status,
+      tx_hash: row.tx_hash,
+      tx_url: row.tx_url || (row.tx_hash ? txUrl(row.tx_hash) : ""),
+    })),
     promotion: "HOLD",
   });
 }
@@ -1114,6 +1502,7 @@ export async function handle(req, ctx) {
         vault_reachable: mat.vaultReachable,
         open_invite: OPEN_INVITE,
         coordinator: PUBLIC_COORDINATOR,
+        ...chainContracts(),
       });
     }
     if (req.method === "GET" && path === "/.well-known/inference-receipt-key.json") {
@@ -1125,7 +1514,18 @@ export async function handle(req, ctx) {
       const job = await store.getJob(decodeURIComponent(path.slice("/v1/jobs/".length)));
       if (!job) throw mesh(404, "unknown job", "unknown_job");
       if (!job.output_text) {
-        return json({ id: job.id, object: "gpumesh.job", status: job.status, model: job.model, error: job.error, verdict: job.verdict });
+        return json({
+          id: job.id,
+          object: "gpumesh.job",
+          status: job.status,
+          model: job.model,
+          error: job.error,
+          verdict: job.verdict,
+          ledger: CHAIN.ledger,
+          settlement_status: job.settlement_status || "",
+          settlement_tx_hash: job.settlement_tx_hash || "",
+          settlement_tx_url: job.settlement_tx_url || "",
+        });
       }
       const worker = (await store.listNodes()).find((node) => node.id === job.assigned_node_id);
       const receipt = await receiptForJob(store, job);
@@ -1144,22 +1544,17 @@ export async function handle(req, ctx) {
       const url = new URL(req.url);
       const limit = Math.max(1, Math.min(Number(url.searchParams.get("limit") || 20), 50));
       const rows = await store.listLedger(limit);
+      const notes = await receiptAnnotations(store);
       return json({
-        receipts: rows.map((row) => ({
-          seq: row.seq,
-          ts: row.ts,
-          actor: row.actor,
-          kind: row.kind,
-          payload: row.payload,
-          prev_hash: row.prev_hash,
-          hash: row.hash,
-          canon: row.canon,
-          amount: row.amount,
-          signature: row.signature,
-          signer: row.signer,
-          typed_data: row.typed_data,
-        })),
+        receipts: rows.map((row) => annotateReceipt(row, notes.byJob, notes.byHash)),
       });
+    }
+    if (req.method === "GET" && path === "/api/settlements/pending") {
+      await requireSettler(req, ctx);
+      return json({ settlements: await pendingSettlements(store) });
+    }
+    if (req.method === "POST" && path === "/api/settlements/result") {
+      return await settlementResult(req, store, ctx);
     }
     if (req.method === "POST" && path === "/api/nodes/register") return await register(req, store, ctx);
     if (req.method === "POST" && path === "/api/nodes/heartbeat") return await heartbeat(req, store, ctx);
