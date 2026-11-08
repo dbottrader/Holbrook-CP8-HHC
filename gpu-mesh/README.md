@@ -2,7 +2,7 @@
 
 Volunteer GPU network for free open-weight inference. People contribute GPU time the way miners contribute hashpower. The coordinator queues chat jobs and hands them to machines that already run those models through [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai). Anyone can call the public API.
 
-Compute credits are integer claims on a hash-chained ledger. The default backend is simulated. A verified credit settles to the Base work token once the on-chain backend is enabled. Switching backends is `GPU_MESH_LEDGER_BACKEND`. This build does not deploy a contract. Receipts are canonical JSON plus SHA-256 and an Ed25519 signature, in the same style as [ASIN-HHC](https://github.com/dbottrader/ASIN-HHC-Agent-Mesh). The format is written down in [docs/RECEIPT_FORMAT.md](docs/RECEIPT_FORMAT.md).
+Compute credits are integer claims on a hash-chained ledger. HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public hub settles that credit as HHCW on Base Sepolia after two distinct verifiers, neither of them the worker, agree. Settlement is `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA` and the token is `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`. The deployer key stays on the operator box (`settler/settle.py`). The hub stores the transaction hash and does not hold the key. A self-hosted Python process still defaults to a local integer ledger (`GPU_MESH_LEDGER_BACKEND=simulated`). Setting that process to `onchain` does not submit a transaction and does not open a socket. Receipts are canonical JSON plus SHA-256 and an Ed25519 signature, in the same style as [ASIN-HHC](https://github.com/dbottrader/ASIN-HHC-Agent-Mesh). The format is written down in [docs/RECEIPT_FORMAT.md](docs/RECEIPT_FORMAT.md). Launch checks are in [`docs/LAUNCH_DEMOS.md`](../docs/LAUNCH_DEMOS.md).
 
 ```
 client  --OpenAI /v1/chat/completions-->  coordinator  <--pull jobs--  node (your GPU)
@@ -124,28 +124,28 @@ Backends:
 - `llamacpp` — llama.cpp on CPU. Default model id `SmolLM2-360M-Instruct`. Weights download into `GPU_MESH_MODEL_CACHE` (default `data/models`) and are not committed. Canary-shaped exact-token prompts are answered literally; every other prompt is the GGUF. No TOPLOC hidden-state proof.
 - `cpu` — deterministic `mock-tiny` only. Not an open-weight model.
 
-The ledger unit is HHC, a work token and a utility credit for verified contribution. The software stores it as an integer kudos balance. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. The simulated ledger is the default. `GPU_MESH_LEDGER_BACKEND=onchain` selects the Base settlement backend. That backend is not enabled in this build, so the process refuses the write and does not submit a transaction. A verified credit settles to the Base work token once the on-chain backend is enabled.
+The ledger unit is HHC, a utility credit for verified contribution. The software stores the mesh amount as an integer. Amounts scale with capped completion length and VRAM class (1× CPU, 2× under 12 GB, 4× under 20 GB, 8× at 20 GB and above) and are recorded only after verification. Until a worker is trusted (by default, account age of 7 days and 3 verified jobs), the balance stays in an accounting hold. A failed canary reduces the balance by 5 and adds a strike. Jobs that finish absurdly fast on a GPU backend, or that keep failing, raise a suspicion score and the scheduler pauses the node. Anonymous callers can queue small jobs. A request above the free completion-length cap needs a positive HHC balance on an API key, and a higher balance is served first. On the public hub, two distinct verifiers (neither of them the worker) move the job to the settler queue. The box settler then submits HHCW on Base Sepolia. One mesh credit is 1000 HHCW units, split 900 / 50 / 50. `GPU_MESH_LEDGER_BACKEND=onchain` on a self-hosted Python process still refuses the write and does not open a socket. That switch is not the live settler.
 
 ## Join with one command
 
-The volunteer image, Compose file, Linux/macOS installer, and Windows steps are in [deploy/join/](deploy/join/README.md). The image is `ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join`. llama.cpp is inside it. Ollama is `--backend ollama`. The public coordinator is `https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh`. The installer uses it when `--coordinator` is omitted. See [docs/PUBLIC_COORDINATOR.md](docs/PUBLIC_COORDINATOR.md).
+The volunteer image, Compose file, Linux/macOS installer, and Windows steps are in [deploy/join/](deploy/join/README.md). The image is `ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join`. A visible NVIDIA or AMD GPU selects Ollama on that device (`--gpus all`, or `ollama/ollama:rocm` with `/dev/kfd` and `/dev/dri`). `--cpu` forces llama.cpp. `--gpu` stops if no GPU is visible. `--payout-address 0x…` names the EVM account for this node's HHCW. The public coordinator is `https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh`. The installer uses it when `--coordinator` is omitted. See [docs/PUBLIC_COORDINATOR.md](docs/PUBLIC_COORDINATOR.md).
 
 ## Install a node (systemd, non-root)
 
-On the GPU machine, after the NVIDIA driver and Ollama or vLLM are up:
+The public one-command path is the Docker installer in the section above. A self-hosted coordinator serves a different systemd installer at `/install.sh` (the file is `gpumesh/assets/install.sh`). That script creates user `gpumesh`, a venv under `/opt/gpumesh`, `/etc/gpumesh/node.env`, and `gpumesh-node.service`. The unit sets `User=gpumesh`, `NoNewPrivileges=true`, `ProtectSystem=strict`, and can write only `/var/lib/gpumesh`. Root is used to install, not to serve.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --name my-rig
+curl -fsSL https://gpu.example.com/install.sh | sudo bash -s -- --name my-rig --payout-address 0xYourEvmAddress
 ```
 
-The script creates user `gpumesh`, a venv under `/opt/gpumesh`, `/etc/gpumesh/node.env`, and `gpumesh-node.service`. The unit sets `User=gpumesh`, `NoNewPrivileges=true`, `ProtectSystem=strict`, and can write only `/var/lib/gpumesh`. Root is used to install, not to serve.
+`--gpu` requires a visible NVIDIA or AMD GPU and, with `--backend auto`, selects Ollama. `--cpu` forces the CPU fallback. The env file records `GPU_MESH_ACCELERATOR` as `cuda`, `rocm`, or `cpu`. The public edge function does not serve this unit or the node tarball; use the Docker join for that coordinator.
 
 ```bash
 systemctl status gpumesh-node
 journalctl -u gpumesh-node -f
 ```
 
-Dry run on a box with no GPU: add `--allow-cpu`. That serves `mock-tiny` only. For a real small model on CPU, use `--backend llamacpp` after `pip install 'llama-cpp-python>=0.3.4'`. See [docs/FREE_TIER.md](docs/FREE_TIER.md).
+On a box with no GPU, `--cpu` (or a machine where no GPU is detected) selects llama.cpp and SmolLM2-360M-Instruct. `--allow-cpu` still allows the deterministic `mock-tiny` fallback when the backend is `auto` and no model server answers. See [docs/FREE_TIER.md](docs/FREE_TIER.md).
 
 The same agent is a Docker image (`node/Dockerfile`). It starts as root only to chown the state volume, then `setpriv` drops to uid 10001 (`gpumesh`). For a real GPU, install the NVIDIA container toolkit and run that image with `--gpus all`, `GPU_MESH_BACKEND=ollama` or `vllm`, and the runtime reachable from the container (host network, or an Ollama container on the same Docker network). Do not set `GPU_MESH_ALLOW_CPU` on a machine you intend to contribute for real.
 
@@ -182,7 +182,7 @@ CI is [`.github/workflows/gpu-mesh.yml`](../.github/workflows/gpu-mesh.yml) in t
 - A spot-check compares text. It cannot prove the weights that produced it. A node that behaves only on canary-shaped prompts can still cheat ordinary traffic until a temperature-0 re-run disagrees. That disagreement is recorded and, when temperature was 0, penalized.
 - Prompts are stored until `GPU_MESH_PROMPT_RETENTION_SEC` (default one day) so a spot-check can replay them, then the message body is cleared. Receipts never contained the prompt.
 - The node does not execute the prompt in a shell. It forwards chat messages to Ollama, vLLM, or a local llama.cpp GGUF. The `cpu` backend does not run a model at all.
-- HHC is an integer credit for verified contribution. The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Do not describe the credit as a payout, a sale, or a return.
+- HHC is a utility credit for verified contribution. Do not describe the credit as a sale or a return. The public hub settles HHCW on Base Sepolia through the box settler. A self-hosted process keeps a local integer ledger and does not submit that transaction.
 - One worker process. Do not mount the Docker socket, the coordinator database, or host paths into the node. The Compose node runs as uid 10001, read-only, with every capability dropped.
 - Install `torch==2.5.1` (CPU index is enough) and `toploc==0.1.6` before a public launch if you want proof-of-inference enforced. Without that library the coordinator still spot-checks text and records the proof as unavailable.
 
@@ -201,7 +201,7 @@ No AGPL source is copied into this repo. AI Horde's server and worker are AGPL-3
 | [Petals](https://github.com/bigscience-workshop/petals) | MIT | Heartbeat expiry, request timeouts, and the warning that untrusted peers can lie. The second-node spot-check is their "send it twice" idea. | We do not run a DHT or shard layers. The node opens no port. |
 | [exo](https://github.com/exo-explore/exo) | Apache-2.0 | OpenAI-compatible `/v1/chat/completions`, and placing a job only on a node that advertises the model. | No Apache source is copied. We do not elect a master or pool a home cluster over libp2p. |
 | [GPUStack](https://github.com/gpustack/gpustack) | Apache-2.0 | Dashboard metering: tokens, jobs, and per-model usage, plus per-key quotas. No Apache source is copied. | Their cluster manager and model catalog service. |
-| EIP-712 and Merkle commitments | Public specifications | Typed-data claims and a pairwise SHA-256 root over receipt hashes. SHA-256 stands in for keccak256. `chainId` is 0. | No transaction, contract, or mint. |
+| EIP-712 and Merkle commitments | Public specifications | Typed-data claims and a pairwise SHA-256 root over receipt hashes. SHA-256 stands in for keccak256. The receipt digest uses `chainId` 0 and is not itself a transaction. | The box settler submits `Settlement.settle` on Base Sepolia. This Python process does not. |
 | [ASIN-HHC Agent Mesh](https://github.com/dbottrader/ASIN-HHC-Agent-Mesh) | see that repo | Canonical JSON hashing for the receipt chain (`sort_keys`, compact separators, millisecond timestamps). | — |
 
-On top of those: fenced leases (a generation token, an expiry, rejection of a late completion), exactly-once settlement enforced by a unique key (the same unique constraint Postgres and SQLite both apply), revocable per-node credentials, admission control, and the signed simulated ledger.
+On top of those: fenced leases (a generation token, an expiry, rejection of a late completion), exactly-once settlement enforced by a unique key (the same unique constraint Postgres and SQLite both apply), revocable per-node credentials, admission control, and the signed integer ledger. The public hub's chain settlement is the box settler, after two distinct verifiers.

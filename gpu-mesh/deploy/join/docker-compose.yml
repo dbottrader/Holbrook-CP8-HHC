@@ -1,12 +1,27 @@
 # Volunteer worker against a coordinator you already have.
-# HHC recorded by that coordinator is a simulated utility credit.
+# HHC recorded by the public coordinator is a utility credit for verified
+# contribution. It settles as HHCW on Base Sepolia after two distinct verifiers.
+# Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA
+# Token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d
+# This file does not hold a key and does not deploy a contract.
 #
+# CPU fallback (no GPU):
 #   docker compose -f gpu-mesh/deploy/join/docker-compose.yml up --build
-# GPU_MESH_COORDINATOR overrides the public coordinator below.
-#   GPU_MESH_BACKEND=ollama docker compose --profile ollama up --build
+# NVIDIA. The device reservation is driver nvidia, capabilities [gpu].
+# Scale the CPU worker to zero so only the GPU worker registers:
+#   docker compose -f gpu-mesh/deploy/join/docker-compose.yml --profile nvidia up --build --scale worker=0
+# AMD ROCm (ollama/ollama:rocm, /dev/kfd and /dev/dri):
+#   docker compose -f gpu-mesh/deploy/join/docker-compose.yml --profile rocm up --build --scale worker=0
+# CPU Ollama, small model, no device passthrough:
+#   GPU_MESH_BACKEND=ollama docker compose -f gpu-mesh/deploy/join/docker-compose.yml --profile ollama up --build
 #
-# Ollama's image is the official ollama/ollama image, pinned by tag.
-# The coordinator ledger defaults to simulated. It settles to the Base work token once the on-chain backend is enabled. This file does not deploy a contract.
+# The one-command installer detects the GPU and applies the same passthrough.
+
+x-worker-env: &worker-env
+  GPU_MESH_COORDINATOR: ${GPU_MESH_COORDINATOR:-https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh}
+  GPU_MESH_INVITE: ${GPU_MESH_INVITE:-}
+  GPU_MESH_NAME: ${GPU_MESH_NAME:-volunteer}
+  GPU_MESH_PAYOUT_ADDRESS: ${GPU_MESH_PAYOUT_ADDRESS:-}
 
 services:
   worker:
@@ -15,15 +30,61 @@ services:
       context: ../..
       dockerfile: deploy/join/Dockerfile
     environment:
-      GPU_MESH_COORDINATOR: ${GPU_MESH_COORDINATOR:-https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh}
+      <<: *worker-env
       GPU_MESH_BACKEND: ${GPU_MESH_BACKEND:-llamacpp}
       GPU_MESH_OLLAMA_HOST: ${GPU_MESH_OLLAMA_HOST:-http://ollama:11434}
-      GPU_MESH_INVITE: ${GPU_MESH_INVITE:-}
-      GPU_MESH_NAME: ${GPU_MESH_NAME:-volunteer}
-      GPU_MESH_PAYOUT_ADDRESS: ${GPU_MESH_PAYOUT_ADDRESS:-}
       GPU_MESH_ALLOW_CPU: "1"
+      GPU_MESH_ACCELERATOR: cpu
     volumes:
       - join-data:/var/lib/gpumesh
+    restart: unless-stopped
+
+  worker-nvidia:
+    profiles: ["nvidia"]
+    image: ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:${GPU_MESH_IMAGE_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: deploy/join/Dockerfile
+    environment:
+      <<: *worker-env
+      GPU_MESH_BACKEND: ollama
+      GPU_MESH_OLLAMA_HOST: http://ollama-nvidia:11434
+      GPU_MESH_ALLOW_CPU: "0"
+      GPU_MESH_ACCELERATOR: cuda
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - join-data-nvidia:/var/lib/gpumesh
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    depends_on:
+      - ollama-nvidia
+    restart: unless-stopped
+
+  worker-rocm:
+    profiles: ["rocm"]
+    image: ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:${GPU_MESH_IMAGE_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: deploy/join/Dockerfile
+    environment:
+      <<: *worker-env
+      GPU_MESH_BACKEND: ollama
+      GPU_MESH_OLLAMA_HOST: http://ollama-rocm:11434
+      GPU_MESH_ALLOW_CPU: "0"
+      GPU_MESH_ACCELERATOR: rocm
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    volumes:
+      - join-data-rocm:/var/lib/gpumesh
+    depends_on:
+      - ollama-rocm
     restart: unless-stopped
 
   ollama:
@@ -33,6 +94,37 @@ services:
       - ollama:/root/.ollama
     restart: unless-stopped
 
+  ollama-nvidia:
+    profiles: ["nvidia"]
+    image: ollama/ollama:0.12.6
+    volumes:
+      - ollama-nvidia:/root/.ollama
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  ollama-rocm:
+    profiles: ["rocm"]
+    image: ollama/ollama:rocm
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    volumes:
+      - ollama-rocm:/root/.ollama
+    restart: unless-stopped
+
 volumes:
   join-data:
+  join-data-nvidia:
+  join-data-rocm:
   ollama:
+  ollama-nvidia:
+  ollama-rocm:

@@ -17,4 +17,4 @@ On a push to `main`, `.github/workflows/supabase-functions.yml` deploys the func
 
 If the Groq key is missing, `POST /` returns 503 `groq_api_key_not_configured`. If the signing seed is missing or not a 32-byte Ed25519 seed, the route returns 503 and does not call Groq.
 
-The default ledger row is simulated. It settles to the Base work token once the on-chain backend is enabled. This function does not deploy a contract.
+HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public GPU mesh settles HHCW on Base Sepolia after two distinct verifiers (Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d). The key stays on the box settler. This function does not deploy a contract and does not hold that key.

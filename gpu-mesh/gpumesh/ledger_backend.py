@@ -1,10 +1,13 @@
 """Ledger backends.
 
-``simulated`` is the default: append-only integer claims in the local
-database, signed, with a Merkle root that is not published. ``onchain`` is
-the seam for the Base settlement backend. This build does not submit a
-transaction. A verified credit settles to the Base work token once that
-backend is enabled. Switching is ``GPU_MESH_LEDGER_BACKEND``.
+``simulated`` is the default for this process: append-only integer claims in
+the local database, signed, with a Merkle root that is not published.
+``onchain`` is the name of the seam. This process still does not submit a
+transaction and does not open a socket. Live HHCW settlement on Base Sepolia
+is the box-side settler (``gpu-mesh/settler``), which holds the key.
+Settlement ``0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA``, token
+``0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d``, after two distinct verifiers.
+Switching the local name is ``GPU_MESH_LEDGER_BACKEND``.
 """
 
 from __future__ import annotations
@@ -44,8 +47,10 @@ class OnchainLedger:
         del session, actor, kind, payload
         raise MeshError(
             501,
-            "the on-chain ledger backend is not enabled in this build. "
-            "A verified credit settles to the Base work token once the on-chain backend is enabled.",
+            "This process does not submit a Base transaction and does not open a socket. "
+            "The public GPU mesh settles HHCW on Base Sepolia via the box-side settler "
+            "(Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, "
+            "token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d) after two distinct verifiers.",
             "server_error",
             "onchain_disabled",
         )
@@ -54,8 +59,10 @@ class OnchainLedger:
         del session
         raise MeshError(
             501,
-            "on-chain anchoring is not enabled in this build. "
-            "A verified credit settles to the Base work token once the on-chain backend is enabled.",
+            "This process does not anchor on Base and does not open a socket. "
+            "The public GPU mesh settles HHCW on Base Sepolia via the box-side settler "
+            "(Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, "
+            "token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d) after two distinct verifiers.",
             "server_error",
             "onchain_disabled",
         )

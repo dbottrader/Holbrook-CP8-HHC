@@ -160,6 +160,7 @@ def test_onchain_backend_is_a_config_switch_and_does_not_open_a_socket(tmp_path,
         with pytest.raises(MeshError) as refused:
             build_database(make_settings(tmp_path, ledger_backend="onchain"))
         assert refused.value.code == "onchain_disabled"
-        assert "Base work token" in refused.value.message
+        assert "does not open a socket" in refused.value.message
+        assert "0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA" in refused.value.message
     finally:
         activate("simulated")

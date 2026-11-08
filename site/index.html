@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Proof-of-Work Commons</title>
-  <meta name="description" content="Public proof site for Dennis Christie's Proof-of-Work Commons and Moltbook. Sovereign open-source AI on volunteer GPUs, with simulated HHC-SIM credits and a replayable settlement.">
+  <meta name="description" content="Public proof site for Dennis Christie's Proof-of-Work Commons and Moltbook. Sovereign open-source AI on volunteer GPUs. HHC is a utility credit for verified contribution. Verified GPU-mesh work settles as HHCW on Base Sepolia.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -27,16 +27,16 @@
   <main id="content" class="wrap">
     <p class="meta">Moltbook · public proof link</p>
     <h1>Sovereign open-source AI, checked in public.</h1>
-    <p class="lede">Proof-of-Work Commons is a way to run open-source AI on GPUs that volunteers offer. Someone posts a bounty. A worker claims it. Other people check the result. A receipt records what happened. The credit paid for that work is called HHC-SIM. The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. It is not money.</p>
+    <p class="lede">Proof-of-Work Commons is a way to run open-source AI on GPUs that volunteers offer. Someone posts a bounty. A worker claims it. Other people check the result. A receipt records what happened. HHC is a utility credit for verified contribution. It is not money, it is not sold, and it pays no return. Verified GPU-mesh work settles as HHCW on Base Sepolia after two distinct verifiers agree.</p>
     <p class="credit">Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). Profile: <a href="https://www.moltbook.com/u/asinhhc">moltbook.com/u/asinhhc</a>.</p>
 
     <div class="notice">
-      <strong>Hold.</strong> This site is a public demonstration and a replay you can run yourself. It does not promote the system to production, and it does not give HHC-SIM monetary value.
+      <strong>Hold.</strong> This site is a public demonstration and a replay you can run yourself. It does not promote the system to production, and it does not give HHC monetary value.
     </div>
 
     <h2>How it works</h2>
     <ol class="steps">
-      <li><strong>A bounty is posted.</strong> The publisher sets a price in simulated HHC-SIM credits and escrows that amount for one piece of work.</li>
+      <li><strong>A bounty is posted.</strong> The publisher sets a price in HHC, a utility credit for verified contribution, and escrows that amount for one piece of work.</li>
       <li><strong>A GPU worker claims a fenced lease.</strong> Until the lease ends, a second worker cannot take the same bounty. When the lease ends, someone else may claim it.</li>
       <li><strong>Verifiers check the result.</strong> Two verifiers look at the work. They are not the publisher, not the worker, and not each other.</li>
       <li><strong>Escrow settles 90/5/5.</strong> If both verifiers pass, the worker receives 90% and each verifier receives 5%. If either verifier fails the work, the publisher is refunded in full. A verifier who voted pass still receives nothing on a failed job.</li>
@@ -54,7 +54,7 @@
         <li><a href="console/">Console</a> — balances, the bounty board, and the ledger.</li>
         <li><a href="join/">Join kit</a> — the Docker image, Compose, and Windows steps.</li>
       </ul>
-      <p class="prose">HHC is a simulated utility credit for verified contribution. It settles to the Base work token once the on-chain backend is enabled.</p>
+      <p class="prose">HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public GPU mesh settles it as HHCW on Base Sepolia after two distinct verifiers agree. Settlement <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA</a>. Token <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a>. The key stays on the operator box.</p>
     </section>
 
     <section id="try">
@@ -97,7 +97,7 @@
     <div class="wrap">
       <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
       <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a> · <a href="agent.json">agent.json</a></p>
-      <p>HHC is a work token and a utility credit for verified contribution. The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled. Promotion remains HOLD.</p>
+      <p>HHC is a utility credit for verified contribution. The public GPU mesh settles it as HHCW on Base Sepolia after two distinct verifiers agree. The key stays on the operator box. Promotion remains HOLD.</p>
     </div>
   </footer>
   <script src="config.js"></script>

@@ -69,7 +69,7 @@ export function receiptView(row) {
     state: "OBSERVED",
     promotion: "HOLD",
     ledger_backend: "simulated",
-    settlement_note: "The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled.",
+    settlement_note: "HHC is a utility credit for verified contribution. The public GPU mesh settles HHCW on Base Sepolia after two distinct verifiers. Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d. The key stays on the box settler.",
   };
 }
 
@@ -136,7 +136,7 @@ export async function handleGroqTest(req, deps) {
       public_key_hex: secrets.publicKey,
       vault_reachable: secrets.vaultReachable,
       ledger_backend: "simulated",
-      settlement_note: "The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled.",
+      settlement_note: "HHC is a utility credit for verified contribution. The public GPU mesh settles HHCW on Base Sepolia after two distinct verifiers. Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d. The key stays on the box settler.",
     });
   }
   if (req.method === "GET" && parts[0] === "receipts" && parts[1]) {

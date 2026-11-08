@@ -1,8 +1,8 @@
 # Inference receipt format
 
-A Groq fallback receipt and a volunteer receipt use the same bytes. An EIP-712 settlement attestation can wrap one receipt later. This repository does not deploy that contract. `GPU_MESH_LEDGER_BACKEND=simulated` is the default. `GPU_MESH_LEDGER_BACKEND=onchain` selects the Base backend. That backend is not enabled in this build.
+A Groq fallback receipt and a volunteer receipt use the same bytes. The public hub settles a verified worker receipt as HHCW on Base Sepolia after two distinct verifiers. Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA`, token `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`. The box settler holds the key. HHC is a utility credit for verified contribution. It is not sold and it pays no return.
 
-The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled.
+A self-hosted Python process defaults to `GPU_MESH_LEDGER_BACKEND=simulated` and writes the local chain. `GPU_MESH_LEDGER_BACKEND=onchain` in that process does not submit a transaction and does not open a socket. That switch is not the live settler.
 
 ## Fields
 
@@ -33,7 +33,7 @@ Groq fallback payload schema is `gpumesh.groq_fallback.v1`. It records `worker_i
 
 ## Where a row lives
 
-- The coordinator appends through `LedgerBackend`. `simulated` writes the local chain. `onchain` is the seam for the Base backend and currently refuses without opening a socket.
+- The self-hosted coordinator appends through `LedgerBackend`. `simulated` writes the local chain. `onchain` in that process refuses without opening a socket. The public hub's box settler is the process that submits `Settlement.settle`.
 - The public test appends the same shape to `public.cp8_inference_receipts` on project `ecenvlwyenpakrxfuqup`. Read it with `GET /inference-receipts/{receipt_id}` on `moltbook-api` or `GET /receipts/{receipt_id}` on `groq-test`.
 
 `cp8_moltbook_receipt_chain` stays the bounty HMAC chain. Inference proofs do not invent a bounty id to fit that table.

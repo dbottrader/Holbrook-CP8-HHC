@@ -508,6 +508,20 @@ function cleanModels(raw, backend) {
   });
 }
 
+function normalizeAccelerator(gpu) {
+  const raw = String(gpu.accelerator || gpu.device || gpu.compute || "").trim().toLowerCase();
+  if (raw === "cuda" || raw === "nvidia") return "cuda";
+  if (raw === "rocm" || raw === "amd" || raw === "hip") return "rocm";
+  if (raw === "cpu") return "cpu";
+  const vendor = String(gpu.vendor || "").trim().toLowerCase();
+  if (vendor === "nvidia") return "cuda";
+  if (vendor === "amd" || vendor === "rocm") return "rocm";
+  const name = String(gpu.model || gpu.name || "cpu").trim().toLowerCase();
+  const vram = Math.max(0, Number(gpu.vram_mb) || 0);
+  if (vram > 0 && name && name !== "cpu") return "cuda";
+  return "cpu";
+}
+
 function gpuOf(raw) {
   const gpu = raw && typeof raw === "object" ? raw : {};
   return {
@@ -515,6 +529,7 @@ function gpuOf(raw) {
     vram_mb: Math.max(0, Number(gpu.vram_mb) || 0),
     gpu_count: Math.max(0, Number(gpu.count) || 0),
     driver: String(gpu.driver || "").slice(0, 64),
+    accelerator: normalizeAccelerator(gpu),
   };
 }
 
@@ -692,6 +707,7 @@ async function register(req, store, ctx) {
       backend: node.backend,
       gpu: node.gpu_name,
       vram_mb: node.vram_mb,
+      accelerator: node.accelerator,
       models: models.map((model) => model.id),
       amount: 0,
       credits: 0,
@@ -714,7 +730,13 @@ async function heartbeat(req, store, ctx) {
   const backend = String(spec.backend || node.backend);
   node.backend = ["cpu", "ollama", "vllm", "llamacpp"].includes(backend) ? backend : node.backend;
   if (Array.isArray(spec.models) && spec.models.length) node.models = cleanModels(spec.models, node.backend);
-  Object.assign(node, gpuOf(spec.gpu || { model: node.gpu_name, vram_mb: node.vram_mb, count: node.gpu_count, driver: node.driver }));
+  Object.assign(node, gpuOf(spec.gpu || {
+    model: node.gpu_name,
+    vram_mb: node.vram_mb,
+    count: node.gpu_count,
+    driver: node.driver,
+    accelerator: node.accelerator,
+  }));
   if (spec.payout_address) node.payout_address = parsePayout(spec.payout_address);
   node.last_heartbeat = clock(ctx);
   node.last_ip = clientIp(req).slice(0, 64);
@@ -1443,6 +1465,17 @@ async function stats(store, ctx) {
   const mat = await material(ctx);
   const chainRows = await store.listChainSettlements();
   const settled = chainRows.filter((row) => row.tx_hash);
+  const listed = await store.listNodes();
+  const nodes = listed.map((node) => ({
+    id: node.id,
+    name: node.name,
+    status: node.status,
+    backend: node.backend,
+    gpu_name: node.gpu_name || "cpu",
+    vram_mb: node.vram_mb || 0,
+    gpu_count: node.gpu_count || 0,
+    accelerator: node.accelerator || "cpu",
+  }));
   return json({
     ok: true,
     ...body,
@@ -1458,6 +1491,7 @@ async function stats(store, ctx) {
     ledger: CHAIN.ledger,
     ...chainContracts(),
     settlements_pending: chainRows.filter((row) => row.status === "pending").length,
+    nodes,
     settlements_settled: chainRows.filter((row) => row.status === "settled" || row.status === "already_settled").length,
     settlement_txs: settled.slice(-20).map((row) => ({
       id: row.id,

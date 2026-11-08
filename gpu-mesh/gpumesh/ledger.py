@@ -131,7 +131,13 @@ def append_genesis(session: Session) -> LedgerEntry:
             "mesh": "0.1.0",
             "signer": signer_public_hex(),
             "ledger_backend": current_backend(),
-            "note": "Integer credits on the configured ledger. The default backend is simulated. A verified credit settles to the Base work token once the on-chain backend is enabled.",
+            "note": (
+                "Integer credits on this process's ledger. HHC is a utility credit for "
+                "verified contribution. The public mesh settles HHCW on Base Sepolia "
+                "(Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, "
+                "token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d) after two distinct "
+                "verifiers. The key stays on the box settler."
+            ),
             "amount": 0,
             "credits": 0,
         },

@@ -46,7 +46,7 @@
     <section id="view-dashboard">
       <div class="lede">
         <h1>Open-weight inference, served by GPUs people lend.</h1>
-        <p>You contribute GPU time the way a miner contributes hashpower. The network serves free inference for models those machines already run. A verified job appends a signed, hash-chained receipt with an integer amount. That amount sits in escrow until the worker is trusted. The simulated ledger is on; nothing is minted.</p>
+        <p>You contribute GPU time the way a miner contributes hashpower. The network serves free inference for models those machines already run. A verified job appends a signed, hash-chained receipt with an integer amount. That amount sits in escrow until the worker is trusted. HHC is a utility credit for verified contribution. The public hub settles HHCW on Base Sepolia after two distinct verifiers agree. This self-hosted process keeps an integer ledger and does not submit that transaction.</p>
       </div>
       <div class="stats" id="stats">
         <div class="stat"><span>Reading the ledger…</span><strong>—</strong></div>
@@ -111,15 +111,15 @@
       <pre class="terminal" id="cpu-cmd"></pre>
       <div class="row-actions"><button type="button" data-copy="#cpu-cmd">Copy</button></div>
       <h2>CPU open-weight worker</h2>
-      <p class="prose">This serves <span class="mono">SmolLM2-360M-Instruct</span> (Apache-2.0) through llama.cpp. The pinned GGUF is downloaded on first start and is not <span class="mono">mock-tiny</span>. HHC is a simulated utility credit. An amount is recorded only after a second worker spot-checks the same model id.</p>
+      <p class="prose">This serves <span class="mono">SmolLM2-360M-Instruct</span> (Apache-2.0) through llama.cpp. The pinned GGUF is downloaded on first start and is not <span class="mono">mock-tiny</span>. HHC is a utility credit for verified contribution. An amount is recorded only after a second worker spot-checks the same model id.</p>
       <pre class="terminal" id="llamacpp-cmd"></pre>
       <div class="row-actions"><button type="button" data-copy="#llamacpp-cmd">Copy</button></div>
       <h2>What you are not signing up for</h2>
-      <p class="prose">There is no payout and no wallet in this build. A verified credit settles to the Base work token once the on-chain backend is enabled. A bad canary or a temperature-0 spot-check that disagrees costs credits and, after repeated failures, quarantine. Prompts are kept only long enough to re-run a spot-check, then deleted. The node executes chat messages through your local model server. It does not shell out with the prompt.</p>
+      <p class="prose">Pass <span class="mono">--payout-address</span> to name the EVM account for this node's HHCW. HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public hub settles HHCW on Base Sepolia (Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d) after two distinct verifiers agree. The key stays on the operator box. A bad canary or a temperature-0 spot-check that disagrees costs credits and, after repeated failures, quarantine. Prompts are kept only long enough to re-run a spot-check, then deleted. The node executes chat messages through your local model server. It does not shell out with the prompt.</p>
     </section>
   </main>
   <footer class="site">
-    <div class="wrap">The default ledger is simulated. It settles to the Base work token once the on-chain backend is enabled.</div>
+    <div class="wrap">HHC is a utility credit for verified contribution. The public hub settles HHCW on Base Sepolia after two distinct verifiers. This process does not submit that transaction.</div>
   </footer>
   <script src="/static/app.js"></script>
 </body>

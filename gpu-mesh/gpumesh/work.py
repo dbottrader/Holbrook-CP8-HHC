@@ -1,8 +1,9 @@
 """Job lifecycle: register, schedule, complete, spot-check, and credit.
 
-Credits are integer claims on the configured ledger. The default backend is
-simulated. A verified credit settles to the Base work token once the on-chain
-backend is enabled. A completed inference appends one hash-chained receipt.
+Credits are integer claims on the configured ledger. This process defaults
+to its local integer ledger. The public hub settles HHCW on Base Sepolia
+after two distinct verifiers; the box settler holds the key. A completed
+inference appends one hash-chained receipt.
 A sample of those jobs is run again on a different node. Canaries (known
 answers) run against whoever is online, including a network of one.
 """
@@ -40,6 +41,15 @@ from gpumesh.settings import Settings
 from gpumesh.textutil import canon_answer, judge_outputs
 
 log = logging.getLogger("gpumesh.work")
+
+# Public settlement is live. This process still does not submit the transaction.
+PUBLIC_HHC_NOTE = (
+    "HHC is a utility credit for verified contribution. "
+    "The public mesh settles HHCW on Base Sepolia "
+    "(Settlement 0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA, "
+    "token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d) "
+    "after two distinct verifiers. The key stays on the box settler."
+)
 
 TERMINAL = {"completed", "failed", "cancelled", "expired", "verified", "disputed", "rejected"}
 CLIENT_READY = TERMINAL | {"verifying"}
@@ -95,13 +105,24 @@ def model_ids_of(node: Node) -> list[str]:
 
 
 def _gpu_fields(gpu: dict | None) -> dict[str, Any]:
+    from gpumesh_node.gpu import normalize_accelerator
+
     gpu = gpu or {}
+    model = str(gpu.get("model") or "cpu")[:160]
+    vram = int(gpu.get("vram_mb") or 0)
+    accelerator = normalize_accelerator(
+        str(gpu.get("accelerator") or ""),
+        vendor=str(gpu.get("vendor") or ""),
+        model=model,
+        vram_mb=vram,
+    )
     return {
         "gpu_json": json.dumps(gpu, sort_keys=True),
-        "gpu_name": str(gpu.get("model") or "cpu")[:160],
-        "vram_mb": int(gpu.get("vram_mb") or 0),
+        "gpu_name": model,
+        "vram_mb": vram,
         "gpu_count": int(gpu.get("count") or 0),
         "driver": str(gpu.get("driver") or "")[:64],
+        "accelerator": accelerator,
     }
 
 
@@ -215,6 +236,7 @@ def register_node(session: Session, settings: Settings, spec: dict, ip: str) -> 
             "backend": node.backend,
             "gpu": node.gpu_name,
             "vram_mb": node.vram_mb,
+            "accelerator": node.accelerator,
             "models": [m["id"] for m in clean_models],
             "model_digests": [m["digest"] for m in clean_models],
             "credits": 0,
@@ -1655,7 +1677,10 @@ def stats(session: Session, settings: Settings) -> dict[str, Any]:
     return {
         "network": "gpu-mesh",
         "version": "0.1.0",
-        "notice": "Integer credits on the configured ledger. Escrowed until a worker is trusted. A verified credit settles to the Base work token once the on-chain backend is enabled.",
+        "notice": (
+            "Integer credits on this process's ledger, escrowed until a worker is trusted. "
+            + PUBLIC_HHC_NOTE
+        ),
         "ledger_backend": settings.ledger_backend,
         "online_nodes": len(online),
         "total_nodes": len(nodes),
@@ -1742,6 +1767,7 @@ def _node_public(node: Node, now: float | None = None) -> dict[str, Any]:
         "backend": node.backend,
         "gpu": node.gpu_name,
         "vram_mb": node.vram_mb,
+        "accelerator": node.accelerator or "cpu",
         "gpu_count": node.gpu_count,
         "driver": node.driver,
         "models": model_ids_of(node),
@@ -1802,7 +1828,7 @@ def ledger_export(session: Session) -> dict[str, Any]:
         "canon": CANON,
         "algorithm": ALGORITHM,
         "hashed_fields": ["actor", "kind", "payload", "prev_hash", "seq", "ts"],
-        "note": "Signed integer credits on the configured ledger. The default backend is simulated. A verified credit settles to the Base work token once the on-chain backend is enabled.",
+        "note": "Signed integer credits on this process's ledger. " + PUBLIC_HHC_NOTE,
         "entries": [entry_public(row) for row in rows],
     }
 

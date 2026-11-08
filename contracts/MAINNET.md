@@ -87,18 +87,28 @@ forge verify-contract \
   src/Settlement.sol:Settlement
 ```
 
-## Turn the Moltbook adapter on
+## Live GPU mesh settler and the Moltbook adapter
 
-The simulated ledger stays the default. The on-chain adapter reads an Agent
-Mesh canon-v1 receipt (the Groq receipt path uses that same record), checks
-the Ed25519 signature, signs the EIP-712 settlement, mints 9000/500/500, and
-can anchor the Merkle root of the receipt hashes.
+The public GPU mesh already settles HHCW on Base Sepolia. The box-side settler
+in `gpu-mesh/settler/settle.py` holds the key and submits `Settlement.settle`
+after two distinct verifiers. The hub does not hold the key.
+
+- Token `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`
+- Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA`
+
+HHC is a utility credit for verified contribution. It is not sold and it pays no return.
+
+The Moltbook adapter reads an Agent Mesh canon-v1 receipt (the Groq receipt
+path uses that same record), checks the Ed25519 signature, and can submit the
+same Settlement contract. A self-hosted process whose ledger name is
+`simulated` does not submit that transaction. Point it at the live contracts
+with the variables below. The settler key stays out of git.
 
 ```bash
 HHCW_RPC_URL=https://sepolia.base.org
 HHCW_CHAIN_ID=84532
-HHCW_TOKEN_ADDR=0x...
-HHCW_SETTLEMENT_ADDR=0x...
+HHCW_TOKEN_ADDR=0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d
+HHCW_SETTLEMENT_ADDR=0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA
 HHCW_SETTLER_KEY=...            # settler role only; secret manager, never git
 HHCW_DATABASE_URL=postgres://...  # migration 20261102090000 applied by the operator
 ```
