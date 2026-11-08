@@ -365,6 +365,46 @@ test("verifier independence is two ids, neither of them the worker", async () =>
   assert.equal(await timingSafeEqualText("short", "much-longer-token"), false);
 });
 
+test("registration stores cuda hardware and stats lists the node", async () => {
+  const store = createMemoryStore();
+  const clock = () => 1_700_000_000;
+  const registered = await call(store, "/api/nodes/register", {
+    method: "POST",
+    body: {
+      name: "rig",
+      backend: "ollama",
+      models: [{ id: "qwen2.5:7b-instruct", resident: true, source: "ollama" }],
+      gpu: {
+        vendor: "nvidia",
+        model: "NVIDIA GeForce RTX 4090",
+        vram_mb: 24564,
+        count: 1,
+        driver: "550.90",
+        accelerator: "cuda",
+      },
+    },
+  }, {}, clock);
+  assert.equal(registered.status, 200, JSON.stringify(registered.data));
+  const nodes = await store.listNodes();
+  assert.equal(nodes[0].accelerator, "cuda");
+  assert.equal(nodes[0].gpu_name, "NVIDIA GeForce RTX 4090");
+  assert.equal(nodes[0].vram_mb, 24564);
+  assert.equal(nodes[0].backend, "ollama");
+  const stats = await call(store, "/api/stats", {}, {}, clock);
+  assert.equal(stats.status, 200);
+  assert.equal(stats.data.nodes[0].name, "rig");
+  assert.equal(stats.data.nodes[0].accelerator, "cuda");
+  assert.equal(stats.data.nodes[0].vram_mb, 24564);
+  const cpu = await call(store, "/api/nodes/register", {
+    method: "POST",
+    body: { name: "laptop", backend: "cpu", models: ["mock-tiny"], gpu: { model: "cpu", vram_mb: 0, count: 0 } },
+  }, {}, clock);
+  assert.equal(cpu.status, 200, JSON.stringify(cpu.data));
+  const again = await store.listNodes();
+  const laptop = again.find((node) => node.name === "laptop");
+  assert.equal(laptop.accelerator, "cpu");
+});
+
 test("health and stats name Base Sepolia contracts", async () => {
   const store = createMemoryStore();
   const health = await call(store, "/health");

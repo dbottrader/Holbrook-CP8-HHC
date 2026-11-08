@@ -1,4 +1,6 @@
 # Hugging Face Spaces, Docker SDK, free CPU.
+# GPU passthrough is not this image. Use gpu-mesh/deploy/join:
+# NVIDIA --gpus all, or AMD ollama/ollama:rocm with /dev/kfd and /dev/dri.
 # Build context is an assembled Space root (see assemble.sh), not the
 # Holbrook monorepo. Weights are not copied in. The process downloads the
 # pinned SmolLM2 GGUF on first start.

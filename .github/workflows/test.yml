@@ -24,6 +24,7 @@ jobs:
           pip install pytest
           pip install -r requirements-dar-p.txt
           pip install -r requirements-onchain.txt
+          sudo apt-get install -y shellcheck
 
       - name: Verify imports CI would use
         run: |

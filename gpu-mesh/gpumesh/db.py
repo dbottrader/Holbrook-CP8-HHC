@@ -30,6 +30,7 @@ class Node(Base):
     vram_mb: Mapped[int] = mapped_column(Integer, default=0)
     gpu_count: Mapped[int] = mapped_column(Integer, default=0)
     driver: Mapped[str] = mapped_column(String(64), default="")
+    accelerator: Mapped[str] = mapped_column(String(16), default="cpu")
     models_json: Mapped[str] = mapped_column(Text, default="[]")
     status: Mapped[str] = mapped_column(String(24), default="online", index=True)
     reputation: Mapped[int] = mapped_column(Integer, default=100)
@@ -279,6 +280,7 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
         "trusted": "INTEGER DEFAULT 0",
         "verified_jobs": "INTEGER DEFAULT 0",
         "last_uptime_at": "FLOAT DEFAULT 0",
+        "accelerator": "VARCHAR(16) DEFAULT 'cpu'",
     },
     "jobs": {
         "lease_generation": "INTEGER DEFAULT 0",

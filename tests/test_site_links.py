@@ -24,4 +24,5 @@ def test_landing_section_is_a_simulated_credit_invitation():
     lowered = section.lower()
     for banned in ("token sale", "returns", "yield", "investor", "airdrop", "mint"):
         assert banned not in lowered
-    assert "simulated utility credit for verified contribution" in lowered
+    assert "utility credit for verified contribution" in lowered
+    assert "0xdffe664d23e30baff7ad4d16831ad625cc90bcca" in lowered

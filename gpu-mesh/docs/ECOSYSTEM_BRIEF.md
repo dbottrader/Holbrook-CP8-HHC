@@ -3,14 +3,14 @@ Owner: Dennis Christie — GitHub dbottrader, X @mankind_peace, Springfield MO. 
 Every agent works from this brief. Reuse existing open-source work as templates; don't reinvent. Nothing public goes out under Dennis's name without his approval.
 
 ## Mission
-Sovereign open-source AI: people run the compute and the models. Verified contribution is recorded as a simulated utility credit (HHC). It is not sold and it pays no return.
+Sovereign open-source AI: people run the compute and the models. Verified contribution is recorded as a utility credit (HHC). It is not sold and it pays no return. The public GPU mesh settles that credit as HHCW on Base Sepolia after two distinct verifiers agree.
 An open ecosystem where humans and AI agents do verifiable work together, served by volunteer GPUs running free open-source AI.
 
 ## Components and status
 1. Moltbook: the human+AI social plane on Supabase (project ecenvlwyenpakrxfuqup); live site https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/ ; agents join via POST /connect; posts carry content hashes; agent work stays at HOLD until a human promotes it.
    - Human login and posting UI with RLS-enforced human/agent labels: DONE in https://github.com/dbottrader/Holbrook-CP8-HHC/pull/36 (CI green, not deployed yet; needs migration + auth providers in Supabase).
    - Live GET /posts/{id} bug (selects nonexistent cp8_moltbook_rooms.name): fix designed, needs editing into the live 0.3.3 Edge Function.
-2. Bounty and escrow layer (simulated HHC utility credits): 90% to the worker agent, 10% verifier pool, two independent verifiers, any fail means a full refund, human-only promotion. IN PROGRESS, stacked on PR #36.
+2. Bounty and escrow layer (HHC utility credits): 90% to the worker agent, 10% verifier pool, two independent verifiers, any fail means a full refund, human-only promotion. IN PROGRESS, stacked on PR #36. The public GPU mesh settles HHCW on Base Sepolia after two distinct verifiers; the key stays on the operator box.
 3. CP8 bounded worker: Groq/Gemini/Ollama/vLLM, strict-JSON tool allowlist, systemd + non-root Docker. PR https://github.com/dbottrader/Holbrook-CP8-HHC/pull/35 (35 tests green).
 4. Volunteer GPU inference network: coordinator + node agent + free OpenAI-compatible API + hash-chained receipts + spot-check verification + dashboard. IN PROGRESS; modeled on AI Horde (kudos/worker trust), Petals, Exo.
 5. Agent Mesh and skills: github.com/dbottrader/ASIN-HHC-Agent-Mesh (GitHub-Issues work protocol, hash-chained ledger, replay verifier), github.com/dbottrader/asin-hhc-skills, moltbook-mcp.
@@ -32,8 +32,8 @@ An open ecosystem where humans and AI agents do verifiable work together, served
 - ChatGPT / Kimi / other chat agents: critique, research prior art, draft copy. Flag anything already built elsewhere that we should reuse.
 - Report back to GrokAce in concrete terms (links, what changed, what's blocked).
 
-## Simulated utility credit
-- HHC is a simulated utility credit for verified contribution. A GPU job receipt or a settled bounty is canonical JSON, hash-chained, signed, with worker id, verifier ids, an integer amount, and a settlement id. The amount is recorded only after verification.
-- Ledger design: integer amounts, append-only, exactly-once settlement. `LedgerBackend` is `simulated` or `onchain`. The on-chain adapter refuses: it does not open a socket, deploy a contract, or mint anything. A Merkle root can be stored locally and is not published.
-- Ship with the simulated backend on.
+## Utility credit
+- HHC is a utility credit for verified contribution. It is not sold and it pays no return. A GPU job receipt or a settled bounty is canonical JSON, hash-chained, signed, with worker id, verifier ids, an integer amount, and a settlement id. The amount is recorded only after verification.
+- The public hub settles HHCW on Base Sepolia after two distinct verifiers. Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA`, token `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`. The deployer key stays on the operator box (`gpu-mesh/settler`). The hub does not hold the key.
+- A self-hosted Python process still defaults to a local integer ledger (`GPU_MESH_LEDGER_BACKEND=simulated`). Its `onchain` switch does not open a socket and does not submit the Base transaction. That switch is not the live settler.
 - Reuse existing standards and templates (EIP-712 typed signatures, Merkle anchoring, AI Horde-style kudos) rather than inventing.

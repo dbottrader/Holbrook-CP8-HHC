@@ -1,7 +1,13 @@
 # One volunteer image. Build context is gpu-mesh/ (the directory that
-# contains gpumesh_node/). llama.cpp is the same CPU worker already
-# used by gpu-mesh/gpumesh_node/llamacpp.py. Ollama stays outside this image:
-# set GPU_MESH_BACKEND=ollama and GPU_MESH_OLLAMA_HOST.
+# contains gpumesh_node/). llama.cpp is the CPU worker already used by
+# gpu-mesh/gpumesh_node/llamacpp.py. This image does not bake a CUDA wheel.
+# NVIDIA passthrough is a runtime flag (--gpus all, or Compose
+# deploy.resources.reservations.devices with driver nvidia and
+# capabilities: [gpu]). The NVIDIA Container Toolkit then mounts nvidia-smi.
+# AMD is the ollama/ollama:rocm container with /dev/kfd and /dev/dri.
+# Ollama stays outside this image: GPU_MESH_BACKEND=ollama and
+# GPU_MESH_OLLAMA_HOST. The official ollama/ollama tag is the CUDA build
+# and uses the GPU when the device is passed through.
 #
 # PyPI llama-cpp-python 0.3.36 is a source tarball. The main publish
 # (Actions run 41285393780) failed in that build: CMake had no C or C++

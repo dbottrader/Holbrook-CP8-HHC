@@ -28,6 +28,7 @@ function fromNode(row) {
     last_heartbeat: num(row.last_heartbeat),
     created_at: num(row.created_at),
     payout_address: String(row.payout_address || ""),
+    accelerator: String(row.accelerator || "cpu"),
   };
 }
 

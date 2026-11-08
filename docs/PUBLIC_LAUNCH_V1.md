@@ -62,12 +62,12 @@ The following must not be represented as independently validated or production-a
 - full autonomous agent mesh / INF8 orchestration;
 - experimental geometry, glyph-decoding and harmonic interpretations;
 - independent reproduction claims not backed by external receipts;
-- HHC-SIM as anything other than simulated value;
+- HHC as anything other than a utility credit for verified contribution;
 - production cryptographic or monetary authority;
 - Hugging Face publication until the hardened workflow produces its deployment receipt;
 - any deployment whose exact source revision remains unbound.
 
-HHC-SIM is simulation only. No live monetary authority is asserted by this launch document.
+HHC is a utility credit for verified contribution. It is not sold and it pays no return. Verified GPU-mesh work settles as HHCW on Base Sepolia (token `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`, Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA`) after two distinct verifiers. The key stays on the operator box. The checks are in [`LAUNCH_DEMOS.md`](./LAUNCH_DEMOS.md). This launch document does not assert a sale or a return.
 
 ## Evidence and provenance
 

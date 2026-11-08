@@ -36,7 +36,8 @@ def test_compose_pins_one_image_and_ollama():
     assert "gpumesh_node" in dockerfile
     readme = (JOIN / "README.md").read_text(encoding="utf-8").lower()
     windows = (JOIN / "WINDOWS.md").read_text(encoding="utf-8").lower()
-    assert "simulated utility credit" in readme
+    assert "utility credit for verified contribution" in readme
+    assert "0xdffe664d23e30baff7ad4d16831ad625cc90bcca" in readme
     assert "windows" in windows
     for banned in ("token sale", "airdrop", "investor"):
         assert banned not in readme

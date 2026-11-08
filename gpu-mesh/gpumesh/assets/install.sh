@@ -6,8 +6,11 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage: install.sh [--coordinator URL] [--name NAME] [--backend auto|ollama|vllm|llamacpp|cpu]
-                  [--allow-cpu] [--ollama-host URL] [--vllm-host URL]
+                  [--gpu] [--cpu] [--allow-cpu] [--ollama-host URL] [--vllm-host URL]
                   [--invite TOKEN] [--payout-address 0x…] [--uninstall] [--purge]
+
+--gpu requires a visible NVIDIA or AMD GPU and selects Ollama when --backend is auto.
+--cpu forces the CPU fallback even when a GPU is visible. --payout-address is unchanged.
 
 The coordinator URL is filled in when this script is downloaded from a coordinator.
 EOF
@@ -34,6 +37,8 @@ UNINSTALL="0"
 PURGE="0"
 INVITE=""
 PAYOUT=""
+WANT_GPU="0"
+WANT_CPU="0"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,6 +63,15 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --allow-cpu)
+      ALLOW_CPU="1"
+      shift
+      ;;
+    --gpu)
+      WANT_GPU="1"
+      shift
+      ;;
+    --cpu)
+      WANT_CPU="1"
       ALLOW_CPU="1"
       shift
       ;;
@@ -132,6 +146,99 @@ fi
 if [[ -n "$INVITE" && ! "$INVITE" =~ ^[A-Za-z0-9_.:@+-]{8,128}$ ]]; then
   echo "Invite must be 8-128 characters: letters, digits, and _ . : @ + -" >&2
   exit 2
+fi
+
+if [[ "$WANT_GPU" == "1" && "$WANT_CPU" == "1" ]]; then
+  echo "Pass only one of --gpu or --cpu." >&2
+  exit 2
+fi
+
+gpu_mesh_source_mode() {
+  local here="" mode_file=""
+  if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
+    here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  fi
+  if [[ -n "$here" && -f "$here/../../deploy/join/gpu-mode.sh" ]]; then
+    mode_file="$here/../../deploy/join/gpu-mode.sh"
+    # shellcheck disable=SC1090,SC1091
+    source "$mode_file"
+    return 0
+  fi
+  if [[ -n "${GPU_MESH_GPU_MODE_FILE:-}" && -f "${GPU_MESH_GPU_MODE_FILE}" ]]; then
+    # shellcheck disable=SC1090
+    source "${GPU_MESH_GPU_MODE_FILE}"
+    return 0
+  fi
+  local url="${GPU_MESH_GPU_MODE_URL:-https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/gpu-mode.sh}"
+  local tmp
+  tmp="$(mktemp)"
+  curl -fsSL "$url" -o "$tmp"
+  # shellcheck disable=SC1090
+  source "$tmp"
+  rm -f "$tmp"
+}
+
+gpu_mesh_source_mode
+gpu_mode_detect
+DETECTED_ACCEL="$GPU_ACCEL"
+DETECTED_NAME="$GPU_NAME"
+DETECTED_VRAM="$GPU_VRAM_MB"
+if [[ "$WANT_GPU" == "1" && "$DETECTED_ACCEL" == "cpu" ]]; then
+  echo "GPU_MESH_MODE: --gpu was passed but no NVIDIA or AMD GPU was detected." >&2
+  exit 2
+fi
+RUN_ACCEL="$DETECTED_ACCEL"
+if [[ "$WANT_CPU" == "1" || "$BACKEND" == "cpu" ]]; then
+  RUN_ACCEL="cpu"
+fi
+if [[ "$BACKEND" == "auto" ]]; then
+  if [[ "$RUN_ACCEL" == "cpu" ]]; then
+    BACKEND="llamacpp"
+    ALLOW_CPU="1"
+  else
+    BACKEND="ollama"
+  fi
+fi
+if [[ "$RUN_ACCEL" == "cpu" ]]; then
+  REPORT_ACCEL="cpu"
+  REPORT_NAME="cpu"
+  REPORT_VRAM="0"
+  REPORT_COUNT="0"
+  REPORT_DRIVER=""
+  if [[ "$WANT_CPU" == "1" && "$DETECTED_ACCEL" != "cpu" ]]; then
+    echo "GPU_MESH_MODE: CPU mode forced by --cpu. Detected ${DETECTED_ACCEL} ${DETECTED_NAME} (${DETECTED_VRAM} MiB) will not be registered."
+  else
+    echo "GPU_MESH_MODE: CPU mode. No NVIDIA or AMD GPU was detected. Inference backend is ${BACKEND}."
+  fi
+else
+  REPORT_ACCEL="$DETECTED_ACCEL"
+  REPORT_NAME="$DETECTED_NAME"
+  REPORT_VRAM="$DETECTED_VRAM"
+  REPORT_COUNT="$GPU_COUNT"
+  REPORT_DRIVER="$GPU_DRIVER"
+  echo "GPU_MESH_MODE: GPU mode ${REPORT_ACCEL}. ${REPORT_NAME}, ${REPORT_VRAM} MiB. Inference backend is ${BACKEND}."
+fi
+
+if [[ "$BACKEND" == "ollama" ]] && command -v ollama >/dev/null 2>&1; then
+  OLLAMA_MODEL="$(gpu_mode_model "$REPORT_ACCEL" "$REPORT_VRAM")"
+  echo "GPU_MESH_MODE: pulling ${OLLAMA_MODEL} with the native Ollama (CUDA when an NVIDIA GPU is visible)."
+  ollama pull "$OLLAMA_MODEL"
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 180 ollama run "$OLLAMA_MODEL" "Reply with exactly: ok"
+  else
+    ollama run "$OLLAMA_MODEL" "Reply with exactly: ok"
+  fi
+  ollama_ps="$(ollama ps || true)"
+  echo "$ollama_ps"
+  if [[ "$REPORT_ACCEL" != "cpu" ]]; then
+    if ! gpu_mode_ps_uses_gpu "$ollama_ps"; then
+      echo "GPU_MESH_MODE: ollama ps did not show a GPU processor. The service was not started." >&2
+      exit 1
+    fi
+    echo "GPU_MESH_MODE: ollama ps shows a GPU processor for ${OLLAMA_MODEL}."
+  else
+    echo "GPU_MESH_MODE: CPU Ollama is serving ${OLLAMA_MODEL}."
+  fi
 fi
 
 if [[ -z "$NAME" ]]; then
@@ -226,6 +333,14 @@ fi
 if [[ -n "$PAYOUT" ]]; then
   printf 'GPU_MESH_PAYOUT_ADDRESS=%s\n' "$PAYOUT" >> /etc/gpumesh/node.env
 fi
+cat >> /etc/gpumesh/node.env <<EOF
+GPU_MESH_ACCELERATOR=$REPORT_ACCEL
+GPU_MESH_GPU_NAME=$REPORT_NAME
+GPU_MESH_VRAM_MB=$REPORT_VRAM
+GPU_MESH_GPU_COUNT=$REPORT_COUNT
+GPU_MESH_GPU_DRIVER=$REPORT_DRIVER
+EOF
+echo "GPU_MESH_MODE: registered hardware accelerator=${REPORT_ACCEL} gpu=${REPORT_NAME} vram_mb=${REPORT_VRAM} backend=${BACKEND}."
 if [[ "$BACKEND" == "llamacpp" ]]; then
   cat >> /etc/gpumesh/node.env <<'EOF'
 GPU_MESH_MODEL_CACHE=/var/lib/gpumesh/models

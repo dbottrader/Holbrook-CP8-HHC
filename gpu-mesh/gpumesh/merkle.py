@@ -1,8 +1,9 @@
 """Merkle root over the receipt chain.
 
 The root is a local commitment. Nothing here opens a socket, talks to a
-chain, or deploys a contract. An on-chain hook exists only so a later
-backend can be switched on without rewriting receipts, and it refuses.
+chain, or deploys a contract. The public hub's box-side settler submits
+HHCW settlement on Base Sepolia. This hook still refuses so this process
+cannot broadcast.
 """
 
 from __future__ import annotations
@@ -75,7 +76,8 @@ class OnchainAnchor:
         del session, commitment
         raise MeshError(
             501,
-            "on-chain anchoring is disabled. The simulated backend records Merkle roots locally and does not mint or broadcast.",
+            "This process records Merkle roots locally and does not broadcast. "
+            "The public GPU mesh settles HHCW on Base Sepolia via the box-side settler.",
             "server_error",
             "onchain_disabled",
         )

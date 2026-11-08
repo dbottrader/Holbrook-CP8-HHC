@@ -1,6 +1,6 @@
 # Windows
 
-HHC is a simulated utility credit for verified contribution. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and leave it running.
+HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public hub settles it as HHCW on Base Sepolia after two distinct verifiers agree. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and leave it running. The Linux installer detects a GPU. On Windows, pass `--gpus all` yourself when Docker Desktop GPU support is on, or use `--cpu` behavior by leaving the GPU flags off.
 
 ## llama.cpp (default)
 

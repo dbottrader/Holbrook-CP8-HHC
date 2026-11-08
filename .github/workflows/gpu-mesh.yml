@@ -40,4 +40,13 @@ jobs:
         run: pytest -q
 
       - name: Installer syntax
-        run: bash -n gpumesh/assets/install.sh
+        run: |
+          sudo apt-get install -y shellcheck
+          bash -n gpumesh/assets/install.sh
+          bash -n deploy/join/install.sh
+          bash -n deploy/join/gpu-mode.sh
+          shellcheck -x deploy/join/install.sh deploy/join/gpu-mode.sh gpumesh/assets/install.sh deploy/join/entrypoint.sh
+
+      - name: Join GPU detection
+        working-directory: ${{ github.workspace }}
+        run: python -m pytest -q tests/test_join_gpu_mode.py

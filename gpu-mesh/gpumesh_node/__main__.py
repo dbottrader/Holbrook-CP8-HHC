@@ -62,6 +62,13 @@ async def _async_main(args: argparse.Namespace) -> None:
     name = args.name.strip() or socket.gethostname()
     models = [item.strip() for item in args.models.split(",") if item.strip()]
     gpu = probe_gpu()
+    hardware = gpu or {"model": "cpu", "vram_mb": 0, "accelerator": "cpu"}
+    logging.getLogger("gpumesh.node").warning(
+        "GPU_MESH_MODE accelerator=%s gpu=%s vram_mb=%s",
+        hardware.get("accelerator") or "cpu",
+        hardware.get("model") or "cpu",
+        hardware.get("vram_mb") or 0,
+    )
     runtime = await detect_runtime(
         args.backend,
         allow_cpu=args.allow_cpu,
