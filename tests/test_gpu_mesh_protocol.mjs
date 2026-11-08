@@ -5,6 +5,8 @@ import test from "node:test";
 import { createMemoryStore } from "../supabase/functions/gpu-mesh/memory_store.mjs";
 import {
   CHAIN,
+  CLAIM_POLL_MS,
+  RESULT_POLL_MS,
   handle,
   independentVerifiers,
   timingSafeEqualText,
@@ -140,10 +142,13 @@ test("two workers verify and the award receipt is canon v1", async () => {
   assert.ok(checked, "second worker did not receive the verification");
 
   const response = await pending;
-  const data = await response.json();
-  assert.equal(response.status, 200, JSON.stringify(data));
-  assert.equal(data.choices[0].message.content, "MESH_OK");
-  assert.equal(data.gpumesh.worker_name, "worker-a");
+  const early = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(early));
+  assert.equal(early.choices[0].message.content, "MESH_OK");
+  assert.equal(early.gpumesh.worker_name, "worker-a");
+  const follow = await call(store, `/v1/jobs/${early.gpumesh.job_id}`, {}, env, clock);
+  const data = follow.data;
+  assert.equal(follow.status, 200, JSON.stringify(data));
   assert.equal(data.gpumesh.verdict, "agree");
   assert.equal(data.gpumesh.credit_hold, true);
   const receipt = data.gpumesh.receipt;
@@ -198,9 +203,11 @@ test("seven days and three verified jobs release the hold", async () => {
       if (!checked) await new Promise((resolve) => setTimeout(resolve, 15));
     }
     const response = await pending;
-    const data = await response.json();
-    assert.equal(response.status, 200, JSON.stringify(data));
-    assert.equal(data.gpumesh.verdict, "agree");
+    const early = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(early));
+    const follow = await call(store, `/v1/jobs/${early.gpumesh.job_id}`, {}, env, clock);
+    assert.equal(follow.status, 200, JSON.stringify(follow.data));
+    assert.equal(follow.data.gpumesh.verdict, "agree");
   }
   const worker = (await store.listNodes()).find((node) => node.name === "worker-a");
   assert.equal(worker.trusted, 1);
@@ -442,10 +449,12 @@ test("settler routes require the bearer token and record a Base tx", async () =>
   }
   assert.ok(checked, "first verifier did not receive the check");
   const response = await pendingChat;
-  const data = await response.json();
-  assert.equal(response.status, 200, JSON.stringify(data));
-  assert.equal(data.gpumesh.verdict, "agree");
-  assert.equal(data.gpumesh.receipt.amount, 4);
+  const chatBody = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(chatBody));
+  const settled = await call(store, `/v1/jobs/${chatBody.gpumesh.job_id}`, {}, env, clock);
+  assert.equal(settled.status, 200, JSON.stringify(settled.data));
+  assert.equal(settled.data.gpumesh.verdict, "agree");
+  assert.equal(settled.data.gpumesh.receipt.amount, 4);
   const waiting = await store.listChainSettlements(["awaiting_second_verifier"]);
   assert.equal(waiting.length, 1);
   assert.equal(waiting[0].worker_id, a.node_id);
@@ -567,4 +576,106 @@ test("a settlement without payout addresses is skipped and can resume", async ()
   assert.equal(resumed.data.settlements.length, 1);
   assert.equal(resumed.data.settlements[0].worker_address, address[0]);
   assert.equal(resumed.data.settlements[0].status, "pending");
+});
+
+test("deployed poll intervals stay inside a few hundred milliseconds", () => {
+  assert.ok(RESULT_POLL_MS >= 250 && RESULT_POLL_MS <= 500, RESULT_POLL_MS);
+  assert.ok(CLAIM_POLL_MS >= 250 && CLAIM_POLL_MS <= 500, CLAIM_POLL_MS);
+});
+
+test("a claim heartbeat touch does not reset inflight or quarantine", async () => {
+  const store = createMemoryStore();
+  const clock = () => Date.now() / 1000;
+  const joined = await register(store, "worker", clock);
+  const node = (await store.listNodes()).find((row) => row.id === joined.node_id);
+  node.inflight = 3;
+  node.status = "offline";
+  await store.saveNode(node);
+  await store.touchHeartbeat(node.id, 12345);
+  const again = (await store.listNodes()).find((row) => row.id === joined.node_id);
+  assert.equal(again.inflight, 3);
+  assert.equal(again.last_heartbeat, 12345);
+  assert.equal(again.status, "online");
+  again.status = "quarantined";
+  again.inflight = 2;
+  await store.saveNode(again);
+  await store.touchHeartbeat(again.id, 12346);
+  const held = (await store.listNodes()).find((row) => row.id === joined.node_id);
+  assert.equal(held.status, "quarantined");
+  assert.equal(held.inflight, 2);
+  assert.equal(held.last_heartbeat, 12346);
+});
+
+test("claim long-poll checks the queue often and sweeps rarely", async () => {
+  const store = createMemoryStore();
+  const clock = () => Date.now() / 1000;
+  const joined = await register(store, "worker", clock);
+  let listed = 0;
+  let queued = 0;
+  let nodes = 0;
+  const origJobs = store.listJobs.bind(store);
+  const origQueued = store.listQueuedForClaim.bind(store);
+  const origNodes = store.listNodes.bind(store);
+  store.listJobs = async (...args) => {
+    listed += 1;
+    return origJobs(...args);
+  };
+  store.listQueuedForClaim = async (...args) => {
+    queued += 1;
+    return origQueued(...args);
+  };
+  store.listNodes = async (...args) => {
+    nodes += 1;
+    return origNodes(...args);
+  };
+  const started = Date.now();
+  const response = await handle(req("/api/nodes/jobs/claim?wait=0.35", {
+    method: "POST",
+    token: joined.token,
+  }), { store, clock, pollMs: 40 });
+  const elapsed = Date.now() - started;
+  const data = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(data));
+  assert.equal(data.job, null);
+  assert.ok(elapsed < 1000, `claim held ${elapsed}ms`);
+  assert.ok(queued >= 4, `queue checks ${queued}`);
+  assert.ok(nodes <= 2, `node sweeps ${nodes}`);
+  assert.ok(listed <= 2, `full job lists ${listed}`);
+});
+
+test("a lone worker reply returns when the result is stored, not at the wait deadline", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const worker = await register(store, "ollama", clock);
+  const waitSec = 8;
+  const started = Date.now();
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "auto", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": String(waitSec) },
+  }), { store, env, clock, pollMs: 40 });
+  let served = null;
+  for (let i = 0; i < 40 && !served; i++) {
+    served = await work(store, worker.token, "hello-from-worker", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(served, "worker did not receive the job");
+  const postedAt = Date.now();
+  const response = await pending;
+  const after = Date.now() - postedAt;
+  const total = Date.now() - started;
+  const data = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(data));
+  assert.equal(data.choices[0].message.content, "hello-from-worker");
+  assert.equal(data.gpumesh.status, "verifying");
+  assert.equal(data.gpumesh.verdict, "pending");
+  assert.equal(data.gpumesh.credits, 0);
+  assert.ok(after < 2000, `held ${after}ms after the worker posted`);
+  assert.ok(total < 4000, `chat took ${total}ms toward a ${waitSec}s deadline`);
+  const queued = await store.listJobs(["queued"]);
+  assert.equal(queued.some((job) => job.kind === "verification" && job.excluded.includes(worker.node_id)), true);
+  const node = (await store.listNodes()).find((row) => row.id === worker.node_id);
+  assert.equal(node.credits, 0);
+  assert.equal(node.escrow_credits, 0);
 });

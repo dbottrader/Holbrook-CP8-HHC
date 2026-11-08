@@ -55,6 +55,14 @@ const MAX_PROMPT = 4000;
 const MAX_MESSAGES = 16;
 const HEARTBEAT_TIMEOUT = 30;
 const JOB_TIMEOUT = 120;
+// Deployed poll cadence. Tests pass ctx.pollMs to run faster. Both sit in the
+// 250–500ms band: short enough that a stored result is visible inside ~2s of
+// the worker, long enough that an idle claim does not hammer Postgres.
+export const RESULT_POLL_MS = 250;
+export const CLAIM_POLL_MS = 400;
+// Lease expiry and heartbeat refresh during a long-poll. Not a reply delay.
+const CLAIM_MAINTENANCE_MS = 5000;
+const CALLER_TERMINAL = new Set(["verified", "disputed", "failed", "rejected"]);
 const REGISTER_PER_HOUR = 10;
 const ANON_RPM = 20;
 const MAX_NODES = 64;
@@ -101,6 +109,25 @@ function clientIp(req) {
 
 function clock(ctx) {
   return ctx.clock ? ctx.clock() : Date.now() / 1000;
+}
+
+function intervalMs(ctx, deployed) {
+  const raw = Number(ctx?.pollMs);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return deployed;
+}
+
+function sleep(ms) {
+  if (!(ms > 0)) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function callerReady(job) {
+  if (!job) return false;
+  if (CALLER_TERMINAL.has(job.status)) return true;
+  // The worker has stored text. A second node may still verify; that must not
+  // hold the HTTP call until the wait deadline (the old path waited ~45s).
+  return job.status === "verifying" && Boolean(job.output_text);
 }
 
 function bearer(req) {
@@ -725,17 +752,23 @@ async function heartbeat(req, store, ctx) {
   return json({ ok: true, node_id: node.id, status: node.status });
 }
 
-async function claimOnce(store, ctx, node) {
+async function maintainClaim(store, ctx, nodeId) {
+  await store.touchHeartbeat(nodeId, clock(ctx));
   await sweep(store, clock(ctx));
-  const current = await store.nodeByTokenHash(node.token_hash);
+}
+
+async function claimOnce(store, ctx, node) {
+  const modelIds = (node.models || []).map((model) => model.id);
+  const [current, queued] = await Promise.all([
+    store.nodeByTokenHash(node.token_hash),
+    store.listQueuedForClaim(modelIds),
+  ]);
   if (!current || current.status !== "online") return null;
   if ((current.inflight || 0) >= (current.max_inflight || 1)) return null;
-  const ids = new Set((current.models || []).map((model) => model.id));
-  const queued = (await store.listJobs(["queued"]))
-    .filter((job) => ids.has(job.model))
-    .sort((a, b) => (b.priority - a.priority) || (a.created_at - b.created_at));
+  const ids = new Set(modelIds);
   const now = clock(ctx);
   for (const job of queued) {
+    if (!ids.has(job.model)) continue;
     if ((job.excluded || []).includes(current.id)) continue;
     if (job.kind === "verification" && job.origin_node_id === current.id) continue;
     const generation = (job.lease_generation || 0) + 1;
@@ -764,11 +797,20 @@ async function claim(req, store, ctx) {
   let wait = Number(url.searchParams.get("wait") ?? "0");
   if (!Number.isFinite(wait)) throw mesh(400, "wait must be a number", "bad_wait");
   wait = Math.max(0, Math.min(wait, 20));
+  const interval = intervalMs(ctx, CLAIM_POLL_MS);
   const deadline = Date.now() + wait * 1000;
-  let job = await claimOnce(store, ctx, node);
-  while (!job && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, ctx.pollMs || 400));
+  let nextMaintenance = 0;
+  let job = null;
+  for (;;) {
+    if (Date.now() >= nextMaintenance) {
+      await maintainClaim(store, ctx, node.id);
+      nextMaintenance = Date.now() + CLAIM_MAINTENANCE_MS;
+    }
     job = await claimOnce(store, ctx, node);
+    if (job) break;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await sleep(Math.min(interval, remaining));
   }
   return json({ job: job ? jobForNode(job) : null });
 }
@@ -1209,15 +1251,15 @@ async function chat(req, store, ctx) {
   let wait = header == null ? 45 : Number(header);
   if (!Number.isFinite(wait)) throw mesh(400, "X-GPUMesh-Wait-Seconds must be a number", "bad_wait");
   wait = Math.max(0, Math.min(wait, 55));
+  const interval = intervalMs(ctx, RESULT_POLL_MS);
   const deadline = Date.now() + wait * 1000;
-  let current = job;
-  while (Date.now() < deadline) {
+  let current = await store.getJob(job.id);
+  while (!callerReady(current) && Date.now() < deadline) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await sleep(Math.min(interval, remaining));
     current = await store.getJob(job.id);
-    if (current && ["verified", "disputed", "failed", "rejected"].includes(current.status)) break;
-    if (current?.output_text && current.status === "verifying" && Date.now() + (ctx.pollMs || 400) >= deadline) break;
-    await new Promise((resolve) => setTimeout(resolve, ctx.pollMs || 400));
   }
-  current = await store.getJob(job.id);
   if (!current?.output_text) {
     if (current?.status === "queued") throw mesh(503, "no node accepted the job in time", "no_capacity", "server_error");
     throw mesh(504, `job ${job.id} did not finish before the timeout`, "timeout", "server_error");

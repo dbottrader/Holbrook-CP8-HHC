@@ -56,6 +56,20 @@ export function createMemoryStore() {
     async listJobs(statuses) {
       return [...jobs.values()].filter((row) => statuses.includes(row.status)).map((row) => structuredClone(row));
     },
+    async listQueuedForClaim(models) {
+      const wanted = new Set(models || []);
+      return [...jobs.values()]
+        .filter((row) => row.status === "queued" && wanted.has(row.model))
+        .sort((a, b) => (b.priority - a.priority) || (a.created_at - b.created_at) || String(a.id).localeCompare(String(b.id)))
+        .slice(0, 50)
+        .map((row) => structuredClone(row));
+    },
+    async touchHeartbeat(id, now) {
+      const row = nodes.get(id);
+      if (!row) return;
+      row.last_heartbeat = now;
+      if (row.status === "offline") row.status = "online";
+    },
     async tip() {
       if (!ledger.length) return null;
       const last = ledger[ledger.length - 1];
