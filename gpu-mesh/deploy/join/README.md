@@ -22,7 +22,7 @@ The public coordinator is the default. No invite is required. The published open
 curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash
 ```
 
-Force the CPU fallback, or require a GPU:
+Run the llama.cpp CPU worker, or require a GPU:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --cpu

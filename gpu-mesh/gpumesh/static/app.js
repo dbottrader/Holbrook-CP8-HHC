@@ -93,7 +93,7 @@ function renderDashboard(data) {
   }
 
   renderJobTable(document.querySelector("#jobs"), data.recent_jobs || []);
-  const modelName = models[0] ? models[0].id : "mock-tiny";
+  const modelName = models[0] ? models[0].id : "SmolLM2-360M-Instruct";
   const example = document.querySelector("#try-api");
   if (example) {
     example.textContent = `curl -s ${location.origin}/v1/chat/completions \\\n  -H 'content-type: application/json' \\\n  -d '{"model":${JSON.stringify(modelName)},"messages":[{"role":"user","content":"Say hello in one sentence."}],"temperature":0}'`;
@@ -277,13 +277,10 @@ async function poll() {
 function fillContribute() {
   const origin = location.origin;
   const install = `curl -fsSL ${origin}/install.sh | sudo bash -s -- --name my-rig --backend ollama --invite YOUR_INVITE`;
-  const cpu = `curl -fsSL ${origin}/install.sh | sudo bash -s -- --name my-rig --allow-cpu`;
   const llamacpp = `curl -fsSL ${origin}/install.sh | sudo bash -s -- --name my-rig --backend llamacpp --invite YOUR_INVITE`;
   const installEl = document.querySelector("#install-cmd");
-  const cpuEl = document.querySelector("#cpu-cmd");
   const llamacppEl = document.querySelector("#llamacpp-cmd");
   if (installEl) installEl.textContent = install;
-  if (cpuEl) cpuEl.textContent = cpu;
   if (llamacppEl) llamacppEl.textContent = llamacpp;
   document.querySelectorAll("[data-copy]").forEach((button) => {
     button.addEventListener("click", async () => {

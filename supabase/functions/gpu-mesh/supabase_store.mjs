@@ -43,6 +43,7 @@ function fromJob(row) {
     messages: Array.isArray(row.messages) ? row.messages : [],
     excluded: Array.isArray(row.excluded) ? row.excluded : [],
     temperature: num(row.temperature),
+    requested_temperature: row.requested_temperature == null || row.requested_temperature === "" ? null : num(row.requested_temperature),
     max_tokens: num(row.max_tokens),
     seed: row.seed === null || row.seed === undefined ? null : num(row.seed),
     attempt: num(row.attempt),

@@ -20,14 +20,18 @@ def _config_from_env(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--coordinator", default=os.environ.get("GPU_MESH_COORDINATOR", ""))
     parser.add_argument("--name", default=os.environ.get("GPU_MESH_NAME", ""))
     parser.add_argument("--backend", default=os.environ.get("GPU_MESH_BACKEND", "auto"))
-    parser.add_argument("--allow-cpu", action="store_true", default=os.environ.get("GPU_MESH_ALLOW_CPU", "0") == "1")
+    parser.add_argument(
+        "--allow-cpu",
+        action="store_true",
+        help="ignored. A stand-in reply cannot serve or earn.",
+    )
     parser.add_argument(
         "--ollama-host",
         default=os.environ.get("GPU_MESH_OLLAMA_HOST", os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")),
     )
     parser.add_argument("--vllm-host", default=os.environ.get("GPU_MESH_VLLM_HOST", "http://127.0.0.1:8000"))
     parser.add_argument("--state", default=os.environ.get("GPU_MESH_STATE", "data/node.json"))
-    parser.add_argument("--models", default=os.environ.get("GPU_MESH_MODELS", "mock-tiny"))
+    parser.add_argument("--models", default=os.environ.get("GPU_MESH_MODELS", ""))
     parser.add_argument("--gguf-repo", default=os.environ.get("GPU_MESH_GGUF_REPO", ""))
     parser.add_argument("--gguf-file", default=os.environ.get("GPU_MESH_GGUF_FILE", ""))
     parser.add_argument("--model-id", default=os.environ.get("GPU_MESH_MODEL_ID", ""))
@@ -61,6 +65,8 @@ async def _async_main(args: argparse.Namespace) -> None:
         raise SystemExit("Pass --coordinator or set GPU_MESH_COORDINATOR.")
     name = args.name.strip() or socket.gethostname()
     models = [item.strip() for item in args.models.split(",") if item.strip()]
+    if any(item.lower() in {"mock-tiny", "mock", "cpu-fallback"} for item in models):
+        raise SystemExit("cpu-fallback and mock-tiny cannot serve or earn. Use ollama, vllm, or llamacpp.")
     gpu = probe_gpu()
     hardware = gpu or {"model": "cpu", "vram_mb": 0, "accelerator": "cpu"}
     logging.getLogger("gpumesh.node").warning(
@@ -69,9 +75,12 @@ async def _async_main(args: argparse.Namespace) -> None:
         hardware.get("model") or "cpu",
         hardware.get("vram_mb") or 0,
     )
+    if args.allow_cpu:
+        logging.getLogger("gpumesh.node").warning(
+            "--allow-cpu does not serve a stand-in. Use ollama, vllm, or llamacpp."
+        )
     runtime = await detect_runtime(
         args.backend,
-        allow_cpu=args.allow_cpu,
         models=models,
         ollama_host=args.ollama_host.rstrip("/"),
         vllm_host=args.vllm_host.rstrip("/"),
@@ -87,12 +96,7 @@ async def _async_main(args: argparse.Namespace) -> None:
             "sha256": args.gguf_sha256,
         },
     )
-    if runtime.name == "cpu":
-        logging.getLogger("gpumesh.node").warning(
-            "serving the deterministic CPU fallback (%s). This is not a neural model.",
-            ", ".join(models),
-        )
-    elif runtime.name == "llamacpp":
+    if runtime.name == "llamacpp":
         logging.getLogger("gpumesh.node").info(
             "serving open-weight GGUF %s via llama.cpp. No TOPLOC hidden-state proof is attached.",
             getattr(runtime, "model_id", ""),

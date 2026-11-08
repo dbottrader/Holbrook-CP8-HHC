@@ -81,7 +81,7 @@ curl -fsS "$COORD/v1/chat/completions" \
   -d '{"model":"qwen2.5:3b-instruct","messages":[{"role":"user","content":"Reply with exactly the token: MESH_OK"}],"temperature":0,"max_tokens":32}'
 ```
 
-CPU llama.cpp nodes advertise `SmolLM2-360M-Instruct` instead. Use the id `/v1/models` returned. `mock-tiny` is the deterministic stub, not this demo.
+CPU llama.cpp nodes advertise `SmolLM2-360M-Instruct` instead. Use the id `/v1/models` returned. A temperature above 0 is clamped to 0. The response `gpumesh` object includes `deterministic: true` and `requested_temperature`.
 
 What to check:
 

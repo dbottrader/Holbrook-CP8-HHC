@@ -113,9 +113,31 @@ async def test_llamacpp_runtime_generates_and_answers_canaries_literally():
     assert len(llm.calls) == 1
 
 
-def test_llamacpp_backend_registers_and_mock_name_stays_cpu(tmp_path: Path):
+@pytest.mark.asyncio
+async def test_llamacpp_sends_seed_zero_and_forces_temperature_zero():
+    llm = _FakeLLM()
+    runtime = LlamaCppRuntime(model_id="SmolLM2-360M-Instruct", digest="abc", llm=llm)
+    await runtime.complete(
+        {
+            "model": "SmolLM2-360M-Instruct",
+            "messages": [{"role": "user", "content": "What color is the sky?"}],
+            "temperature": 0.7,
+            "max_tokens": 32,
+            "seed": 0,
+        },
+        None,
+    )
+    assert llm.calls[0]["temperature"] == 0.0
+    assert llm.calls[0]["top_k"] == 1
+    assert llm.calls[0]["seed"] == 0
+    assert "seed" in llm.calls[0]
+
+
+def test_llamacpp_backend_registers_and_canned_backend_is_rejected(tmp_path: Path):
     assert _normalize_backend("llamacpp") == "llamacpp"
-    assert _normalize_backend("cpu") == "cpu"
+    with pytest.raises(MeshError) as canned:
+        _normalize_backend("cpu")
+    assert canned.value.code == "canned_backend"
     settings = make_settings(tmp_path, verify_sample_rate=0)
     _engine, factory = build_database(settings)
     spec = {

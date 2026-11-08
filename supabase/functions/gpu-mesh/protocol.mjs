@@ -70,7 +70,9 @@ const TRUST_AGE = 7 * 24 * 3600;
 const TRUST_JOBS = 3;
 const VERIFIER_PAY = 2;
 const MAX_ATTEMPTS = 3;
-const VERIFY_THRESHOLD = 0.82;
+const CANNED_BACKENDS = new Set(["cpu", "cpu-fallback", "mock", "mock-tiny"]);
+const CANNED_MARKERS = new Set(["cpu-fallback", "mock", "mock-tiny"]);
+const CANNED_MESSAGE = "cpu-fallback and mock nodes cannot register or claim work";
 const REPLAY = new Set(["completed", "verifying", "verified", "disputed", "rejected", "failed", "cancelled"]);
 const ACTIVE = new Set(["leased", "running"]);
 
@@ -216,35 +218,47 @@ function hexId(prefix, bytes) {
   return prefix + hex;
 }
 
-function normalize(text) {
-  return String(text || "").toLowerCase().split(/\s+/).filter(Boolean).join(" ");
-}
-
-function similarity(left, right) {
-  const a = normalize(left);
-  const b = normalize(right);
-  if (a === b) return 1;
-  if (!a || !b) return 0;
-  const aw = a.split(" ");
-  const bw = b.split(" ");
-  const bag = new Map();
-  for (const word of aw) bag.set(word, (bag.get(word) || 0) + 1);
-  let common = 0;
-  for (const word of bw) {
-    const have = bag.get(word) || 0;
-    if (have) {
-      bag.set(word, have - 1);
-      common += 1;
-    }
+function normalizeMatch(text) {
+  const folded = String(text || "").normalize("NFKC");
+  let spaced = "";
+  for (const char of folded) {
+    spaced += /\s/u.test(char) ? " " : char;
   }
-  return (2 * common) / (aw.length + bw.length);
+  return spaced.replace(/ +/g, " ").trim();
 }
 
-function judge(parentText, childText, temperature) {
-  if (!String(parentText || "").trim()) return "parent_empty";
-  if (!String(childText || "").trim()) return "child_empty";
-  if (similarity(parentText, childText) >= VERIFY_THRESHOLD) return "agree";
-  return temperature <= 0 ? "disagree_deterministic" : "disagree_sampling";
+async function meshSeed(jobId) {
+  const bytes = new TextEncoder().encode(`gpumesh.seed.v1:${jobId}`);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const value = ((digest[0] << 24) | (digest[1] << 16) | (digest[2] << 8) | digest[3]) >>> 0;
+  return value & 0x7fffffff;
+}
+
+function judge(parentText, childText) {
+  const parent = String(parentText || "");
+  const child = String(childText || "");
+  if (!parent.trim()) return { verdict: "parent_empty", match_rule: "" };
+  if (!child.trim()) return { verdict: "child_empty", match_rule: "" };
+  if (parent === child) return { verdict: "agree", match_rule: "exact" };
+  if (normalizeMatch(parent) === normalizeMatch(child)) return { verdict: "agree", match_rule: "normalized" };
+  return { verdict: "disagree_deterministic", match_rule: "" };
+}
+
+function cannedBackend(backend) {
+  return CANNED_BACKENDS.has(String(backend || "").trim().toLowerCase());
+}
+
+function cannedModel(model) {
+  const id = String(model?.id || "").trim().toLowerCase();
+  const source = String(model?.source || "").trim().toLowerCase();
+  const digest = String(model?.digest || "").trim().toLowerCase();
+  return id === "mock-tiny" || CANNED_MARKERS.has(source) || CANNED_MARKERS.has(digest);
+}
+
+function assertServable(backend, models, status = 400) {
+  if (cannedBackend(backend) || (models || []).some(cannedModel)) {
+    throw mesh(status, CANNED_MESSAGE, "canned_backend", status === 403 ? "permission_error" : "invalid_request_error");
+  }
 }
 
 function weight(node) {
@@ -441,6 +455,7 @@ async function settle(store, ctx, { key, job, node, kind, amount, payload }) {
 function blankJob(partial) {
   return {
     temperature: 0,
+    requested_temperature: null,
     max_tokens: 256,
     seed: null,
     stop: null,
@@ -526,12 +541,14 @@ function cleanModels(raw, backend) {
     if (!model || typeof model !== "object" || !String(model.id || "").trim()) throw mesh(400, "each model needs an id", "bad_model");
     const id = String(model.id).trim();
     if (id.length > 128) throw mesh(400, "model id is not usable", "bad_model");
-    return {
+    const cleaned = {
       id,
       resident: Boolean(model.resident),
       source: String(model.source || backend).slice(0, 32),
-      digest: String(model.digest || (backend === "cpu" ? "cpu-fallback" : "unpinned")).slice(0, 128),
+      digest: String(model.digest || "unpinned").slice(0, 128),
     };
+    if (cannedModel(cleaned)) throw mesh(400, CANNED_MESSAGE, "canned_backend");
+    return cleaned;
   });
 }
 
@@ -645,7 +662,7 @@ function resultBody(job) {
 function completion(job, receipt, extra) {
   const prompt = job.prompt_tokens || 0;
   const completionTokens = job.completion_tokens || 0;
-  return {
+  const body = {
     id: `chatcmpl-${String(job.id).replace(/^job_/, "")}`,
     object: "chat.completion",
     created: Math.floor(job.created_at || Date.now() / 1000),
@@ -675,6 +692,13 @@ function completion(job, receipt, extra) {
       settlement_tx_url: job.settlement_tx_url || "",
     },
   };
+  if (job.requested_temperature != null) {
+    body.gpumesh.deterministic = true;
+    body.gpumesh.requested_temperature = job.requested_temperature;
+    body.gpumesh.temperature = job.temperature;
+    body.gpumesh.seed = job.seed == null ? 0 : job.seed;
+  }
+  return body;
 }
 
 async function register(req, store, ctx) {
@@ -692,8 +716,9 @@ async function register(req, store, ctx) {
   if ((await store.countNodes()) >= MAX_NODES) throw mesh(503, "the node cohort is full", "cohort_full", "server_error");
   const name = String(spec.name || "").trim();
   if (!name || name.length > 63) throw mesh(400, "name is required (63 characters max)", "bad_name");
-  const backend = String(spec.backend || "cpu");
-  if (!["cpu", "ollama", "vllm", "llamacpp"].includes(backend)) throw mesh(400, "backend must be ollama, vllm, llamacpp, or cpu", "bad_backend");
+  const backend = String(spec.backend || "").trim().toLowerCase();
+  if (cannedBackend(backend)) throw mesh(400, CANNED_MESSAGE, "canned_backend");
+  if (!["ollama", "vllm", "llamacpp"].includes(backend)) throw mesh(400, "backend must be ollama, vllm, or llamacpp", "bad_backend");
   const models = cleanModels(spec.models, backend);
   const token = `gmt_${hexId("", 16)}`;
   const now = clock(ctx);
@@ -754,9 +779,11 @@ async function heartbeat(req, store, ctx) {
   const spec = await readJson(req);
   const node = await authNode(req, store);
   if (node.status === "quarantined") return json({ ok: false, node_id: node.id, status: node.status });
-  const backend = String(spec.backend || node.backend);
-  node.backend = ["cpu", "ollama", "vllm", "llamacpp"].includes(backend) ? backend : node.backend;
-  if (Array.isArray(spec.models) && spec.models.length) node.models = cleanModels(spec.models, node.backend);
+  const backend = String(spec.backend || node.backend).trim().toLowerCase();
+  const nextModels = Array.isArray(spec.models) && spec.models.length ? cleanModels(spec.models, backend) : node.models;
+  assertServable(backend, nextModels, 403);
+  node.backend = ["ollama", "vllm", "llamacpp"].includes(backend) ? backend : node.backend;
+  if (Array.isArray(spec.models) && spec.models.length) node.models = nextModels;
   Object.assign(node, gpuOf(spec.gpu || {
     model: node.gpu_name,
     vram_mb: node.vram_mb,
@@ -796,6 +823,9 @@ async function claimOnce(store, ctx, node) {
     const generation = (job.lease_generation || 0) + 1;
     const deadline = now + JOB_TIMEOUT;
     const model = (current.models || []).find((item) => item.id === job.model);
+    const nodeDigest = String(model?.digest || "");
+    if (job.kind === "verification" && job.model_digest && nodeDigest !== job.model_digest) continue;
+    const digest = job.kind === "verification" && job.model_digest ? job.model_digest : nodeDigest;
     const leased = await store.leaseJob(job.id, {
       assigned_node_id: current.id,
       assigned_at: now,
@@ -803,7 +833,7 @@ async function claimOnce(store, ctx, node) {
       lease_expires_at: deadline,
       lease_generation: generation,
       attempt: (job.attempt || 0) + 1,
-      model_digest: model?.digest || "",
+      model_digest: digest,
     });
     if (!leased) continue;
     current.inflight = (current.inflight || 0) + 1;
@@ -815,6 +845,7 @@ async function claimOnce(store, ctx, node) {
 
 async function claim(req, store, ctx) {
   const node = await authNode(req, store);
+  assertServable(node.backend, node.models, 403);
   const url = new URL(req.url);
   let wait = Number(url.searchParams.get("wait") ?? "0");
   if (!Number.isFinite(wait)) throw mesh(400, "wait must be a number", "bad_wait");
@@ -846,9 +877,11 @@ async function enqueueVerification(store, parent, options = {}) {
     status: "queued",
     model: parent.model,
     messages: parent.messages,
-    temperature: 0,
+    temperature: parent.temperature,
+    requested_temperature: parent.requested_temperature ?? null,
     max_tokens: parent.max_tokens,
-    seed: parent.temperature <= 0 && parent.seed != null ? parent.seed : 0,
+    seed: parent.seed == null ? 0 : parent.seed,
+    model_digest: parent.model_digest || "",
     stop: parent.stop,
     origin_node_id: parent.assigned_node_id,
     parent_job_id: parent.id,
@@ -899,8 +932,9 @@ async function finishSecondVerification(store, ctx, node, job) {
     await store.saveJob(job);
     return;
   }
-  const verdict = judge(parent.output_text, job.output_text, parent.temperature);
-  const kind = verdict === "agree" ? "verification_pass" : (verdict === "disagree_sampling" ? "verification_disagree" : "verification_fail");
+  const judged = judge(parent.output_text, job.output_text);
+  const verdict = judged.verdict;
+  const kind = verdict === "agree" ? "verification_pass" : "verification_fail";
   const verifierReceipt = await settle(store, ctx, {
     key: `${job.id}:verifier_award`,
     job,
@@ -916,6 +950,7 @@ async function finishSecondVerification(store, ctx, node, job) {
       parent_output_hash: parent.output_hash,
       verifier_ids: node.id,
       verifier_decision: verdict,
+      match_rule: judged.match_rule,
       toploc: "unavailable",
       check: "duplicate",
     },
@@ -978,8 +1013,9 @@ async function finishVerification(store, ctx, node, job) {
     await store.saveJob(job);
     return;
   }
-  const verdict = judge(parent.output_text, job.output_text, parent.temperature);
-  const kind = verdict === "agree" ? "verification_pass" : (verdict === "disagree_sampling" ? "verification_disagree" : "verification_fail");
+  const judged = judge(parent.output_text, job.output_text);
+  const verdict = judged.verdict;
+  const kind = verdict === "agree" ? "verification_pass" : "verification_fail";
   const verifierReceipt = await settle(store, ctx, {
     key: `${job.id}:verifier_award`,
     job,
@@ -995,6 +1031,7 @@ async function finishVerification(store, ctx, node, job) {
       parent_output_hash: parent.output_hash,
       verifier_ids: node.id,
       verifier_decision: verdict,
+      match_rule: judged.match_rule,
       toploc: "unavailable",
     },
   });
@@ -1186,7 +1223,7 @@ async function groqFallback(store, ctx, parsed) {
   let decision = "fail";
   try {
     const second = await groqCall(ctx, verifier, parsed, mat.groqKey);
-    decision = judge(primary.text, second.text, 0) === "agree" ? "agree" : "fail";
+    decision = judge(primary.text, second.text).verdict === "agree" ? "agree" : "fail";
   } catch {
     decision = "fail";
   }
@@ -1256,14 +1293,17 @@ async function chat(req, store, ctx) {
   }
   const model = resolveModel(nodes, parsed.model, now);
   if (!model) throw mesh(404, `model ${parsed.model} is not served by any node`, "model_not_found");
+  const id = hexId("job_", 6);
   const job = blankJob({
-    id: hexId("job_", 6),
+    id,
     kind: "inference",
     status: "queued",
     model,
     messages: parsed.messages,
-    temperature: parsed.temperature,
+    temperature: 0,
+    requested_temperature: parsed.temperature,
     max_tokens: parsed.max_tokens,
+    seed: await meshSeed(id),
     client_key: `ip:${ip}`.slice(0, 80),
     created_at: clock(ctx),
     priority: 0,

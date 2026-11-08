@@ -191,6 +191,8 @@ def _parse_chat(data: dict, settings) -> dict:  # noqa: ANN001
     except (TypeError, ValueError) as exc:
         raise MeshError(400, "temperature must be a number", code="bad_temperature") from exc
     temperature = max(0.0, min(2.0, temperature))
+    # Volunteer jobs execute at temperature 0. This value is recorded as
+    # requested_temperature and returned on the gpumesh object.
     raw_max = data.get("max_tokens", data.get("max_completion_tokens", 256))
     try:
         max_tokens = int(raw_max if raw_max is not None else 256)
@@ -228,6 +230,26 @@ def _parse_chat(data: dict, settings) -> dict:  # noqa: ANN001
     }
 
 
+def _mesh_meta(snap: dict) -> dict:
+    """Public gpumesh object. Volunteer jobs say they were clamped to temperature 0."""
+
+    body = {
+        "job_id": snap["id"],
+        "node_id": snap["assigned_node_id"],
+        "receipt": snap["receipt_hash"],
+        "output_hash": snap["output_hash"],
+        "verdict": snap["verdict"],
+        "duration_ms": snap["duration_ms"],
+        "credits": snap["credits_awarded"],
+    }
+    if snap.get("requested_temperature") is not None:
+        body["deterministic"] = True
+        body["requested_temperature"] = snap["requested_temperature"]
+        body["temperature"] = snap.get("temperature", 0)
+        body["seed"] = snap.get("seed")
+    return body
+
+
 def _completion(snap: dict) -> dict:
     created = int(snap["created_at"] or time.time())
     text = snap["output_text"] or ""
@@ -249,15 +271,7 @@ def _completion(snap: dict) -> dict:
             "total_tokens": snap["prompt_tokens"] + snap["completion_tokens"],
         },
         "system_fingerprint": f"fp_{(snap['receipt_hash'] or 'none')[:16]}",
-        "gpumesh": {
-            "job_id": snap["id"],
-            "node_id": snap["assigned_node_id"],
-            "receipt": snap["receipt_hash"],
-            "output_hash": snap["output_hash"],
-            "verdict": snap["verdict"],
-            "duration_ms": snap["duration_ms"],
-            "credits": snap["credits_awarded"],
-        },
+        "gpumesh": _mesh_meta(snap),
     }
 
 

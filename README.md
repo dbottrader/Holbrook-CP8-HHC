@@ -36,10 +36,10 @@ The site source is `site/`. `.github/workflows/pages.yml` republishes it on push
 
 [`gpu-mesh/`](./gpu-mesh/) is the volunteer inference coordinator: a FastAPI process, poll-only workers, fenced leases, an OpenAI-compatible `POST /v1/chat/completions`, spot-checks, and integer receipts signed with Ed25519.
 
-Two worker backends are easy to confuse:
+Workers:
 
-- `mock-tiny` (`GPU_MESH_BACKEND=cpu`) is a deterministic stub. It is not an open-weight model.
-- `llamacpp` serves **SmolLM2-360M-Instruct** (Apache-2.0) through llama.cpp. The GGUF is downloaded at runtime and is not in git. An NVIDIA volunteer joins with Ollama and an invite; that path is separate from the stub.
+- `llamacpp` serves **SmolLM2-360M-Instruct** (Apache-2.0) through llama.cpp. The GGUF is downloaded at runtime and is not in git.
+- An NVIDIA or AMD volunteer joins with Ollama. The hub rejects `cpu`, `cpu-fallback`, and `mock-tiny`. Volunteer jobs run at temperature 0 with a seed stored on the job.
 
 HHC on this mesh is a utility credit for verified contribution. The integer amount is recorded only after a second worker spot-checks the output, and a third distinct check (two verifiers, neither of them the worker) is required before the box settler submits HHCW on Base Sepolia. It is not sold and it pays no return. Promotion of the mesh stays HOLD. The five launch checks are in [`docs/LAUNCH_DEMOS.md`](./docs/LAUNCH_DEMOS.md).
 

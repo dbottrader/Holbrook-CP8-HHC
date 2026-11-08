@@ -38,7 +38,7 @@ from gpumesh.errors import MeshError
 from gpumesh.ledger import entry_public, tip_status, verify_session
 from gpumesh.ledger_backend import append_current as append
 from gpumesh.settings import Settings
-from gpumesh.textutil import canon_answer, judge_outputs
+from gpumesh.textutil import canon_answer, compare_outputs, mesh_seed
 
 log = logging.getLogger("gpumesh.work")
 
@@ -126,12 +126,32 @@ def _gpu_fields(gpu: dict | None) -> dict[str, Any]:
     }
 
 
+_CANNED_BACKENDS = {"cpu", "cpu-fallback", "mock", "mock-tiny"}
+_CANNED_MARKERS = {"cpu-fallback", "mock", "mock-tiny"}
+_CANNED_MESSAGE = "cpu-fallback and mock nodes cannot register or claim work"
+
+
 def _normalize_backend(backend: str) -> str:
-    if backend in {"cpu-fallback", "cpu"}:
-        return "cpu"
-    if backend in {"ollama", "vllm", "llamacpp"}:
-        return backend
-    raise MeshError(400, "backend must be ollama, vllm, llamacpp, or cpu", code="bad_backend")
+    name = str(backend or "").strip().lower()
+    if name in _CANNED_BACKENDS:
+        raise MeshError(400, _CANNED_MESSAGE, code="canned_backend")
+    if name in {"ollama", "vllm", "llamacpp"}:
+        return name
+    raise MeshError(400, "backend must be ollama, vllm, or llamacpp", code="bad_backend")
+
+
+def _model_is_canned(item: dict) -> bool:
+    model_id = str(item.get("id") or "").strip().lower()
+    source = str(item.get("source") or "").strip().lower()
+    digest = str(item.get("digest") or "").strip().lower()
+    return model_id == "mock-tiny" or source in _CANNED_MARKERS or digest in _CANNED_MARKERS
+
+
+def _reject_canned_node(node: Node) -> None:
+    models = _loads(node.models_json, [])
+    canned_models = isinstance(models, list) and any(isinstance(item, dict) and _model_is_canned(item) for item in models)
+    if node.backend in _CANNED_BACKENDS or canned_models:
+        raise MeshError(403, _CANNED_MESSAGE, "permission_error", "canned_backend")
 
 
 def credit_weight(node: Node) -> int:
@@ -175,7 +195,7 @@ def register_node(session: Session, settings: Settings, spec: dict, ip: str) -> 
     name = str(spec.get("name") or "").strip()
     if not name or len(name) > 63:
         raise MeshError(400, "name is required (63 characters max)", code="bad_name")
-    backend = _normalize_backend(str(spec.get("backend") or "cpu"))
+    backend = _normalize_backend(str(spec.get("backend") or ""))
     models = spec.get("models") or []
     if not isinstance(models, list) or not models:
         raise MeshError(400, "advertise at least one model", code="no_models")
@@ -190,17 +210,17 @@ def register_node(session: Session, settings: Settings, spec: dict, ip: str) -> 
         mid = str(item["id"]).strip()
         if len(mid) > 128 or any(c in mid for c in "\n\r\t"):
             raise MeshError(400, f"model id {mid!r} is not usable", code="bad_model")
-        digest = str(item.get("digest") or "").strip()
-        if not digest:
-            digest = "cpu-fallback" if backend == "cpu" else "unpinned"
-        clean_models.append(
-            {
-                "id": mid,
-                "resident": bool(item.get("resident")),
-                "source": str(item.get("source") or backend)[:32],
-                "digest": digest[:128],
-            }
-        )
+        digest = str(item.get("digest") or "").strip() or "unpinned"
+        source = str(item.get("source") or backend)[:32]
+        cleaned = {
+            "id": mid,
+            "resident": bool(item.get("resident")),
+            "source": source,
+            "digest": digest[:128],
+        }
+        if _model_is_canned(cleaned):
+            raise MeshError(400, _CANNED_MESSAGE, code="canned_backend")
+        clean_models.append(cleaned)
     requested = int(spec.get("max_inflight") or 1)
     cap = max(1, settings.max_node_inflight)
     token = new_secret("gmt_")
@@ -446,15 +466,19 @@ def enqueue_inference(
             headers={"retry-after": "5"},
         )
     now = time.time()
+    # Client temperature and seed are not the execution parameters. Every
+    # volunteer job is temperature 0 with a seed derived from the job id.
+    job_id = new_id("job")
     job = Job(
-        id=new_id("job"),
+        id=job_id,
         kind="inference",
         status="queued",
         model=model,
         messages_json=json.dumps(messages),
-        temperature=temperature,
+        temperature=0,
+        requested_temperature=float(temperature),
         max_tokens=max_tokens,
-        seed=seed,
+        seed=mesh_seed(job_id),
         stop_json=json.dumps(stop),
         max_attempts=settings.max_attempts,
         client_key=client_key,
@@ -462,6 +486,7 @@ def enqueue_inference(
         priority=max(0, int(priority)),
         kudos_cost=max(0, int(kudos_cost)),
     )
+    del seed
     session.add(job)
     session.flush()
     return job
@@ -607,7 +632,6 @@ def _maybe_enqueue_verification(session: Session, settings: Settings, parent: Jo
     )
     if outstanding >= settings.max_outstanding_verifications:
         return None
-    seed = parent.seed if parent.temperature <= 0 and parent.seed is not None else 0
     now = time.time()
     job = Job(
         id=new_id("job"),
@@ -615,9 +639,10 @@ def _maybe_enqueue_verification(session: Session, settings: Settings, parent: Jo
         status="queued",
         model=parent.model,
         messages_json=parent.messages_json,
-        temperature=0,
+        temperature=float(parent.temperature),
+        requested_temperature=parent.requested_temperature,
         max_tokens=parent.max_tokens,
-        seed=seed,
+        seed=0 if parent.seed is None else int(parent.seed),
         stop_json=parent.stop_json,
         origin_node_id=parent.assigned_node_id,
         parent_job_id=parent.id,
@@ -625,6 +650,7 @@ def _maybe_enqueue_verification(session: Session, settings: Settings, parent: Jo
         max_attempts=settings.max_attempts,
         client_key="verify",
         created_at=now,
+        model_digest=parent.model_digest or "",
     )
     session.add(job)
     session.flush()
@@ -636,6 +662,7 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
     # autoflush is off, so a sweep that just requeued a job must hit the database
     # before the queued-status filter runs.
     session.flush()
+    _reject_canned_node(node)
     if node.status != "online":
         return None
     if node.inflight >= node.max_inflight:
@@ -658,6 +685,10 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
             continue
         if job.kind == "verification" and _skip_repeat_verifier(session, job, node):
             continue
+        node_digest = _digest_for(node, job.model)
+        if job.kind == "verification" and job.model_digest and node_digest != job.model_digest:
+            continue
+        digest = job.model_digest if job.kind == "verification" and job.model_digest else node_digest
         new_attempt = job.attempt + 1
         new_gen = int(job.lease_generation or 0) + 1
         deadline = now + settings.job_timeout_sec
@@ -673,7 +704,7 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
                 lease_generation=new_gen,
                 attempt=new_attempt,
                 cancel_requested=0,
-                model_digest=_digest_for(node, job.model),
+                model_digest=digest,
             )
         )
         if result.rowcount != 1:
@@ -686,7 +717,7 @@ def claim_job(session: Session, settings: Settings, node: Node) -> Job | None:
         job.lease_generation = new_gen
         job.attempt = new_attempt
         job.cancel_requested = 0
-        job.model_digest = _digest_for(node, job.model)
+        job.model_digest = digest
         node.inflight += 1
         node.last_assigned = now
         session.flush()
@@ -1284,7 +1315,7 @@ def _settle_verification(session: Session, settings: Settings, node: Node, job: 
         )
         return "skip", 0, entry.hash
 
-    verdict = judge_outputs(parent.output_text, job.output_text, parent.temperature, settings.verify_similarity)
+    verdict, match_rule = compare_outputs(parent.output_text, job.output_text)
     base = {
         "schema": "gpumesh.verification.v1",
         "job_id": job.id,
@@ -1306,6 +1337,7 @@ def _settle_verification(session: Session, settings: Settings, node: Node, job: 
     # Activations for a hidden-state proof travel on the checker result, stored beside the proof field.
     base["verifier_ids"] = node.id
     base["verifier_decision"] = verdict
+    base["match_rule"] = match_rule
     base["toploc"] = toploc["status"]
     receipt, pay = settle_once(
         session,
@@ -1447,6 +1479,8 @@ def job_snapshot(job: Job) -> dict[str, Any]:
         "created_at": job.created_at,
         "completed_at": job.completed_at,
         "temperature": job.temperature,
+        "requested_temperature": job.requested_temperature,
+        "seed": job.seed,
     }
 
 
@@ -1628,8 +1662,6 @@ def list_public_models(session: Session, settings: Settings | None = None) -> li
                 slot["gpumesh"]["resident_nodes"] += 1
             if node.backend not in slot["gpumesh"]["backends"]:
                 slot["gpumesh"]["backends"].append(node.backend)
-            if node.backend == "cpu":
-                slot["gpumesh"]["notice"] = "deterministic CPU fallback, not a neural model"
     if settings is not None and settings.groq_api_key and settings.groq_model not in merged:
         merged[settings.groq_model] = {
             "id": settings.groq_model,

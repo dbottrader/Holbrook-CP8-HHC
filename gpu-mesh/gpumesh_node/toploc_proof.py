@@ -1,10 +1,9 @@
 """TOPLOC proofs. The polynomial math is Prime Intellect's library (MIT).
 
-CPU-fallback jobs have no transformer activations. For those, both the node
-and the coordinator build the same deterministic bfloat16 trace from the
-canonical prompt and model id, then call ``toploc.build_proofs_base64`` /
-``toploc.verify_proofs_base64``. That binds the job to the prompt. It does
-not claim a neural net ran.
+A prompt-trace proof has no transformer activations. The node and the
+coordinator build the same bfloat16 trace from the canonical prompt and model
+id, then call ``toploc.build_proofs_base64`` / ``toploc.verify_proofs_base64``.
+That binds the job to the prompt. It does not claim a neural net ran.
 
 A hidden-state proof is the real check: the node commits last-layer
 activations and the coordinator verifies that proof against the activations

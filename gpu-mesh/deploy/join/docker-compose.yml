@@ -5,7 +5,7 @@
 # Token 0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d
 # This file does not hold a key and does not deploy a contract.
 #
-# CPU fallback (no GPU):
+# CPU worker (llama.cpp, SmolLM2-360M-Instruct):
 #   docker compose -f gpu-mesh/deploy/join/docker-compose.yml up --build
 # NVIDIA. The device reservation is driver nvidia, capabilities [gpu].
 # Scale the CPU worker to zero so only the GPU worker registers:
@@ -33,7 +33,7 @@ services:
       <<: *worker-env
       GPU_MESH_BACKEND: ${GPU_MESH_BACKEND:-llamacpp}
       GPU_MESH_OLLAMA_HOST: ${GPU_MESH_OLLAMA_HOST:-http://ollama:11434}
-      GPU_MESH_ALLOW_CPU: "1"
+      GPU_MESH_ALLOW_CPU: "0"
       GPU_MESH_ACCELERATOR: cpu
     volumes:
       - join-data:/var/lib/gpumesh

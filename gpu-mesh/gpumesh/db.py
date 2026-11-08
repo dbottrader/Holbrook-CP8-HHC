@@ -62,6 +62,7 @@ class Job(Base):
     model: Mapped[str] = mapped_column(String(128), index=True)
     messages_json: Mapped[str] = mapped_column(Text, default="[]")
     temperature: Mapped[float] = mapped_column(Float, default=0)
+    requested_temperature: Mapped[float | None] = mapped_column(Float, nullable=True)
     max_tokens: Mapped[int] = mapped_column(Integer, default=256)
     seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     stop_json: Mapped[str] = mapped_column(Text, default="null")
@@ -283,6 +284,7 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
         "accelerator": "VARCHAR(16) DEFAULT 'cpu'",
     },
     "jobs": {
+        "requested_temperature": "FLOAT",
         "lease_generation": "INTEGER DEFAULT 0",
         "lease_expires_at": "FLOAT DEFAULT 0",
         "model_digest": "VARCHAR(128) DEFAULT ''",

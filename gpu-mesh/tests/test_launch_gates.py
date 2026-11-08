@@ -26,9 +26,9 @@ from tests.conftest import make_settings
 def _spec(name: str, model: str = "alpha") -> dict:
     return {
         "name": name,
-        "backend": "cpu",
+        "backend": "llamacpp",
         "gpu": {"vendor": "cpu", "model": "cpu", "vram_mb": 0, "driver": "", "count": 0},
-        "models": [{"id": model, "resident": True, "source": "cpu-fallback", "digest": "cpu-fallback"}],
+        "models": [{"id": model, "resident": True, "source": "llama.cpp", "digest": "weights-pin"}],
         "version": "test",
     }
 

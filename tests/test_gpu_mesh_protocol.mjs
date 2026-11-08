@@ -92,7 +92,7 @@ test("published open invite is optional, and required only when invite mode is o
   const open = createMemoryStore();
   const joined = await call(open, "/api/nodes/register", {
     method: "POST",
-    body: { name: "stranger", backend: "cpu", models: ["mock-tiny"] },
+    body: { name: "stranger", backend: "llamacpp", models: ["SmolLM2-360M-Instruct"] },
   });
   assert.equal(joined.status, 200, JSON.stringify(joined.data));
   assert.match(joined.data.token, /^gmt_/);
@@ -100,13 +100,13 @@ test("published open invite is optional, and required only when invite mode is o
   const locked = createMemoryStore();
   const denied = await call(locked, "/api/nodes/register", {
     method: "POST",
-    body: { name: "stranger", backend: "cpu", models: ["mock-tiny"] },
+    body: { name: "stranger", backend: "llamacpp", models: ["SmolLM2-360M-Instruct"] },
   }, { GPU_MESH_INVITE_ONLY: "1" });
   assert.equal(denied.status, 403);
   const allowed = await call(locked, "/api/nodes/register", {
     method: "POST",
     headers: { "x-gpumesh-invite": "open" },
-    body: { name: "stranger", backend: "cpu", models: ["mock-tiny"] },
+    body: { name: "stranger", backend: "llamacpp", models: ["SmolLM2-360M-Instruct"] },
   }, { GPU_MESH_INVITE_ONLY: "1" });
   assert.equal(allowed.status, 200, JSON.stringify(allowed.data));
 });
@@ -397,7 +397,7 @@ test("registration stores cuda hardware and stats lists the node", async () => {
   assert.equal(stats.data.nodes[0].vram_mb, 24564);
   const cpu = await call(store, "/api/nodes/register", {
     method: "POST",
-    body: { name: "laptop", backend: "cpu", models: ["mock-tiny"], gpu: { model: "cpu", vram_mb: 0, count: 0 } },
+    body: { name: "laptop", backend: "llamacpp", models: ["SmolLM2-360M-Instruct"], gpu: { model: "cpu", vram_mb: 0, count: 0 } },
   }, {}, clock);
   assert.equal(cpu.status, 200, JSON.stringify(cpu.data));
   const again = await store.listNodes();
@@ -425,13 +425,13 @@ test("payout address is optional and must be a non-zero EVM address", async () =
   const store = createMemoryStore();
   const bad = await call(store, "/api/nodes/register", {
     method: "POST",
-    body: { name: "rig", backend: "cpu", models: ["mock-tiny"], payout_address: "not-an-address" },
+    body: { name: "rig", backend: "llamacpp", models: ["SmolLM2-360M-Instruct"], payout_address: "not-an-address" },
   });
   assert.equal(bad.status, 400);
   assert.equal(bad.data.error.code, "bad_payout_address");
   const zero = await call(store, "/api/nodes/register", {
     method: "POST",
-    body: { name: "rig", backend: "cpu", models: ["mock-tiny"], payout_address: "0x" + "0".repeat(40) },
+    body: { name: "rig", backend: "llamacpp", models: ["SmolLM2-360M-Instruct"], payout_address: "0x" + "0".repeat(40) },
   });
   assert.equal(zero.status, 400);
   const clock = () => Date.now() / 1000;
@@ -718,4 +718,73 @@ test("a lone worker reply returns when the result is stored, not at the wait dea
   const node = (await store.listNodes()).find((row) => row.id === worker.node_id);
   assert.equal(node.credits, 0);
   assert.equal(node.escrow_credits, 0);
+});
+
+test("cpu-fallback and mock-tiny cannot register", async () => {
+  const store = createMemoryStore();
+  const canned = await call(store, "/api/nodes/register", {
+    method: "POST",
+    body: { name: "stub", backend: "cpu-fallback", models: ["mock-tiny"] },
+  });
+  assert.equal(canned.status, 400);
+  assert.equal(canned.data.error.code, "canned_backend");
+  const named = await call(store, "/api/nodes/register", {
+    method: "POST",
+    body: { name: "stub", backend: "ollama", models: [{ id: "mock-tiny", source: "cpu-fallback", digest: "cpu-fallback" }] },
+  });
+  assert.equal(named.status, 400);
+  assert.equal(named.data.error.code, "canned_backend");
+});
+
+test("a sampled request is clamped and the verifier copies the parent seed", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "worker-a", clock);
+  const b = await register(store, "worker-b", clock);
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: {
+      model: "SmolLM2-360M-Instruct",
+      temperature: 0.7,
+      max_tokens: 16,
+      messages: [{ role: "user", content: "Say hello" }],
+    },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "same-text", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(served);
+  assert.equal(served.temperature, 0);
+  assert.equal(typeof served.seed, "number");
+  assert.equal(served.max_tokens, 16);
+  let checked = null;
+  for (let i = 0; i < 20 && !checked; i++) {
+    checked = await work(store, b.token, "same-text", clock, env);
+    if (!checked) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(checked);
+  const storedCheck = await store.getJob(checked.job_id);
+  assert.equal(storedCheck.kind, "verification");
+  assert.equal(checked.temperature, served.temperature);
+  assert.equal(checked.seed, served.seed);
+  assert.equal(checked.max_tokens, served.max_tokens);
+  assert.equal(checked.model_digest, served.model_digest);
+  assert.deepEqual(checked.messages, served.messages);
+  const response = await pending;
+  const body = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(body));
+  assert.equal(body.gpumesh.deterministic, true);
+  assert.equal(body.gpumesh.requested_temperature, 0.7);
+  assert.equal(body.gpumesh.temperature, 0);
+  assert.equal(body.gpumesh.seed, served.seed);
+  const follow = await call(store, `/v1/jobs/${body.gpumesh.job_id}`, {}, env, clock);
+  assert.equal(follow.data.gpumesh.verdict, "agree");
+  const receipt = follow.data.gpumesh.receipt;
+  const payload = JSON.parse(receipt.payload);
+  assert.equal(payload.verifier_decision, "agree");
 });

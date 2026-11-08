@@ -1,13 +1,11 @@
-"""Inference backends: Ollama, vLLM, and an honest CPU fallback.
+"""Inference backends: Ollama and vLLM.
 
-The fallback is deterministic so two machines agree on a spot-check. It is not
-a neural model and it says so in every reply. Canary prompts ask for an exact
-token; those patterns have to stay aligned with the coordinator's canary list.
+Volunteer jobs are temperature 0, top_k 1, and a hub-assigned seed. The seed
+is sent even when it is 0. This module does not serve a stand-in reply.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import time
@@ -55,59 +53,39 @@ def _words(text: str) -> int:
     return len(text.split()) if text.strip() else 0
 
 
-class CpuFallbackRuntime:
-    """Deterministic stand-in used when a box has no GPU. Not a language model."""
+def generation_controls(job: dict) -> dict:
+    """Temperature 0, top_k 1, and a seed. Seed 0 is included."""
 
-    name = "cpu"
-
-    def __init__(self, models: list[str] | None = None) -> None:
-        self._models = models or ["mock-tiny"]
-
-    async def list_models(self) -> list[dict]:
-        return [
-            {"id": model, "resident": True, "source": "cpu-fallback", "digest": "cpu-fallback"}
-            for model in self._models
-        ]
-
-    async def complete(self, job: dict, on_delta) -> InferenceResult:
-        started = time.perf_counter()
-        text = fallback_text(job.get("messages") or [], int(job.get("max_tokens") or 256))
-        for index in range(0, len(text), 24):
-            piece = text[index : index + 24]
-            if on_delta is not None and piece:
-                await on_delta(piece)
-        elapsed = max(1, int((time.perf_counter() - started) * 1000))
-        prompt = " ".join(str(m.get("content") or "") for m in job.get("messages") or [])
-        return InferenceResult(
-            text=text,
-            prompt_tokens=max(1, _words(prompt)),
-            completion_tokens=max(1, _words(text)),
-            duration_ms=elapsed,
-            finish_reason="stop",
-        )
+    raw_seed = job.get("seed")
+    seed = 0 if raw_seed is None else int(raw_seed)
+    return {"temperature": 0, "seed": seed, "top_k": 1}
 
 
-def fallback_text(messages: list[dict], max_tokens: int) -> str:
-    demanded = exact_reply(messages)
-    if demanded:
-        return demanded
-    user = ""
-    for message in reversed(messages):
-        if message.get("role") == "user" and isinstance(message.get("content"), str):
-            user = message["content"].strip()
-            break
-    digest = hashlib.sha256(
-        json.dumps(messages, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
-    ).hexdigest()[:12]
-    body = (
-        "GPU Mesh CPU fallback (not a neural model). "
-        f"I received: {user[:240]}. "
-        f"Checksum {digest}."
-    )
-    words = body.split()
-    if max_tokens and len(words) > max_tokens:
-        body = " ".join(words[:max_tokens])
-    return body
+def ollama_payload(job: dict) -> dict:
+    options = {
+        **generation_controls(job),
+        "num_predict": int(job.get("max_tokens") or 256),
+    }
+    if job.get("stop"):
+        options["stop"] = job["stop"]
+    return {"model": job["model"], "messages": job["messages"], "stream": True, "options": options}
+
+
+def vllm_payload(job: dict) -> dict:
+    controls = generation_controls(job)
+    payload = {
+        "model": job["model"],
+        "messages": job["messages"],
+        "temperature": controls["temperature"],
+        "seed": controls["seed"],
+        "top_k": controls["top_k"],
+        "max_tokens": int(job.get("max_tokens") or 256),
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
+    if job.get("stop"):
+        payload["stop"] = job["stop"]
+    return payload
 
 
 class OllamaRuntime:
@@ -137,12 +115,7 @@ class OllamaRuntime:
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
         started = time.perf_counter()
-        options: dict = {"temperature": job.get("temperature", 0), "num_predict": job.get("max_tokens") or 256}
-        if job.get("seed") is not None:
-            options["seed"] = job["seed"]
-        if job.get("stop"):
-            options["stop"] = job["stop"]
-        payload = {"model": job["model"], "messages": job["messages"], "stream": True, "options": options}
+        payload = ollama_payload(job)
         parts: list[str] = []
         prompt_tokens = 0
         completion_tokens = 0
@@ -191,18 +164,7 @@ class VllmRuntime:
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
         started = time.perf_counter()
-        payload = {
-            "model": job["model"],
-            "messages": job["messages"],
-            "temperature": job.get("temperature", 0),
-            "max_tokens": job.get("max_tokens") or 256,
-            "stream": True,
-            "stream_options": {"include_usage": True},
-        }
-        if job.get("seed") is not None:
-            payload["seed"] = job["seed"]
-        if job.get("stop"):
-            payload["stop"] = job["stop"]
+        payload = vllm_payload(job)
         parts: list[str] = []
         prompt_tokens = 0
         completion_tokens = 0
@@ -247,24 +209,31 @@ async def _reachable(url: str) -> bool:
         return False
 
 
+_CANNED_BACKENDS = {"cpu", "cpu-fallback", "mock", "mock-tiny"}
+
+
 async def detect_runtime(
     backend: str,
     *,
-    allow_cpu: bool,
-    models: list[str],
     ollama_host: str,
     vllm_host: str,
     job_timeout: float,
     gpu: dict | None,
     llamacpp: dict | None = None,
+    models: list[str] | None = None,
+    allow_cpu: bool = False,
 ) -> Runtime:
+    del allow_cpu, models
     backend = (backend or "auto").lower()
+    if backend in _CANNED_BACKENDS:
+        raise SystemExit(
+            "cpu-fallback and mock-tiny cannot serve or earn. "
+            "Use --backend ollama, vllm, or llamacpp."
+        )
     if backend == "llamacpp":
         from gpumesh_node.llamacpp import open_llamacpp
 
         return open_llamacpp(llamacpp)
-    if backend == "cpu":
-        return CpuFallbackRuntime(models)
     if backend == "ollama":
         runtime = OllamaRuntime(ollama_host, job_timeout)
         if not await runtime.list_models():
@@ -285,13 +254,11 @@ async def detect_runtime(
         runtime = VllmRuntime(vllm_host, job_timeout)
         if await runtime.list_models():
             return runtime
-    if allow_cpu:
-        return CpuFallbackRuntime(models)
     if gpu:
         raise SystemExit(
             "A GPU is visible to nvidia-smi, but neither Ollama nor vLLM answered. "
-            "Start one and pull an open model, or pass --allow-cpu to run the deterministic fallback."
+            "Start one and pull an open model, or pass --backend llamacpp."
         )
     raise SystemExit(
-        "No NVIDIA GPU detected. Install a driver, or pass --allow-cpu to run the deterministic fallback."
+        "No model server answered. Start Ollama or vLLM, or pass --backend llamacpp."
     )

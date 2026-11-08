@@ -228,11 +228,8 @@ gpu_mode_plan() {
       gpus="all"
     fi
   fi
-  if [[ "$mode" == "cpu" ]]; then
-    allow="1"
-  else
-    allow="0"
-  fi
+  # The stand-in runtime is not available. llama.cpp is a real GGUF worker.
+  allow="0"
   toolkit="n/a"
   if [[ -n "$gpus" ]]; then
     if gpu_mode_nvidia_toolkit_ok; then

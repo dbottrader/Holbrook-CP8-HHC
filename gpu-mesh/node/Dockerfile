@@ -1,5 +1,5 @@
 # image pin: docker/IMAGE_PINS
-# Local compose CPU stub. A contributed GPU does not use this image.
+# Hardened local node image. It does not serve a stand-in reply.
 # The join image is deploy/join/Dockerfile. Pass --gpus all (NVIDIA) or
 # /dev/kfd and /dev/dri (AMD ROCm) at runtime; this file has no CUDA layer.
 FROM python:3.12-slim
@@ -19,8 +19,7 @@ RUN pip install --no-cache-dir 'httpx>=0.27' \
 
 ENV PYTHONPATH=/opt/gpumesh \
     GPU_MESH_STATE=/var/lib/gpumesh/node.json \
-    GPU_MESH_ALLOW_CPU=1 \
-    GPU_MESH_BACKEND=cpu \
+    GPU_MESH_BACKEND=llamacpp \
     PYTHONUNBUFFERED=1
 
 VOLUME /var/lib/gpumesh

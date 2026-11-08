@@ -124,7 +124,7 @@ async def test_online_volunteer_is_not_sent_to_groq(tmp_path):
                 "/api/nodes/register",
                 json={
                     "name": "rig",
-                    "backend": "cpu",
+                    "backend": "ollama",
                     "models": [{"id": MODEL, "resident": True}],
                     "gpu": {"model": "cpu", "vram_mb": 0, "count": 0, "driver": ""},
                 },

@@ -6,8 +6,8 @@ from httpx import ASGITransport
 
 from gpumesh.main import create_app
 from gpumesh_node.agent import NodeAgent
-from gpumesh_node.runtime import CpuFallbackRuntime
 from tests.conftest import make_settings
+from tests.doubles import FixedTextRuntime
 
 
 @pytest.mark.asyncio
@@ -18,7 +18,7 @@ async def test_worker_register_sends_invite(tmp_path):
         async with httpx.AsyncClient(transport=transport, base_url="http://mesh") as client:
             denied = NodeAgent(
                 base_url="http://mesh",
-                runtime=CpuFallbackRuntime(["mock-tiny"]),
+                runtime=FixedTextRuntime(),
                 name="no-invite",
                 http=client,
                 state_path=None,
@@ -27,7 +27,7 @@ async def test_worker_register_sends_invite(tmp_path):
                 await denied.register()
             joined = NodeAgent(
                 base_url="http://mesh",
-                runtime=CpuFallbackRuntime(["mock-tiny"]),
+                runtime=FixedTextRuntime(),
                 name="invited",
                 http=client,
                 state_path=None,

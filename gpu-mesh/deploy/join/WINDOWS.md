@@ -10,7 +10,6 @@ PowerShell:
 docker run -d --name gpumesh-join --restart unless-stopped `
   -e GPU_MESH_COORDINATOR=https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh `
   -e GPU_MESH_BACKEND=llamacpp `
-  -e GPU_MESH_ALLOW_CPU=1 `
   -e GPU_MESH_NAME=$env:COMPUTERNAME `
   -v gpumesh-join:/var/lib/gpumesh `
   ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest

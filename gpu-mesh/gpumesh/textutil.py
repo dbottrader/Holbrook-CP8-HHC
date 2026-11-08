@@ -1,9 +1,15 @@
-"""Text normalization used by canaries and spot-checks."""
+"""Text comparison used by canaries and spot-checks.
+
+Verified mesh jobs are deterministic. Agreement is exact text, then a
+whitespace and Unicode normalization for CPU versus GPU float drift.
+The rule that matched is returned with the verdict.
+"""
 
 from __future__ import annotations
 
-import difflib
+import hashlib
 import re
+import unicodedata
 
 _EXACT = (
     re.compile(r"reply with exactly(?: the token)?[:\s]+(\S+)", re.IGNORECASE),
@@ -20,13 +26,41 @@ def canon_answer(text: str) -> str:
     return normalize_text(text).strip(".,!;:\"'`")
 
 
-def similarity(a: str, b: str) -> float:
-    left, right = normalize_text(a), normalize_text(b)
-    if left == right:
-        return 1.0
-    if not left or not right:
-        return 0.0
-    return difflib.SequenceMatcher(None, left, right).ratio()
+def mesh_seed(job_id: str) -> int:
+    """Stable signed-32-bit seed for one job. The verifier copies this value."""
+
+    digest = hashlib.sha256(f"gpumesh.seed.v1:{job_id}".encode()).digest()
+    return int.from_bytes(digest[:4], "big") & 0x7FFFFFFF
+
+
+def normalize_match(text: str) -> str:
+    """NFKC plus one ASCII space between tokens. Case is left as written."""
+
+    folded = unicodedata.normalize("NFKC", text)
+    chars: list[str] = []
+    for char in folded:
+        if unicodedata.category(char) == "Zs" or char in "\t\r\n\f\v":
+            chars.append(" ")
+        else:
+            chars.append(char)
+    return re.sub(r" +", " ", "".join(chars)).strip()
+
+
+def compare_outputs(parent_text: str, child_text: str) -> tuple[str, str]:
+    """Return ``(verdict, match_rule)``.
+
+    ``match_rule`` is ``exact``, ``normalized``, or empty when the texts disagree.
+    """
+
+    if not parent_text.strip():
+        return "parent_empty", ""
+    if not child_text.strip():
+        return "child_empty", ""
+    if parent_text == child_text:
+        return "agree", "exact"
+    if normalize_match(parent_text) == normalize_match(child_text):
+        return "agree", "normalized"
+    return "disagree_deterministic", ""
 
 
 def exact_reply(messages: list[dict]) -> str | None:
@@ -65,12 +99,11 @@ def flatten_content(content: object) -> str:
 
 
 def judge_outputs(parent_text: str, child_text: str, parent_temperature: float, threshold: float) -> str:
-    if not parent_text.strip():
-        return "parent_empty"
-    if not child_text.strip():
-        return "child_empty"
-    if similarity(parent_text, child_text) >= threshold:
-        return "agree"
-    if parent_temperature <= 0.0:
-        return "disagree_deterministic"
-    return "disagree_sampling"
+    """Verdict only. Temperature and the old word-overlap threshold are not used.
+
+    Verified jobs run at temperature 0. A mismatch is ``disagree_deterministic``.
+    """
+
+    del parent_temperature, threshold
+    verdict, _rule = compare_outputs(parent_text, child_text)
+    return verdict
