@@ -31,6 +31,8 @@ WorkClaim(string actor,int256 amount,string kind,uint256 ledgerSeq,bytes32 paylo
 
 Groq fallback payload schema is `gpumesh.groq_fallback.v1`. It records `worker_id` `groq:<model>`, `verifier_ids` (`exact-match` or the second model id), `verification_method`, `output_hash`, `prompt_sha256`, `request_id`, integer token counts, `state` `OBSERVED`, and `promotion` `HOLD`. The prompt text is not in the public row.
 
+A volunteer `gpumesh.execution.v1` receipt and a `gpumesh.verification.v1` receipt also record the run that produced the text: `agent_commit` (git commit, or the package version), `runtime_name`, `runtime_version`, `model_digest`, `temperature`, `top_k`, `top_p`, `seed`, `num_ctx`, and `repeat_penalty`. Deterministic jobs pin `top_p` to 1, `repeat_penalty` to 1, and `num_ctx` to 2048. A verification receipt repeats the parent run as `parent_agent_commit`, `parent_runtime_name`, `parent_runtime_version`, `parent_model_digest`, and `parent_` plus each generation field, so a wording mismatch can be traced to a different commit, runtime, or digest. `reported_generation` is the option object the worker said it sent. A digest of `unpinned`, or a missing digest, is not a match.
+
 ## Where a row lives
 
 - The self-hosted coordinator appends through `LedgerBackend`. `simulated` writes the local chain. `onchain` in that process refuses without opening a socket. The public hub's box settler is the process that submits `Settlement.settle`.

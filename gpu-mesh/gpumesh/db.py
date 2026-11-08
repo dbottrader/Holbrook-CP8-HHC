@@ -51,6 +51,9 @@ class Node(Base):
     last_ip: Mapped[str] = mapped_column(String(64), default="")
     created_at: Mapped[float] = mapped_column(Float, default=0)
     version: Mapped[str] = mapped_column(String(32), default="")
+    agent_commit: Mapped[str] = mapped_column(String(64), default="")
+    runtime_name: Mapped[str] = mapped_column(String(32), default="")
+    runtime_version: Mapped[str] = mapped_column(String(64), default="")
 
 
 class Job(Base):
@@ -92,6 +95,13 @@ class Job(Base):
     lease_generation: Mapped[int] = mapped_column(Integer, default=0)
     lease_expires_at: Mapped[float] = mapped_column(Float, default=0)
     model_digest: Mapped[str] = mapped_column(String(128), default="")
+    agent_commit: Mapped[str] = mapped_column(String(64), default="")
+    runtime_name: Mapped[str] = mapped_column(String(32), default="")
+    runtime_version: Mapped[str] = mapped_column(String(64), default="")
+    top_k: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    top_p: Mapped[float | None] = mapped_column(Float, nullable=True)
+    repeat_penalty: Mapped[float | None] = mapped_column(Float, nullable=True)
+    num_ctx: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cancel_requested: Mapped[int] = mapped_column(Integer, default=0)
     priority: Mapped[int] = mapped_column(Integer, default=0)
     kudos_cost: Mapped[int] = mapped_column(Integer, default=0)
@@ -282,12 +292,22 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
         "verified_jobs": "INTEGER DEFAULT 0",
         "last_uptime_at": "FLOAT DEFAULT 0",
         "accelerator": "VARCHAR(16) DEFAULT 'cpu'",
+        "agent_commit": "VARCHAR(64) DEFAULT ''",
+        "runtime_name": "VARCHAR(32) DEFAULT ''",
+        "runtime_version": "VARCHAR(64) DEFAULT ''",
     },
     "jobs": {
         "requested_temperature": "FLOAT",
         "lease_generation": "INTEGER DEFAULT 0",
         "lease_expires_at": "FLOAT DEFAULT 0",
         "model_digest": "VARCHAR(128) DEFAULT ''",
+        "agent_commit": "VARCHAR(64) DEFAULT ''",
+        "runtime_name": "VARCHAR(32) DEFAULT ''",
+        "runtime_version": "VARCHAR(64) DEFAULT ''",
+        "top_k": "INTEGER",
+        "top_p": "FLOAT",
+        "repeat_penalty": "FLOAT",
+        "num_ctx": "INTEGER",
         "cancel_requested": "INTEGER DEFAULT 0",
         "priority": "INTEGER DEFAULT 0",
         "kudos_cost": "INTEGER DEFAULT 0",
