@@ -24,8 +24,8 @@ concurrency:
 jobs:
   checker:
     runs-on: ubuntu-latest
-    # Literal on purpose. timeout-minutes rejects arithmetic such as
-    # inputs.minutes + 60, which failed the workflow file on main.
+    # Literal on purpose. timeout-minutes rejected an arithmetic
+    # expression and failed workflow validation on main.
     # The minutes input still bounds the node loop below.
     timeout-minutes: 180
     steps:
