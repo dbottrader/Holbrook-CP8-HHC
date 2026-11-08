@@ -20,16 +20,30 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
-from moltbook.ledger.backend import OnchainDisabled
-from moltbook.ledger.mesh_receipt import MeshReceiptError
-from moltbook.ledger.onchain import OnchainConfig, OnchainLedger
+def _load_ledger():
+    """Import the repo ledger after the checkout root is on sys.path.
+
+    This file lives under gpu-mesh/, and ruff checks that tree on its own.
+    The ledger package is the parent project, so the path is set inside this
+    function rather than above a module-level import.
+    """
+
+    root = str(Path(__file__).resolve().parents[2])
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from moltbook.ledger.backend import OnchainDisabled
+    from moltbook.ledger.mesh_receipt import MeshReceiptError
+    from moltbook.ledger.onchain import OnchainConfig, OnchainLedger
+
+    return OnchainDisabled, MeshReceiptError, OnchainConfig, OnchainLedger
+
+
+OnchainDisabled, MeshReceiptError, OnchainConfig, OnchainLedger = _load_ledger()
 
 log = logging.getLogger("gpumesh.settler")
 
@@ -96,7 +110,7 @@ def _urllib_json(method: str, url: str, token: str, payload: dict | None) -> dic
             body = response.read().decode("utf-8")
     except urllib.error.HTTPError as exc:
         raise HubError(f"hub {method} failed ({exc.code})") from None
-    except urllib.error.URLError as exc:
+    except urllib.error.URLError:
         raise SettlerError("hub unreachable") from None
     if not body:
         return {}
