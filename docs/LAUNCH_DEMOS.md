@@ -173,3 +173,30 @@ What to check:
 - Open that URL. The transaction is to Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA` and the status is success.
 - The token movement is HHCW `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`.
 - `settlement_status` is `settled` or `already_settled`. A row with no payout address stays `skipped_missing_payout` and has no Base transaction. That is expected until the node joins with `--payout-address`.
+
+## (f) A separate GitHub-hosted checker runs one verification
+
+`.github/workflows/checker-node.yml` is manual (`workflow_dispatch`). It runs on a GitHub-hosted `ubuntu-latest` runner, which is a different machine from the worker. The public hub reports `invite_required: false`, so this workflow uses no repository secret. Registration returns a `gmt_` token. That token stays in the runner's temporary directory for the run.
+
+Dispatch it on `main`:
+
+```bash
+gh workflow run checker-node.yml --ref main -f minutes=30
+```
+
+`minutes` is how long the node keeps claiming work. The default is 30. The run stops sooner once that node has a `verification_pass` or `verification_fail` receipt.
+
+What the runner does:
+
+1. Installs Ollama v0.40.15 from the GitHub release archive `ollama-linux-amd64.tar.zst` (checksum pinned in the workflow) and starts `ollama serve` on localhost.
+2. Downloads `qwen2.5-0.5b-instruct-q4_k_m.gguf` from `Qwen/Qwen2.5-0.5B-Instruct-GGUF` and requires SHA-256 `74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db`.
+3. Creates `asin-qwen0.5b` from the committed `gpu-mesh/models/asin-qwen0.5b.Modelfile` and requires the `/api/tags` digest `29ef26c5cf7d3d68a20fdeb8664ef48f1f32386d2ba09ddb4b19f4c7dc89d5de` for `asin-qwen0.5b:latest`. A mismatch prints the actual digest and fails the run.
+4. Runs `python -m gpumesh_node` against the public coordinator as `gh-actions-checker` with payout address `0x99334f7e733Ca137dc6665106cA6dF96dD97b563`.
+
+What to check in the log:
+
+- `GPUMESH_NODE_ID=node_…` and the agent line `registered node_… as gh-actions-checker`.
+- `GPUMESH_VERIFICATION_CLAIMED=yes` when that node finished a verification job. The kind is `verification_pass` or `verification_fail`.
+- While the run is heartbeating, `GET /api/stats` lists `gh-actions-checker`. This runner has no GPU, so `accelerator` is `cpu` and `backend` stays `ollama`.
+
+The worker that wrote the original reply is excluded from verifying it. This runner is another node advertising the same model digest, which is the check a Base Sepolia settlement waits on. The workflow has no deployer key. The box settler submits the transaction after two distinct verifiers have agreed.
