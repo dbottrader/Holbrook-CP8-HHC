@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { sha256Text } from "../supabase/functions/gpu-mesh/canon.mjs";
 import { createMemoryStore } from "../supabase/functions/gpu-mesh/memory_store.mjs";
 import {
   CHAIN,
@@ -11,7 +12,11 @@ import {
   DET_TOP_K,
   DET_TOP_P,
   RESULT_POLL_MS,
+  VERIFIER_PAY,
+  checkerPay,
+  decodeSettledLog,
   digestsMatch,
+  distinctDigests,
   handle,
   independentVerifiers,
   knownDigest,
@@ -62,6 +67,16 @@ async function work(store, token, text, clock, env = {}) {
   assert.equal(claimed.status, 200, JSON.stringify(claimed.data));
   const job = claimed.data.job;
   if (!job) return null;
+  if (job.commit_required) {
+    const commitment = await sha256Text(text);
+    const committed = await call(store, `/api/nodes/jobs/${job.job_id}/commit`, {
+      method: "POST",
+      token,
+      body: { commitment, fencing_token: job.fencing_token },
+    }, env, clock);
+    assert.equal(committed.status, 200, JSON.stringify(committed.data));
+    assert.equal(JSON.stringify(committed.data).includes("parent_output_hash"), false);
+  }
   const done = await call(store, `/api/nodes/jobs/${job.job_id}/result`, {
     method: "POST",
     token,
@@ -993,6 +1008,23 @@ test("matching digests record both runners and the pinned options", async () => 
     }
     assert.equal(job.model_digest.toLowerCase(), "sha256:abc");
     assert.equal(job.seed, served.seed);
+    assert.equal(job.commit_required, true);
+    assert.equal(Object.hasOwn(job, "parent_output_hash"), false);
+    assert.equal(Object.hasOwn(job, "output_hash"), false);
+    const earlyReveal = await call(store, `/api/nodes/jobs/${job.job_id}/reveal`, { token: b.token }, env, clock);
+    assert.equal(earlyReveal.status, 409);
+    assert.equal(earlyReveal.data.error.code, "commitment_required");
+    assert.equal(JSON.stringify(earlyReveal.data).includes("parent_output_hash"), false);
+    const commitment = await sha256Text("same-words");
+    const committed = await call(store, `/api/nodes/jobs/${job.job_id}/commit`, {
+      method: "POST",
+      token: b.token,
+      body: { commitment, fencing_token: job.fencing_token },
+    }, env, clock);
+    assert.equal(committed.status, 200, JSON.stringify(committed.data));
+    const revealed = await call(store, `/api/nodes/jobs/${job.job_id}/reveal`, { token: b.token }, env, clock);
+    assert.equal(revealed.status, 200, JSON.stringify(revealed.data));
+    assert.equal(revealed.data.parent_output_hash, await sha256Text("same-words"));
     const done = await call(store, `/api/nodes/jobs/${job.job_id}/result`, {
       method: "POST",
       token: b.token,
@@ -1049,4 +1081,183 @@ test("matching digests record both runners and the pinned options", async () => 
   assert.equal(verification.payload.repeat_penalty, 1);
   assert.equal(verification.payload.reported_generation.num_ctx, 2048);
   assert.equal(verification.payload.reported_generation.repeat_penalty, 1);
+});
+
+test("agree and disagree pay the same checker credit and a disagreement holds the worker", async () => {
+  assert.equal(checkerPay("agree"), VERIFIER_PAY);
+  assert.equal(checkerPay("disagree_deterministic"), VERIFIER_PAY);
+  assert.equal(checkerPay("child_empty"), 0);
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed(), GPU_MESH_SETTLER_TOKEN: "settler-test-token" };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "worker-a", clock);
+  const b = await register(store, "checker-b", clock);
+  const c = await register(store, "checker-c", clock);
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "auto", messages: [{ role: "user", content: "Say alpha" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "ALPHA", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(served);
+  let denied = null;
+  for (let i = 0; i < 20 && !denied; i++) {
+    denied = await work(store, b.token, "BETA", clock, env);
+    if (!denied) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(denied);
+  await pending;
+  const nodes = await store.listNodes();
+  const worker = nodes.find((node) => node.id === a.node_id);
+  const checker = nodes.find((node) => node.id === b.node_id);
+  assert.equal(worker.escrow_credits, 0);
+  assert.equal(checker.escrow_credits, VERIFIER_PAY);
+  assert.equal(checker.verified_jobs, 1);
+  const held = await store.listChainSettlements(["held_for_tiebreaker"]);
+  assert.equal(held.length, 1);
+  const queued = await store.listJobs(["queued"]);
+  assert.equal(queued.some((job) => job.client_key === "verify_tiebreak"), true);
+  let tie = null;
+  for (let i = 0; i < 20 && !tie; i++) {
+    tie = await work(store, c.token, "BETA", clock, env);
+    if (!tie) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(tie);
+  const again = await store.listNodes();
+  assert.equal(again.find((node) => node.id === c.node_id).escrow_credits, checker.escrow_credits);
+  assert.equal(again.find((node) => node.id === a.node_id).escrow_credits, 0);
+  const closed = await store.listChainSettlements(["held_disagreement"]);
+  assert.equal(closed.length, 1);
+  const ready = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.deepEqual(ready.data.settlements, []);
+  const receipts = await call(store, "/api/receipts?limit=20", {}, env, clock);
+  const pays = receipts.data.receipts.filter((row) => row.kind === "verification_fail").map((row) => JSON.parse(row.payload));
+  assert.equal(pays.length >= 2, true);
+  assert.equal(pays.every((row) => row.checker_pay === VERIFIER_PAY && row.agreement_bonus === 0), true);
+});
+
+test("a verifier result without a commitment is rejected and does not reveal the worker hash", async () => {
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed() };
+  const clock = () => Date.now() / 1000;
+  const a = await register(store, "worker-a", clock);
+  const b = await register(store, "checker-b", clock);
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "auto", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  let served = null;
+  for (let i = 0; i < 20 && !served; i++) {
+    served = await work(store, a.token, "hello", clock, env);
+    if (!served) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  assert.ok(served);
+  let claimed = null;
+  for (let i = 0; i < 20 && !claimed; i++) {
+    const response = await call(store, "/api/nodes/jobs/claim?wait=0", { method: "POST", token: b.token }, env, clock);
+    claimed = response.data.job;
+    if (!claimed) await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+  const bare = await call(store, `/api/nodes/jobs/${claimed.job_id}/result`, {
+    method: "POST",
+    token: b.token,
+    body: { output_text: "hello", fencing_token: claimed.fencing_token, prompt_tokens: 1, completion_tokens: 1 },
+  }, env, clock);
+  assert.equal(bare.status, 409);
+  assert.equal(bare.data.error.code, "commitment_required");
+  const hidden = await call(store, `/v1/jobs/${served.job_id}`, {}, env, clock);
+  assert.equal(hidden.data.choices, undefined);
+  await pending;
+});
+
+test("four receipt digests stay distinct and a collision holds settlement", async () => {
+  const manifest = "11".repeat(32);
+  const weights = "22".repeat(32);
+  const same = "33".repeat(32);
+  assert.equal(distinctDigests({ input_digest: "aa".repeat(32), manifest_digest: manifest, output_digest: "bb".repeat(32), weights_digest: weights }), true);
+  assert.equal(distinctDigests({ input_digest: "aa".repeat(32), manifest_digest: same, output_digest: "bb".repeat(32), weights_digest: same }), false);
+  const store = createMemoryStore();
+  const env = { INFERENCE_RECEIPT_SIGNING_KEY: freshSeed(), GPU_MESH_SETTLER_TOKEN: "settler-test-token" };
+  const clock = () => Date.now() / 1000;
+  const models = [{ id: "asin-qwen0.5b:latest", digest: manifest, weights_digest: weights, source: "ollama" }];
+  const a = await register(store, "origin", clock, { backend: "ollama", models });
+  const b = await register(store, "checker", clock, { backend: "ollama", models });
+  const c = await register(store, "second", clock, { backend: "ollama", models });
+  const pending = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "asin-qwen0.5b:latest", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store, env, clock, pollMs: 15 });
+  for (const token of [a.token, b.token, c.token]) {
+    let done = null;
+    for (let i = 0; i < 20 && !done; i++) {
+      done = await work(store, token, "same-words", clock, env);
+      if (!done) await new Promise((resolve) => setTimeout(resolve, 15));
+    }
+    assert.ok(done, token);
+  }
+  const response = await pending;
+  const body = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(body));
+  const follow = await call(store, `/v1/jobs/${body.gpumesh.job_id}`, {}, env, clock);
+  const payload = JSON.parse(follow.data.gpumesh.receipt.payload);
+  assert.equal(payload.manifest_digest, manifest);
+  assert.equal(payload.weights_digest, weights);
+  assert.notEqual(payload.input_digest, payload.manifest_digest);
+  assert.notEqual(payload.output_digest, payload.manifest_digest);
+  assert.notEqual(payload.output_digest, payload.weights_digest);
+  assert.notEqual(payload.input_digest, payload.output_digest);
+  const packet = await call(store, `/api/evidence/${body.gpumesh.job_id}`, {}, env, clock);
+  assert.equal(packet.status, 200, JSON.stringify(packet.data));
+  assert.equal(packet.data.schema, "gpumesh.evidence.v1");
+  assert.equal(packet.data.binding.digests_distinct, true);
+  assert.equal(packet.data.verdicts.length >= 1, true);
+  const ready = await call(store, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.equal(ready.data.settlements.length, 1);
+
+  const collided = [{ id: "asin-qwen0.5b:latest", digest: same, weights_digest: same, source: "ollama" }];
+  const store2 = createMemoryStore();
+  const x = await register(store2, "origin", clock, { backend: "ollama", models: collided });
+  const y = await register(store2, "checker", clock, { backend: "ollama", models: collided });
+  const z = await register(store2, "second", clock, { backend: "ollama", models: collided });
+  const pending2 = handle(req("/v1/chat/completions", {
+    method: "POST",
+    body: { model: "asin-qwen0.5b:latest", messages: [{ role: "user", content: "Say hi" }] },
+    headers: { "x-gpumesh-wait-seconds": "2" },
+  }), { store: store2, env, clock, pollMs: 15 });
+  for (const token of [x.token, y.token, z.token]) {
+    let done = null;
+    for (let i = 0; i < 20 && !done; i++) {
+      done = await work(store2, token, "same-words", clock, env);
+      if (!done) await new Promise((resolve) => setTimeout(resolve, 15));
+    }
+    assert.ok(done);
+  }
+  await pending2;
+  const blocked = await store2.listChainSettlements(["held_indistinct_digests"]);
+  assert.equal(blocked.length, 1);
+  const hidden = await call(store2, "/api/settlements/pending", { token: "settler-test-token" }, env, clock);
+  assert.deepEqual(hidden.data.settlements, []);
+});
+
+test("the evidence packet decodes the first Base Sepolia settlement log", async () => {
+  const { readFileSync } = await import("node:fs");
+  const log = JSON.parse(readFileSync(new URL("./fixtures/base-sepolia-settled-log.json", import.meta.url), "utf8"));
+  const decoded = decodeSettledLog(log);
+  assert.equal(decoded.event, "Settled");
+  assert.equal(decoded.chain_id, 84532);
+  assert.equal(decoded.worker, "0x99334f7e733ca137dc6665106ca6df96dd97b563");
+  assert.equal(decoded.verifier1, "0x2d49700fc13b5bafbf789a7d09c799a858b8b423");
+  assert.equal(decoded.verifier2, "0x99334f7e733ca137dc6665106ca6df96dd97b563");
+  assert.equal(decoded.worker_amount, 18000);
+  assert.equal(decoded.verifier1_amount, 1000);
+  assert.equal(decoded.verifier2_amount, 1000);
+  assert.equal(decoded.contribution_minor, 20000);
+  assert.equal(decoded.split_ok, true);
+  assert.equal(decoded.settlement_id, "0xd68dda289c08bd593ac1c2959f32893288b26335a458d5ed1c06c425902bd2e1");
 });

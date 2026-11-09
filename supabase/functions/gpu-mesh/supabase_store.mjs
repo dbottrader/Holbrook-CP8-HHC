@@ -32,6 +32,7 @@ function fromNode(row) {
     agent_commit: String(row.agent_commit || ""),
     runtime_name: String(row.runtime_name || ""),
     runtime_version: String(row.runtime_version || ""),
+    batch_id: String(row.batch_id || ""),
   };
 }
 
@@ -72,6 +73,11 @@ function fromJob(row) {
     top_p: row.top_p == null || row.top_p === "" ? null : num(row.top_p),
     repeat_penalty: row.repeat_penalty == null || row.repeat_penalty === "" ? null : num(row.repeat_penalty),
     num_ctx: row.num_ctx == null || row.num_ctx === "" ? null : num(row.num_ctx),
+    output_commitment: String(row.output_commitment || ""),
+    commitment_at: num(row.commitment_at),
+    weights_digest: String(row.weights_digest || ""),
+    input_digest: String(row.input_digest || ""),
+    batch_id: String(row.batch_id || ""),
   };
 }
 
@@ -99,6 +105,10 @@ function fromChain(row) {
     detail: String(row.detail || ""),
     verifier1_id: String(row.verifier1_id || ""),
     verifier2_id: String(row.verifier2_id || ""),
+    verifier1_decision: String(row.verifier1_decision || ""),
+    verifier2_decision: String(row.verifier2_decision || ""),
+    tiebreak_node_id: String(row.tiebreak_node_id || ""),
+    tiebreak_decision: String(row.tiebreak_decision || ""),
   };
 }
 
@@ -117,6 +127,10 @@ function toChain(row) {
     tx_hash: row.tx_hash || "",
     tx_url: row.tx_url || "",
     detail: row.detail || "",
+    verifier1_decision: row.verifier1_decision || "",
+    verifier2_decision: row.verifier2_decision || "",
+    tiebreak_node_id: row.tiebreak_node_id || "",
+    tiebreak_decision: row.tiebreak_decision || "",
     created_at: row.created_at || 0,
     updated_at: row.updated_at || 0,
   };
@@ -176,12 +190,16 @@ export function createSupabaseStore(sb) {
       const data = await must(sb.from("gpumesh_jobs").select("*").in("status", statuses).limit(200));
       return (data || []).map(fromJob);
     },
+    async listChildJobs(parentId) {
+      const data = await must(sb.from("gpumesh_jobs").select("*").eq("parent_job_id", parentId).limit(20));
+      return (data || []).map(fromJob);
+    },
     async listQueuedForClaim(models) {
       const ids = (models || []).filter((id) => typeof id === "string" && id).slice(0, 64);
       if (!ids.length) return [];
       const data = await must(
         sb.from("gpumesh_jobs")
-          .select("id,kind,model,priority,created_at,excluded,origin_node_id,lease_generation,attempt,model_digest")
+          .select("id,kind,model,priority,created_at,excluded,origin_node_id,lease_generation,attempt,model_digest,batch_id")
           .eq("status", "queued")
           .in("model", ids)
           .order("priority", { ascending: false })
@@ -216,6 +234,11 @@ export function createSupabaseStore(sb) {
     },
     async listLedger(limit) {
       const data = await must(sb.from("gpumesh_ledger").select("*").order("seq", { ascending: false }).limit(limit));
+      return data || [];
+    },
+    async ledgerMentioning(token) {
+      if (!/^[A-Za-z0-9_:-]{1,80}$/.test(String(token || ""))) return [];
+      const data = await must(sb.from("gpumesh_ledger").select("*").like("payload", `%${token}%`).order("seq", { ascending: true }).limit(100));
       return data || [];
     },
     async getSettlement(key) {

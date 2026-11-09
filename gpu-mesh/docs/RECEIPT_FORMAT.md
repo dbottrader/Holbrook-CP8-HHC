@@ -33,6 +33,8 @@ Groq fallback payload schema is `gpumesh.groq_fallback.v1`. It records `worker_i
 
 A volunteer `gpumesh.execution.v1` receipt and a `gpumesh.verification.v1` receipt also record the run that produced the text: `agent_commit` (git commit, or the package version), `runtime_name`, `runtime_version`, `model_digest`, `temperature`, `top_k`, `top_p`, `seed`, `num_ctx`, and `repeat_penalty`. Deterministic jobs pin `top_p` to 1, `repeat_penalty` to 1, and `num_ctx` to 2048. A verification receipt repeats the parent run as `parent_agent_commit`, `parent_runtime_name`, `parent_runtime_version`, `parent_model_digest`, and `parent_` plus each generation field, so a wording mismatch can be traced to a different commit, runtime, or digest. `reported_generation` is the option object the worker said it sent. A digest of `unpinned`, or a missing digest, is not a match.
 
+A checker is paid the same mesh credit for `agree` and `disagree_deterministic` (`agreement_bonus` is 0). A disagreement does not mint the worker. The hub holds that payout and queues one tiebreaker. The worker output hash stays sealed until the verifier has committed `sha256` of its own output. Receipts keep four digests in separate fields: `input_digest` (canonical messages), `manifest_digest` (Ollama manifest), `output_digest` (output text), and `weights_digest` (GGUF sha256). `GET /api/evidence/{job_id}` returns the job, receipts, verdicts, tx hash, and the decoded `Settled` log when the transaction is on Base Sepolia.
+
 ## Where a row lives
 
 - The self-hosted coordinator appends through `LedgerBackend`. `simulated` writes the local chain. `onchain` in that process refuses without opening a socket. The public hub's box settler is the process that submits `Settlement.settle`.

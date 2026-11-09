@@ -51,6 +51,10 @@ def test_workflow_pins_the_free_checker_and_no_secret():
     assert "secrets." not in text
     assert "actual digest:" in text
     assert "timeout-minutes: 90" in text
+    assert "batch_id:" in text
+    assert "batch-002" in text
+    assert "GPU_MESH_BATCH_ID" in text
+    assert "GPU_MESH_GGUF_SHA256" in text
     assert "inputs.minutes +" not in text
     # Actions ends background processes with the step, so serve and the node share one step.
     between = text[text.find("ollama serve >"):text.find("python -m gpumesh_node")]

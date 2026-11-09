@@ -1,0 +1,1 @@
+The verifier patch for https://github.com/dbottrader/asin-hhc-skills. Push to that repo returned 403 for this agent, so the files are here until they can land on branch cursor/canon-v1-byte-spec-47e6.

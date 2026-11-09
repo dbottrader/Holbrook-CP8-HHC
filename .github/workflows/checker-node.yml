@@ -13,6 +13,11 @@ on:
         required: false
         default: 30
         type: number
+      batch_id:
+        description: Optional checker batch. batch-002 claims verification jobs only and records an evidence packet. Leave empty for a normal checker.
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -78,9 +83,11 @@ jobs:
           GPU_MESH_BACKEND: ollama
           GPU_MESH_OLLAMA_HOST: http://127.0.0.1:11434
           GPU_MESH_PAYOUT_ADDRESS: "0x99334f7e733Ca137dc6665106cA6dF96dD97b563"
+          GPU_MESH_GGUF_SHA256: "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db"
           GPU_MESH_STATE: ${{ runner.temp }}/gh-actions-checker.json
           GPUMESH_COMMIT: ${{ github.sha }}
           CHECKER_MINUTES: ${{ inputs.minutes }}
+          GPU_MESH_BATCH_ID: ${{ inputs.batch_id }}
           PYTHONUNBUFFERED: "1"
         run: |
           set -euo pipefail
@@ -140,6 +147,15 @@ jobs:
             -o "$RUNNER_TEMP/warmup.json" \
             -d '{"model":"asin-qwen0.5b:latest","messages":[{"role":"user","content":"hi"}],"stream":false,"options":{"num_predict":1,"temperature":0,"top_k":1}}'
           echo "warmup ok"
+          if [ "${GPU_MESH_BATCH_ID}" = "batch-002" ]; then
+            echo "batch-002 claims verification jobs only"
+            curl -sS -m 20 -o "$RUNNER_TEMP/batch-chat.json" -w "batch-002 chat http %{http_code}\n" \
+              -H "content-type: application/json" \
+              -H "x-gpumesh-batch: batch-002" \
+              -H "x-gpumesh-wait-seconds: 5" \
+              -d '{"model":"auto","messages":[{"role":"user","content":"Reply with the single word mesh"}],"max_tokens":16}' \
+              "$GPU_MESH_COORDINATOR/v1/chat/completions" || echo "batch-002 chat request did not complete"
+          fi
           log="$RUNNER_TEMP/checker-node.log"
           python -m gpumesh_node \
             --coordinator "$GPU_MESH_COORDINATOR" \
