@@ -9,6 +9,7 @@ stand-in reply.
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -76,8 +77,12 @@ def generation_controls(job: dict) -> dict:
     }
 
 
-def ollama_model_rows(tags: dict, resident: set[str]) -> list[dict]:
-    """One row per /api/tags model. The digest is the tag's own digest."""
+def ollama_model_rows(tags: dict, resident: set[str], weights_digest: str = "") -> list[dict]:
+    """One row per /api/tags model. The digest is the tag's own digest.
+
+    ``weights_digest`` is the GGUF sha256. It stays a different field from the
+    Ollama manifest digest.
+    """
 
     found = []
     for item in tags.get("models") or []:
@@ -90,6 +95,8 @@ def ollama_model_rows(tags: dict, resident: set[str]) -> list[dict]:
         digest = str(item.get("digest") or "").strip()
         if digest:
             row["digest"] = digest[:128]
+        if weights_digest:
+            row["weights_digest"] = str(weights_digest).strip()[:128]
         found.append(row)
     return found
 
@@ -172,7 +179,8 @@ class OllamaRuntime:
                     name = item.get("name") or item.get("model")
                     if name:
                         resident.add(str(name))
-            return ollama_model_rows(tags.json(), resident)
+            weights = os.environ.get("GPU_MESH_GGUF_SHA256", "").strip()
+            return ollama_model_rows(tags.json(), resident, weights)
 
     async def complete(self, job: dict, on_delta) -> InferenceResult:
         started = time.perf_counter()

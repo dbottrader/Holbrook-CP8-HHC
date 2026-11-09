@@ -56,6 +56,9 @@ export function createMemoryStore() {
     async listJobs(statuses) {
       return [...jobs.values()].filter((row) => statuses.includes(row.status)).map((row) => structuredClone(row));
     },
+    async listChildJobs(parentId) {
+      return [...jobs.values()].filter((row) => row.parent_job_id === parentId).map((row) => structuredClone(row));
+    },
     async listQueuedForClaim(models) {
       const wanted = new Set(models || []);
       return [...jobs.values()]
@@ -91,6 +94,10 @@ export function createMemoryStore() {
     },
     async listLedger(limit) {
       return ledger.slice(-limit).reverse().map((row) => structuredClone(row));
+    },
+    async ledgerMentioning(token) {
+      if (!/^[A-Za-z0-9_:-]{1,80}$/.test(String(token || ""))) return [];
+      return ledger.filter((row) => String(row.payload || "").includes(token)).map((row) => structuredClone(row));
     },
     async getSettlement(key) {
       const row = settlements.get(key);

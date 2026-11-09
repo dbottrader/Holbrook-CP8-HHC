@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import json
 import logging
 import os
@@ -148,6 +149,9 @@ class NodeAgent:
         }
         if self.payout_address:
             body["payout_address"] = self.payout_address
+        batch = os.environ.get("GPU_MESH_BATCH_ID", "").strip()
+        if batch:
+            body["batch_id"] = batch
         return body
 
     async def register(self, force: bool = False) -> None:
@@ -231,6 +235,14 @@ class NodeAgent:
                 log.exception("TOPLOC proof was not built")
                 proofs = None
         client = await self._client()
+        if job.get("commit_required"):
+            commitment = hashlib.sha256(result.text.encode("utf-8")).hexdigest()
+            committed = await client.post(
+                f"/api/nodes/jobs/{job['job_id']}/commit",
+                json={"commitment": commitment, "fencing_token": job.get("fencing_token")},
+                headers=self._headers(),
+            )
+            committed.raise_for_status()
         custom = getattr(self.runtime, "effective_generation", None)
         generation = custom(job) if custom is not None else generation_controls(job)
         body = {
@@ -245,6 +257,9 @@ class NodeAgent:
             "runtime_version": str(getattr(self.runtime, "version", "") or ""),
             "generation": generation,
         }
+        weights = os.environ.get("GPU_MESH_GGUF_SHA256", "").strip()
+        if weights:
+            body["weights_digest"] = weights
         if proofs:
             body["toploc_proofs"] = proofs
             body["toploc_source"] = source
