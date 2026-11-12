@@ -1,0 +1,68 @@
+{
+  "schema_version": "gpu_mesh.payout_wallet_record.v1",
+  "recorded_at": "2026-11-12",
+  "project": "dbottrader/Holbrook-CP8-HHC/gpu-mesh",
+  "record_status": "RECORDED_OWNER_ASSERTED_WITH_REPOSITORY_CORROBORATION",
+  "recipient": {
+    "name": "Dennis Christie",
+    "wallet_role": "Personal recipient wallet designated for GPU Mesh worker and checker payouts",
+    "ownership_basis": "Dennis stated in the project group on 2026-11-12 that this is his own MetaMask wallet and that he supplied it for GPU Mesh payouts on 2026-11-08.",
+    "ownership_verification": "Not cryptographically verified by a signed wallet message in this record."
+  },
+  "wallet": {
+    "address": "0x99334f7e733Ca137dc6665106cA6dF96dD97b563",
+    "address_type": "EVM",
+    "owner_described_network": "Base",
+    "settlement_network_in_repository_evidence": "Base Sepolia",
+    "settlement_chain_id": 84532,
+    "network_note": "The EVM address can be used on Base and Base Sepolia, but balances and transactions are chain-specific. The repository settlement fixture is Base Sepolia evidence, not proof of a Base-mainnet transfer."
+  },
+  "purpose": {
+    "system": "GPU Mesh",
+    "uses": [
+      "Dennis's worker-node payout",
+      "One checker/verifier payout that uses the same recipient address"
+    ],
+    "reported_combined_recipient_amount": 19000,
+    "reported_amount_breakdown": {
+      "worker": 18000,
+      "checker_verifier": 1000
+    },
+    "unit": "HHCW integer units as represented by the repository settlement fixture"
+  },
+  "repository_evidence": [
+    {
+      "path": ".github/workflows/checker-node.yml",
+      "observation": "GPU_MESH_PAYOUT_ADDRESS is set to this exact address for gh-actions-checker."
+    },
+    {
+      "path": "tests/fixtures/base-sepolia-settled-log.json",
+      "observation": "The settlement event fixture encodes this address as the worker and as verifier2; verifier1 is a different address."
+    },
+    {
+      "path": "tests/test_evidence_packet.py",
+      "observation": "The decoder test asserts chain_id 84532, worker amount 18000, verifier1 amount 1000, verifier2 amount 1000, and contribution amount 20000."
+    },
+    {
+      "path": "docs/LAUNCH_DEMOS.md",
+      "observation": "The checker-node runbook identifies this address as the GitHub-hosted checker's payout address and documents Base Sepolia settlement."
+    }
+  ],
+  "allocation_interpretation": {
+    "recipient_worker_share": 18000,
+    "recipient_checker_share": 1000,
+    "recipient_total": 19000,
+    "other_verifier_share": 1000,
+    "event_total": 20000,
+    "note": "The 19000 recipient total is the 18000 worker share plus the 1000 verifier2 share sent to the same address. The separate verifier1 share is 1000."
+  },
+  "separation_and_safety": {
+    "not_the_project_treasury": true,
+    "not_the_hhcw_token_contract": true,
+    "not_the_settlement_contract": true,
+    "not_the_deployer_wallet": true,
+    "legacy_bitcoin_wallet_record": "Keep the existing Bitcoin address in tasks.md as a separate BTC record; do not overwrite it with this EVM payout address.",
+    "secret_material_stored": false
+  },
+  "evidence_boundary": "This record captures the owner's statement and matching repository configuration/test-fixture evidence. It does not independently prove wallet control or independently re-query the settlement transaction from a Base Sepolia RPC/explorer."
+}
