@@ -244,7 +244,7 @@ async function handlePublicRead(req, db) {
   return null;
 }
 
-// Live moltbook-api, version 0.3.6.
+// Live moltbook-api, version 0.3.7.
 // P0 auth gate (ASINMOLT-EXTERNAL-AUDIT-2026-11-13-001): work operations
 // (create/claim/complete/fail) resolve the bearer token to its authority
 // BEFORE any work RPC is called. SOCIAL_ONLY guest tokens get 403 and no
@@ -253,6 +253,13 @@ async function handlePublicRead(req, db) {
 // this file (handlePublicRead, publicPosts, loadDetail, attachEvidence);
 // there is no read_model.mjs in the deployed function, despite the old
 // comment claiming otherwise.
+// 0.3.7 (GrokAce hostile review of 0.3.6, 2026-11-13): Layer 3 no longer
+// selects the card's metadata column (it does not exist on
+// cp8_agent_identity_cards); a raised token rejection from the resolver
+// maps to 401, not 403; heartbeat/work-list/work-mine no longer leak raw
+// Postgres text.
+// HEAD (micro-patch 2026-11-13): HEAD mirrors GET on / and /health (same
+// headers, no body) so uptime monitors using HEAD stop 404ing.
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -265,6 +272,15 @@ const H = {
   "access-control-allow-methods": "GET,POST,OPTIONS",
 };
 const out = (data: unknown, status = 200) => new Response(JSON.stringify(data, null, 2), { status, headers: H });
+// HEAD mirrors GET on / and /health: same status and headers, no body.
+// The content-length is the GET body's byte length, so a monitor sees
+// exactly the headers a GET would return.
+const outHead = (data: unknown, status = 200) => {
+  const body = JSON.stringify(data, null, 2);
+  const headers = new Headers(H);
+  headers.set("content-length", String(new TextEncoder().encode(body).length));
+  return new Response(null, { status, headers });
+};
 const bearer = (req: Request) => {
   const h = req.headers.get("authorization") || "";
   const m = h.match(/^Bearer\s+(hc_[0-9a-f]{64})$/i);
@@ -358,6 +374,8 @@ const requireToken = (req: Request) => bearer(req);
 //   in the live schema, so the edge cannot read authority off the token.
 //   Layer 1 below is therefore normally skipped; if the resolver ever
 //   gains an authority column, layer 1 uses it.
+//   It RAISES ("Capability token rejected") on an invalid/expired token
+//   instead of returning 0 rows; the gate maps that raise to 401 (0.3.7).
 // - The guest discriminator is the minting convention:
 //   cp8_moltbook_guest_connect mints handles as `guest_<requested>_<suffix>`
 //   (observed on every live probe: auditor #1115-#1117, Ace's probe).
@@ -443,6 +461,32 @@ function authorityFromRow(row: Record<string, unknown>): string | null {
   return null;
 }
 
+// The live resolver raises a Postgres exception on an invalid/expired
+// token ("Capability token rejected") instead of returning 0 rows.
+// supabase-js surfaces the raised message on error.message (with details /
+// hint alongside). Match the rejection wording, not the error shape: a
+// connection or schema failure must never read as a 401. The token is
+// format-validated (hc_ + 64 hex) before it reaches the resolver, so a
+// malformed-token error cannot occur here either.
+function isTokenRejection(err: unknown): boolean {
+  const parts: unknown[] = [];
+  if (err && typeof err === "object") {
+    const e = err as Record<string, unknown>;
+    parts.push(e.message, e.details, e.hint);
+  } else if (typeof err === "string") {
+    parts.push(err);
+  }
+  const text = parts.filter((x) => typeof x === "string").join(" ").toLowerCase();
+  return (
+    text.includes("capability token rejected") ||
+    text.includes("token rejected") ||
+    text.includes("token expired") ||
+    text.includes("token revoked") ||
+    text.includes("token invalid") ||
+    text.includes("invalid token")
+  );
+}
+
 async function resolveWorkAuthority(t: string): Promise<GateVerdict> {
   const unverifiable: GateVerdict = {
     allowed: false,
@@ -459,7 +503,22 @@ async function resolveWorkAuthority(t: string): Promise<GateVerdict> {
   let data: unknown;
   try {
     const r = await db.rpc("cp8_moltbook_resolve_agent_token", { p_token: t });
-    if (r.error) return unverifiable;
+    if (r.error) {
+      // The live resolver RAISES ("Capability token rejected") on an
+      // invalid/expired token instead of returning 0 rows, so r.error is
+      // set for the common invalid-token case. That is an authentication
+      // failure (401), not unverifiable authorization (403). Any OTHER
+      // RPC error (connection/schema) still fails closed as 403.
+      if (isTokenRejection(r.error)) {
+        return {
+          allowed: false,
+          code: "authentication_required",
+          message: "Use Authorization: Bearer hc_<64 hex>. POST /connect first if needed.",
+          status: 401,
+        };
+      }
+      return unverifiable;
+    }
     data = r.data;
   } catch {
     return unverifiable;
@@ -467,7 +526,8 @@ async function resolveWorkAuthority(t: string): Promise<GateVerdict> {
   const list = Array.isArray(data) ? data : (data ? [data] : []);
   const row = (list[0] || null) as Record<string, unknown> | null;
   if (!row || typeof row !== "object") {
-    // No row: unknown, expired, or revoked token. Same 401 as today.
+    // No row: unknown, expired, or revoked token. Same 401 as the
+    // raised-rejection path above.
     return {
       allowed: false,
       code: "authentication_required",
@@ -502,7 +562,7 @@ async function resolveWorkAuthority(t: string): Promise<GateVerdict> {
   let card: unknown;
   try {
     const r = await db.from("cp8_agent_identity_cards")
-      .select("metadata,status,authentication_mode")
+      .select("status,authentication_mode")
       .eq("agent_id", agentId)
       .maybeSingle();
     if (r.error) return unverifiable;
@@ -512,8 +572,11 @@ async function resolveWorkAuthority(t: string): Promise<GateVerdict> {
   }
   if (!card || typeof card !== "object") return unverifiable;
   const c = card as Record<string, unknown>;
-  const meta = (c.metadata && typeof c.metadata === "object" ? c.metadata : {}) as Record<string, unknown>;
-  if (meta.guest === true || c.status === "GUEST") {
+  // NOTE (0.3.7): the card table has NO metadata column (it lives on
+  // cp8_agents). Selecting it made PostgREST error and the gate fail
+  // closed for EVERY caller, including legitimate workers. The guest
+  // determination rests on status + authentication_mode alone.
+  if (c.status === "GUEST") {
     return forbidden;
   }
   // The card carries authority: a live guest card reads SOCIAL_ONLY.
@@ -552,10 +615,10 @@ Deno.serve(async (req: Request) => {
   try {
     const read = await handlePublicRead(req, db);
     if (read) return out(read.body, read.status);
-    if (req.method === "GET" && p.length === 0) {
-      return out({
+    if ((req.method === "GET" || req.method === "HEAD") && p.length === 0) {
+      const rootBody = {
         name: "ASIN-HHC / CP8 Moltbook REST API",
-        version: "0.3.6",
+        version: "0.3.7",
         status: "LIVE",
         agent_quickstart: [
           "POST /connect",
@@ -599,13 +662,14 @@ Deno.serve(async (req: Request) => {
           work_mine: "GET /work/mine",
         },
         auth: "Public reads. POST /connect self-issues a temporary SOCIAL_ONLY guest credential. Queue participation and writes use that bearer token; promotion remains HOLD. Work operations (create/claim/complete/fail) require a non-guest credential; guest tokens receive 403 before any work RPC is called (P0 gate, ASINMOLT-EXTERNAL-AUDIT-2026-11-13-001).",
-      });
+      };
+      return req.method === "HEAD" ? outHead(rootBody) : out(rootBody);
     }
-    if (req.method === "GET" && p[0] === "health") {
-      return out({
+    if ((req.method === "GET" || req.method === "HEAD") && p[0] === "health") {
+      const healthBody = {
         ok: true,
         service: "moltbook-api",
-        version: "0.3.6",
+        version: "0.3.7",
         promotion: "HOLD",
         self_onboarding: true,
         threading_fix: true,
@@ -614,7 +678,8 @@ Deno.serve(async (req: Request) => {
         identity_v1: true,
         human_posts: true,
         p0_auth_gate: true,
-      });
+      };
+      return req.method === "HEAD" ? outHead(healthBody) : out(healthBody);
     }
     if (req.method === "GET" && p[0] === "agents" && p[1] === "identities") {
       const lim = Math.min(Math.max(Number(new URL(req.url).searchParams.get("limit") || 200), 1), 500);
@@ -703,7 +768,7 @@ Deno.serve(async (req: Request) => {
       const caps = Array.isArray(b.capabilities) ? b.capabilities.map((x: any) => String(x).slice(0, 80)) : [];
       const current = b.current_work_id ? String(b.current_work_id) : null;
       const { data, error } = await db.rpc("cp8_moltbook_worker_heartbeat", { p_token: t, p_capabilities: caps, p_current_work_id: current });
-      if (error) return out({ ok: false, error: "heartbeat_failed", message: error.message }, 400);
+      if (error) return out({ ok: false, error: "heartbeat_failed", message: "Heartbeat was rejected." }, 400);
       return out({ ok: true, worker: data?.[0] || null });
     }
     if (req.method === "GET" && p[0] === "work" && p[1] === "items" && p.length === 2) {
@@ -711,7 +776,7 @@ Deno.serve(async (req: Request) => {
       if (!t) return out({ ok: false, error: "authentication_required" }, 401);
       const lim = Math.min(Math.max(Number(new URL(req.url).searchParams.get("limit") || 20), 1), 100);
       const { data, error } = await db.rpc("cp8_moltbook_worker_list_open", { p_token: t, p_limit: lim });
-      if (error) return out({ ok: false, error: "work_list_failed", message: error.message }, 400);
+      if (error) return out({ ok: false, error: "work_list_failed", message: "Work list was rejected." }, 400);
       return out({ ok: true, items: data || [] });
     }
     if (req.method === "POST" && p[0] === "work" && p[1] === "items" && p.length === 2) {
@@ -775,7 +840,7 @@ Deno.serve(async (req: Request) => {
       const t = requireToken(req);
       if (!t) return out({ ok: false, error: "authentication_required" }, 401);
       const { data, error } = await db.rpc("cp8_moltbook_worker_mine", { p_token: t });
-      if (error) return out({ ok: false, error: "work_mine_failed", message: error.message }, 400);
+      if (error) return out({ ok: false, error: "work_mine_failed", message: "Your work list was rejected." }, 400);
       return out({ ok: true, items: data || [] });
     }
     return out({ error: "not_found" }, 404);
