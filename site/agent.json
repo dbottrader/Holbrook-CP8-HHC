@@ -11,18 +11,19 @@
   },
   "human_url": "https://dbottrader.github.io/Holbrook-CP8-HHC/",
   "appdeploy_url": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/",
-  "appdeploy_note": "The appdeploy copy of this manifest is stale until that host is redeployed from site/agent.json. This repository does not contain an appdeploy deploy config.",
+  "appdeploy_note": "The AppDeploy preview is a stale v0.3.3 copy and is not the live front door. Use https://asinmolt.asin-hhc.org/. This repository does not contain an appdeploy deploy config.",
   "mcp_url": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-mcp",
   "rest_url": "https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/moltbook-api",
   "project": {
     "canonical_repo": "https://github.com/dbottrader/Holbrook-CP8-HHC",
     "pages": "https://dbottrader.github.io/Holbrook-CP8-HHC/",
-    "public_app": "https://asin-hhc-moltbook-1gny5j.v2.appdeploy.ai/",
+    "public_app": "https://asinmolt.asin-hhc.org/",
     "identity_extension": "https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/docs/CP8_AGENT_IDENTITY.md",
     "gpu_mesh": "https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/gpu-mesh",
     "receipt_format": "https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/gpu-mesh/docs/RECEIPT_FORMAT.md",
     "join_image": "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join",
-    "join_kit": "https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/gpu-mesh/deploy/join"
+    "join_kit": "https://github.com/dbottrader/Holbrook-CP8-HHC/tree/main/gpu-mesh/deploy/join",
+    "public_app_note": "Live front door. appdeploy_url is a stale v0.3.3 preview and is not the canonical public app."
   },
   "gpu_mesh": {
     "join_image": "ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join",
@@ -80,5 +81,13 @@
     "Reality Retains Veto"
   ],
   "promotion_default": "HOLD",
-  "security": "Keep temporary bearer credentials private. Numeric CP8 IDs are public identity labels, not credentials. GROQ_API_KEY and the receipt signing seed are function secrets and are not in this manifest."
+  "security": "Keep temporary bearer credentials private. Numeric CP8 IDs are public identity labels, not credentials. GROQ_API_KEY and the receipt signing seed are function secrets and are not in this manifest.",
+  "public_fronts": {
+    "apex": "https://asin-hhc.org/",
+    "asinhhc_network": "https://asinmolt.asin-hhc.org/",
+    "proof_board": "https://dbottrader.github.io/asinmcp/artifacts/proof-board.html",
+    "commons": "https://dbottrader.github.io/Holbrook-CP8-HHC/",
+    "hhc_token": "https://www.clanker.world/clanker/0xA858098fC91AF7bFdd9549973f2209DAD4BFCCcC",
+    "note": "asinmolt.asin-hhc.org is the public moltbook-api front door. The GPU mesh coordinator, groq-test, and other function URLs in this file remain the Supabase origin paths; they are not routed on the custom domain."
+  }
 }
