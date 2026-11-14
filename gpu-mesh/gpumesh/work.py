@@ -586,6 +586,69 @@ def complete_groq_fallback(
     }
 
 
+def complete_cloudflare_fallback(
+    session: Session,
+    *,
+    model: str,
+    messages: list[dict],
+    temperature: float,
+    max_tokens: int,
+    client_key: str,
+    primary: dict[str, Any],
+    verification: dict[str, Any],
+    duration_ms: int,
+) -> dict[str, Any]:
+    """Record a Cloudflare Workers AI fallback that ran because no volunteer was online.
+
+    The amount is 0. The receipt is still signed and chained through the
+    active ledger backend. This path never awards mesh credits.
+    """
+    from gpumesh.cloudflare_provider import fallback_payload
+
+    now = time.time()
+    text = str(primary.get("output") or "")
+    job = Job(
+        id=new_id("job"),
+        kind="inference",
+        status="verified" if verification.get("ok") else "disputed",
+        model=model[:128],
+        messages_json=json.dumps(messages),
+        temperature=float(temperature),
+        max_tokens=int(max_tokens),
+        client_key=client_key[:80],
+        created_at=now,
+        completed_at=now,
+        output_text=text,
+        output_hash=output_hash(text),
+        prompt_tokens=int(primary.get("prompt_tokens") or 0),
+        completion_tokens=int(primary.get("completion_tokens") or 0),
+        duration_ms=int(duration_ms),
+        finish_reason="stop",
+        verdict=("pass" if verification.get("ok") else "fail"),
+        credits_awarded=0,
+        model_digest="cloudflare-unpinned",
+    )
+    session.add(job)
+    session.flush()
+    payload = fallback_payload(
+        job_id=job.id,
+        model=model,
+        primary=primary,
+        verification=verification,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        duration_ms=duration_ms,
+    )
+    entry = append(session, actor="cloudflare-fallback", kind="cloudflare_inference_receipt", payload=payload)
+    job.receipt_hash = entry.hash
+    return {
+        "snapshot": job_snapshot(job),
+        "receipt": entry_public(entry),
+        "verification": verification,
+    }
+
+
 def enqueue_canary(session: Session, settings: Settings, model: str | None = None) -> Job | None:
     nodes = list(session.scalars(select(Node).where(Node.status == "online")))
     if not nodes:
@@ -1804,6 +1867,24 @@ def list_public_models(session: Session, settings: Settings | None = None) -> li
                 "notice": "Fallback when no volunteer worker is online. Checked by an exact-match prompt or a second Groq model.",
             },
         }
+    if settings is not None:
+        from gpumesh.cloudflare_provider import _model_from_settings as cloudflare_model_id
+        from gpumesh.cloudflare_provider import configured as cloudflare_configured
+
+        cf_model = cloudflare_model_id(settings)
+        if cloudflare_configured(settings) and cf_model not in merged:
+            merged[cf_model] = {
+                "id": cf_model,
+                "object": "model",
+                "created": int(time.time()),
+                "owned_by": "cloudflare",
+                "gpumesh": {
+                    "online_nodes": 0,
+                    "resident_nodes": 0,
+                    "backends": ["cloudflare"],
+                    "notice": "Free-tier Cloudflare Workers AI fallback when no volunteer worker is online. Paid models are rejected. Checked by an exact-match prompt or a second allow-listed model.",
+                },
+            }
     return sorted(merged.values(), key=lambda row: row["id"])
 
 
