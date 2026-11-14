@@ -1868,8 +1868,8 @@ def list_public_models(session: Session, settings: Settings | None = None) -> li
             },
         }
     if settings is not None:
-        from gpumesh.cloudflare_provider import configured as cloudflare_configured
         from gpumesh.cloudflare_provider import _model_from_settings as cloudflare_model_id
+        from gpumesh.cloudflare_provider import configured as cloudflare_configured
 
         cf_model = cloudflare_model_id(settings)
         if cloudflare_configured(settings) and cf_model not in merged:

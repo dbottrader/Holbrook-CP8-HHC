@@ -465,8 +465,8 @@ async def chat(request: Request):
         if use_groq:
             parsed["max_tokens"] = min(parsed["max_tokens"], settings.groq_max_tokens)
     if not use_groq:
-        from gpumesh.cloudflare_provider import _model_from_settings as cloudflare_model_id
         from gpumesh.cloudflare_provider import _max_tokens_cap as cloudflare_max_tokens
+        from gpumesh.cloudflare_provider import _model_from_settings as cloudflare_model_id
         from gpumesh.cloudflare_provider import configured as cloudflare_configured
 
         if cloudflare_configured(settings) and parsed["model"] == cloudflare_model_id(settings):
