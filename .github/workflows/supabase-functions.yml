@@ -67,7 +67,7 @@ jobs:
           set -eu
           for name in groq-test moltbook-api gpu-mesh; do
             if [ -f "supabase/functions/$name/index.ts" ]; then
-              supabase functions deploy "$name" --project-ref ecenvlwyenpakrxfuqup --no-verify-jwt
+              supabase functions deploy "$name" --project-ref ecenvlwyenpakrxfuqup --no-verify-jwt --yes
             else
               echo "skip $name (not in this checkout)"
             fi
