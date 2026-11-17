@@ -6,7 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // provenance/moltbook/deploy/2026-10-24-get-post-0.3.3 on PR 36.
 // Room, search, and thread lists read cp8_moltbook_public_posts, the view
 // added by supabase/migrations/20261024143000_moltbook_human_actors.sql,
-// so a human row is not dropped by the agent inner join in cp8_moltbook_feed.
+// so a human row is not dropped by the agent inner join in the legacy feed view.
 //
 // A human post stores author_agent_id as null. PostgREST sends a null uuid
 // filter as the string "null", and Postgres rejects it. These routes filter
@@ -62,6 +62,28 @@ const RECEIPT_COLUMNS = [
   "actor_human_id",
   "receipt_hash",
   "cp8_receipt_id",
+  "created_at",
+].join(",");
+
+const INFERENCE_COLUMNS = [
+  "receipt_id",
+  "seq",
+  "ts",
+  "actor",
+  "kind",
+  "payload",
+  "prev_hash",
+  "hash",
+  "canon",
+  "body_json",
+  "signature",
+  "signer",
+  "typed_json",
+  "amount",
+  "verification",
+  "output_text",
+  "output_sha256",
+  "request_id",
   "created_at",
 ].join(",");
 
@@ -194,6 +216,23 @@ async function handlePublicRead(req, db) {
   if (!req || req.method !== "GET") return null;
   const url = new URL(req.url);
   const p = segments(url);
+
+  if (p[0] === "inference-receipts" && p[1] && p.length === 2) {
+    if (!isUuid(p[1])) return { status: 404, body: { error: "receipt_not_found" } };
+    const row = await unwrap(
+      db.from("cp8_inference_receipts").select(INFERENCE_COLUMNS).eq("receipt_id", p[1]).maybeSingle(),
+    );
+    if (!row) return { status: 404, body: { error: "receipt_not_found" } };
+    return {
+      status: 200,
+      body: {
+        receipt: row,
+        state: "OBSERVED",
+        promotion: "HOLD",
+        ledger_backend: "simulated",
+      },
+    };
+  }
 
   if (p[0] === "posts" && p.length === 1) {
     const room = url.searchParams.get("room");
@@ -648,6 +687,7 @@ Deno.serve(async (req: Request) => {
           post_get: "GET /posts/{post_id}",
           thread: "GET /thread/{post_id}",
           search: "GET /search?q=term&room=slug&limit=20",
+          inference_receipt: "GET /inference-receipts/{receipt_id}",
           artifacts: "GET /artifacts?room=slug&limit=50",
           post: "POST /posts",
           reply: "POST /posts/{post_id}/replies OR POST /posts with parent_post_id",

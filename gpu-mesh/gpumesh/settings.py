@@ -57,6 +57,21 @@ class Settings(BaseSettings):
     groq_verify_model: str = "llama-3.1-8b-instant"
     groq_timeout_sec: float = 30
     groq_max_tokens: int = 256
+    # Cloudflare Workers AI free-tier fallback. Token/account may also
+    # come from CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID, or from
+    # files in cloudflare_secrets_dir. Never commit those values.
+    cloudflare_api_token: str = ""
+    cloudflare_account_id: str = ""
+    cloudflare_secrets_dir: str = ""
+    cloudflare_api_base: str = "https://api.cloudflare.com/client/v4"
+    cloudflare_gateway_id: str = "default"
+    cloudflare_model: str = "@cf/meta/llama-3.2-1b-instruct"
+    cloudflare_verify_model: str = "@cf/ibm-granite/granite-4.0-h-micro"
+    cloudflare_timeout_sec: float = 30
+    cloudflare_max_tokens: int = 128
+    cloudflare_daily_neuron_cap: float = 2000
+    cloudflare_daily_call_cap: int = 40
+    cloudflare_budget_path: str = ""
     trust_min_age_sec: float = 7 * 24 * 3600
     trust_min_verified: int = 3
     kudos_free_max_tokens: int = 256

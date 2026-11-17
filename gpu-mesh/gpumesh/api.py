@@ -34,6 +34,7 @@ from gpumesh.work import (
     ban_ip,
     chunks_after,
     claim_job,
+    complete_cloudflare_fallback,
     complete_groq_fallback,
     create_api_key,
     enqueue_canary,
@@ -334,6 +335,65 @@ async def _groq_completion(request: Request, parsed: dict, client_key: str, cost
     return JSONResponse(body, headers=headers)
 
 
+async def _cloudflare_completion(request: Request, parsed: dict, client_key: str, cost: int, headers: dict) -> Response:
+    from gpumesh.cloudflare_provider import CloudflareCallError, run_verified
+
+    settings = request.app.state.settings
+    started = time.perf_counter()
+    try:
+        primary, verification = await run_verified(
+            settings,
+            parsed["messages"],
+            max_tokens=parsed["max_tokens"],
+            temperature=parsed["temperature"],
+            transport=getattr(request.app.state, "cloudflare_transport", None),
+        )
+    except CloudflareCallError as exc:
+        raise MeshError(502, exc.message, "server_error", exc.code) from exc
+    duration_ms = int((time.perf_counter() - started) * 1000)
+    with write_session(request.app) as session:
+        if cost and client_key.startswith("key:"):
+            from gpumesh.db import ApiKey as KeyRow
+
+            row = session.get(KeyRow, client_key.removeprefix("key:"))
+            if row is None or int(row.kudos or 0) < cost:
+                raise MeshError(402, "not enough kudos", "insufficient_quota", "kudos_required")
+            row.kudos -= cost
+        recorded = complete_cloudflare_fallback(
+            session,
+            model=parsed["model"],
+            messages=parsed["messages"],
+            temperature=parsed["temperature"],
+            max_tokens=parsed["max_tokens"],
+            client_key=client_key,
+            primary=primary,
+            verification=verification,
+            duration_ms=duration_ms,
+        )
+    body = _completion(recorded["snapshot"])
+    body["gpumesh"]["provider"] = "cloudflare"
+    body["gpumesh"]["verification"] = recorded["verification"]
+    body["gpumesh"]["signed_receipt"] = recorded["receipt"]
+    body["gpumesh"]["state"] = "OBSERVED"
+    body["gpumesh"]["promotion"] = "HOLD"
+    if parsed["stream"]:
+        snap = recorded["snapshot"]
+
+        async def one():
+            yield _chunk_line(snap, {"role": "assistant"}, None)
+            if snap["output_text"]:
+                yield _chunk_line(snap, {"content": snap["output_text"]}, None)
+            yield _chunk_line(snap, {}, snap["finish_reason"] or "stop")
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(
+            one(),
+            media_type="text/event-stream",
+            headers={**headers, "cache-control": "no-cache", "x-accel-buffering": "no"},
+        )
+    return JSONResponse(body, headers=headers)
+
+
 def _chunk_line(snap: dict, delta: dict, finish: str | None) -> str:
     payload = {
         "id": f"chatcmpl-{snap['id'].removeprefix('job_')}",
@@ -398,11 +458,22 @@ async def chat(request: Request):
     settings = request.app.state.settings
     parsed = _parse_chat(data, settings)
     use_groq = False
+    use_cloudflare = False
     if settings.groq_api_key and parsed["model"] == settings.groq_model:
         with read_session(request.app) as session:
             use_groq = not model_online(session, parsed["model"])
         if use_groq:
             parsed["max_tokens"] = min(parsed["max_tokens"], settings.groq_max_tokens)
+    if not use_groq:
+        from gpumesh.cloudflare_provider import _max_tokens_cap as cloudflare_max_tokens
+        from gpumesh.cloudflare_provider import _model_from_settings as cloudflare_model_id
+        from gpumesh.cloudflare_provider import configured as cloudflare_configured
+
+        if cloudflare_configured(settings) and parsed["model"] == cloudflare_model_id(settings):
+            with read_session(request.app) as session:
+                use_cloudflare = not model_online(session, parsed["model"])
+            if use_cloudflare:
+                parsed["max_tokens"] = min(parsed["max_tokens"], cloudflare_max_tokens(settings))
     ip = _client_ip(request)
     _hit(request, f"ipcap:{ip}", max(settings.anon_rpm * 5, 60), 60, "ip")
     with write_session(request.app) as session:
@@ -426,6 +497,8 @@ async def chat(request: Request):
     headers = {"x-ratelimit-limit": str(rpm), "x-ratelimit-remaining": str(remaining)}
     if use_groq:
         return await _groq_completion(request, parsed, client_key, cost, headers)
+    if use_cloudflare:
+        return await _cloudflare_completion(request, parsed, client_key, cost, headers)
     with write_session(request.app) as session:
         if cost and client_key.startswith("key:"):
             from gpumesh.db import ApiKey as KeyRow

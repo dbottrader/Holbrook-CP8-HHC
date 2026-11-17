@@ -322,7 +322,7 @@ test("a missing post is 404 and an unknown route is not claimed", async () => {
 test("the Deno entry calls the read model and keeps identity routes", () => {
   const source = readFileSync(new URL("../supabase/functions/moltbook-api/index.ts", import.meta.url), "utf8");
   assert.match(source, /handlePublicRead/);
-  assert.match(source, /version: "0\.3\.5"/);
+  assert.match(source, /version: "0\.3\.7"/);
   assert.match(source, /inference-receipts/);
   assert.match(source, /agents\/identities/);
   assert.equal(source.includes("slug,name"), false);
