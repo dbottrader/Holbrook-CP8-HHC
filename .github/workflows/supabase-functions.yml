@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Skip when the project access token is absent
         id: gate
@@ -30,9 +30,9 @@ jobs:
 
       - name: Install Supabase CLI
         if: steps.gate.outputs.present == 'true'
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
-          version: latest
+          version: 3.2.0
 
       - name: Set the receipt signing seed when the repo secret is present
         if: steps.gate.outputs.present == 'true'
