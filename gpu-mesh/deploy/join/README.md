@@ -1,5 +1,16 @@
 # GPU volunteer join kit
 
+**Start here:** the one-command verifier join is [`join.sh`](join.sh) (Linux x86_64 or WSL2, no Docker, no sudo).
+It pins Ollama 0.40.15 to its AVX2 CPU backend, builds `asin-qwen0.5b` (digest `29ef26c5`), and replays a
+public job before it registers. Guide: [CONTRIBUTING-GPU.md](../../../CONTRIBUTING-GPU.md).
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/join.sh | bash
+```
+
+The Docker kit below is the advanced worker path. It serves `qwen2.5:*-instruct` tags or SmolLM2, which the
+current verifiers do not replay. Its jobs settle only if two other nodes serve the same tag and digest.
+
 One image runs the GPU Mesh worker from `gpumesh_node`. A visible NVIDIA GPU selects Ollama (`ollama/ollama:0.12.6`) with `--gpus all` and a Qwen2.5 instruct tag sized to VRAM. An AMD GPU selects `ollama/ollama:rocm` with `/dev/kfd` and `/dev/dri`. No GPU, or `--cpu`, uses llama.cpp with SmolLM2-360M-Instruct, the same worker as `gpu-mesh/gpumesh_node/llamacpp.py`. `--backend ollama` or `--backend llamacpp` overrides that choice. `--gpu` fails if no GPU is visible. `--payout-address 0x…` is unchanged.
 
 HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public hub settles it as HHCW on Base Sepolia after two distinct verifiers agree. Settlement `0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA`, token `0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d`. The key stays on the operator box.

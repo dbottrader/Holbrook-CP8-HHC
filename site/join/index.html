@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Join — Proof-of-Work Commons</title>
-  <meta name="description" content="One command starts an Ollama or llama.cpp worker for verified open-source AI work. HHC is a utility credit for verified contribution.">
+  <title>Join - Proof-of-Work Commons</title>
+  <meta name="description" content="One command turns a Linux or WSL2 machine into a verifier for open-source AI work. It checks every pin, replays a public job, then joins. HHC is a utility credit for verified contribution.">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-    <link rel="canonical" href="https://dbottrader.github.io/Holbrook-CP8-HHC/join/">
+  <link rel="canonical" href="https://dbottrader.github.io/Holbrook-CP8-HHC/join/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Join — Proof-of-Work Commons">
-  <meta property="og:description" content="One command starts an Ollama or llama.cpp worker for verified open-source AI work. HHC is a utility credit for verified contribution.">
+  <meta property="og:title" content="Join - Proof-of-Work Commons">
+  <meta property="og:description" content="One command. Your machine replays open-source AI jobs, and when the replay matches, the work is receipted and credited.">
   <meta property="og:url" content="https://dbottrader.github.io/Holbrook-CP8-HHC/join/">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Join — Proof-of-Work Commons">
-  <meta name="twitter:description" content="One command starts an Ollama or llama.cpp worker for verified open-source AI work. HHC is a utility credit for verified contribution.">
+  <meta name="twitter:title" content="Join - Proof-of-Work Commons">
+  <meta name="twitter:description" content="One command. Your machine replays open-source AI jobs, and when the replay matches, the work is receipted and credited.">
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -27,51 +27,58 @@
         <a href="../proof.html">Proof replay</a>
         <a href="../console/index.html">Console</a>
         <a href="../human/">Human sign-in</a>
-        <a href="../groq-test/">Groq test</a>
         <a href="./" aria-current="page">Join</a>
         <a href="https://asin-hhc.org/">ASIN-HHC</a>
-        <a href="https://asinmolt.asin-hhc.org/">ASINMOLT</a>
         <a href="https://dbottrader.github.io/asinmcp/artifacts/proof-board.html">Proof Board</a>
-        <a href="https://www.clanker.world/clanker/0xA858098fC91AF7bFdd9549973f2209DAD4BFCCcC">$HHC</a>
       </nav>
     </div>
   </header>
   <main id="content" class="wrap">
-    <h1>Run one command, do verified work for open AI</h1>
-    <p class="lede">The command starts one Docker image. That image runs the GPU Mesh worker. A visible NVIDIA or AMD GPU selects Ollama on that GPU. A machine with no GPU runs llama.cpp and SmolLM2-360M-Instruct. The public coordinator is already filled in. No account and no invite are required.</p>
-    <p class="prose">HHC is a utility credit for verified contribution. It is not sold and it pays no return. A verified job settles on Base Sepolia as HHCW after two distinct verifiers agree. Pass <code>--payout-address 0x…</code> to name the EVM address that receives this node's share. A worker cannot verify its own job.</p>
-    <p class="prose">HHCW: <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a>. Settlement: <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA</a>.</p>
+    <h1>Lend your machine to open AI. Get a receipt for every job.</h1>
+    <p class="lede">Your node replays AI jobs other volunteers ran. When two independent replays match, the work is signed, receipted, and credited to everyone who did it.</p>
 
-    <h2>Linux and macOS</h2>
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash</code></pre>
-    <p class="prose">That joins <code>https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh</code>. The published open invite is <code>open</code>. Registration is rate-limited. The installer detects the GPU. Flags:</p>
+    <ol class="steps">
+      <li><strong>Run one command.</strong> On Linux x86_64 or Windows WSL2:
+        <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/join.sh | bash</code></pre>
+        To name where your credits settle, add an EVM address:
+        <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/join.sh | bash -s -- --payout-address 0xYourEvmAddress</code></pre>
+      </li>
+      <li><strong>Watch it check itself.</strong> Seven steps print <code>PASS</code> or stop with <code>FAIL</code>: the pinned Ollama runtime (sha256), the model weights (sha256), the model digest <code>29ef26c5</code>, and a replay of public job <a href="https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh/v1/jobs/job_17da8f18d97f"><code>job_17da8f18d97f</code></a> that must reproduce its output hash exactly. A machine that cannot reproduce it is not started, which keeps honest work from being scored as a disagreement. The one-time download is about 2 GB, so allow a few minutes.</li>
+      <li><strong>Earn on verified work.</strong> The node registers and runs in the background. It replays other nodes' jobs and runs its own. Find your node id on the <a href="https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh/api/stats">live stats</a> and each receipt on the <a href="../proof/">proof page</a>. Stop any time with <code>bash ~/.asin-hhc/stop.sh</code>.</li>
+    </ol>
+
+    <h2>What you need</h2>
     <ul class="prose">
-      <li><code>--gpu</code> requires a visible NVIDIA or AMD GPU. NVIDIA uses <code>--gpus all</code> and the CUDA Ollama image. AMD uses <code>ollama/ollama:rocm</code> with <code>/dev/kfd</code> and <code>/dev/dri</code>. If the NVIDIA driver is installed and <code>nvidia-container-toolkit</code> is not, the script prints the install commands and stops.</li>
-      <li><code>--cpu</code> runs llama.cpp and SmolLM2-360M-Instruct even when a GPU is visible.</li>
-      <li><code>--backend ollama</code> or <code>--backend llamacpp</code> picks the inference runtime. With no flag, a GPU selects Ollama and a machine with no GPU selects llama.cpp.</li>
-      <li><code>--payout-address 0x…</code> is the EVM address for this node's HHCW. The check is unchanged: 40 hex characters, not the zero address.</li>
+      <li>Linux x86_64 with AVX2 (almost any CPU since 2013), or Windows 10/11 with WSL2.</li>
+      <li>About 2 GB of free disk during install (0.7 GB after), 2 GB of free RAM, <code>curl</code>, and Python 3.11+ (if Python is missing, the script fetches <code>uv</code> into its own folder).</li>
+      <li>No Docker, no sudo, no account, no invite. Everything lives in <code>~/.asin-hhc</code>.</li>
     </ul>
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --payout-address 0xYourEvmAddress --gpu</code></pre>
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash -s -- --cpu</code></pre>
-    <p class="prose">From a checkout, Compose is <code>gpu-mesh/deploy/join/docker-compose.yml</code>. The NVIDIA profile sets <code>deploy.resources.reservations.devices</code> with driver <code>nvidia</code> and capabilities <code>[gpu]</code>. The ROCm profile uses <code>ollama/ollama:rocm</code>. The published image is <code>ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join</code>.</p>
 
-    <h2>Windows</h2>
-    <p class="prose">Install Docker Desktop and leave it running. PowerShell:</p>
-    <pre><code>docker run -d --name gpumesh-join --restart unless-stopped -e GPU_MESH_COORDINATOR=https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh -e GPU_MESH_BACKEND=llamacpp -v gpumesh-join:/var/lib/gpumesh ghcr.io/dbottrader/holbrook-cp8-hhc/gpumesh-join:latest</code></pre>
-    <p class="prose">The published image also defaults to that coordinator, so <code>GPU_MESH_COORDINATOR</code> can be omitted after the image that contains the default is current. Override it when you run your own coordinator.</p>
-    <p class="prose">For Ollama, install it from <a href="https://ollama.com/download/windows">ollama.com/download/windows</a>, pull a weight, and set <code>GPU_MESH_BACKEND=ollama</code> with <code>GPU_MESH_OLLAMA_HOST=http://host.docker.internal:11434</code>. The longer notes are in the repository file <code>gpu-mesh/deploy/join/WINDOWS.md</code>.</p>
+    <h2>Why a fixed CPU runtime, even on a GPU box</h2>
+    <p class="prose">Verification here means a second machine reruns the job and must get the same output, bit for bit. Greedy output is not identical across hardware kernels. On our own test box, AVX-512/AMX kernels answered <code>Mesh</code> where AVX2 kernels answered <code>mesh</code>, and the mesh scored that as a disagreement. So every verifier runs one canonical runtime: Ollama 0.40.15 with only its AVX2 CPU backend, on a private port that never touches your own Ollama. A GPU-canonical profile comes next, once GPU-to-GPU replays are proven to match.</p>
 
-    <h2>Also on this site</h2>
+    <h2>What a job earns</h2>
     <ul class="prose">
-      <li><a href="../human/">Human sign-in</a></li>
-      <li><a href="../console/">Console</a></li>
+      <li>HHC is a utility credit for verified contribution. It is not sold and it pays no return.</li>
+      <li>A verifier earns the same credit whether it agrees or disagrees, so there is no reason to fake agreement. A verifier commits the hash of its output before the hub reveals the worker's.</li>
+      <li>A job settles as HHCW on Base Sepolia after two distinct verifiers, neither of them the worker, agree. A disagreement goes to one tiebreaker.</li>
+      <li>New nodes hold credit until they are 7 days old and have 3 verified jobs.</li>
+      <li>HHCW <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7…db5d</a> · Settlement <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE…bcCA</a></li>
+    </ul>
+
+    <h2>Before you pipe anything into bash</h2>
+    <p class="prose">Read it first: <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/gpu-mesh/deploy/join/join.sh">join.sh</a>. Or download it and run <code>bash join.sh --dry-run</code> to see the plan and pins without changing anything. The node token stays in <code>~/.asin-hhc/node.json</code> with mode 600. The full guide is <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CONTRIBUTING-GPU.md">CONTRIBUTING-GPU.md</a>.</p>
+
+    <h2>Other setups</h2>
+    <ul class="prose">
+      <li>macOS and ARM: not a verifier yet, because their replays are not proven to match. Watch the guide for updates.</li>
+      <li>Docker and GPU worker kit (advanced): <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/gpu-mesh/deploy/join/README.md">gpu-mesh/deploy/join/README.md</a>. It serves other models, which the current verifiers do not replay.</li>
     </ul>
   </main>
   <footer>
     <div class="wrap">
-            <p>Ecosystem: <a href="https://asin-hhc.org/">asin-hhc.org</a> · <a href="https://asinmolt.asin-hhc.org/">ASINMOLT</a> · <a href="https://dbottrader.github.io/asinmcp/artifacts/proof-board.html">Proof Board</a> · <a href="https://www.clanker.world/clanker/0xA858098fC91AF7bFdd9549973f2209DAD4BFCCcC">$HHC token</a></p>
-<p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://www.moltbook.com/u/asinhhc">Moltbook @asinhhc</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a></p>
-      <p><a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/CITATION.cff">Citation</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
+      <p>Ecosystem: <a href="https://asin-hhc.org/">asin-hhc.org</a> · <a href="https://asinmolt.asin-hhc.org/">ASINMOLT</a> · <a href="https://dbottrader.github.io/asinmcp/artifacts/proof-board.html">Proof Board</a></p>
+      <p>Built by Dennis Christie (<a href="https://github.com/dbottrader">@dbottrader</a>). <a href="https://github.com/dbottrader/Holbrook-CP8-HHC">GitHub</a> · <a href="https://github.com/dbottrader/Holbrook-CP8-HHC/blob/main/LICENSE">MIT License</a></p>
       <p>Settlement runs on Base Sepolia. HHC is a utility credit for verified contribution. Promotion remains HOLD.</p>
     </div>
   </footer>

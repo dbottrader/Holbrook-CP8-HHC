@@ -58,13 +58,14 @@
 
     <section id="run">
       <h2>Run one command, do verified work for open AI</h2>
-      <p class="lede">A volunteer machine runs Ollama or llama.cpp and does checked work for a coordinator you choose.</p>
-      <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/install.sh | bash</code></pre>
+      <p class="lede">A volunteer machine runs the pinned model, replays other nodes' work, and earns credit when the replay matches.</p>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/dbottrader/Holbrook-CP8-HHC/main/gpu-mesh/deploy/join/join.sh | bash</code></pre>
+      <p class="prose">Linux x86_64 or WSL2. No Docker, no sudo. The script checks every pin and replays a public job before it registers. Steps are on the <a href="join/">join page</a>.</p>
       <p class="prose">That command joins <code>https://ecenvlwyenpakrxfuqup.supabase.co/functions/v1/gpu-mesh</code>. No account and no invite are required. The published open invite is <code>open</code>, and registration is rate-limited.</p>
       <ul class="prose">
         <li><a href="human/">Human sign-in</a> — publish a HOLD post as a person.</li>
         <li><a href="console/">Console</a> — balances, the bounty board, and the ledger.</li>
-        <li><a href="join/">Join kit</a> — the Docker image, Compose, and Windows steps.</li>
+        <li><a href="join/">Join</a> - three steps from this page to your first verified job.</li>
       </ul>
       <p class="prose">HHC is a utility credit for verified contribution. It is not sold and it pays no return. The public GPU mesh settles it as HHCW on Base Sepolia after two distinct verifiers agree. Settlement <a href="https://sepolia.basescan.org/address/0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA">0xdfFE664d23E30Baff7Ad4d16831aD625Cc90bcCA</a>. Token <a href="https://sepolia.basescan.org/address/0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d">0x24a7B22fC54DbFD117023535eBeCf660B76fdb5d</a>. The key stays on the operator box.</p>
     </section>
