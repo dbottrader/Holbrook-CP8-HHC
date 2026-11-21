@@ -12,6 +12,8 @@ import {AdminHandoff} from "./AdminHandoff.sol";
 ///         attestation signed by SETTLER_ROLE.
 ///         Split is exact: worker 9000 bps, each of the two verifiers 500 bps.
 ///         The three amounts must add up to `contributionMinor`. Dust reverts.
+///         The worker and the two verifiers must be three distinct addresses,
+///         so no address is paid for more than one role in a settlement.
 contract Settlement is AdminHandoff, Pausable, EIP712 {
     using ECDSA for bytes32;
 
@@ -49,6 +51,7 @@ contract Settlement is AdminHandoff, Pausable, EIP712 {
     error BadSplit(uint256 workerAmount, uint256 v1, uint256 v2, uint256 contributionMinor);
     error BadSigner(address recovered);
     error ZeroAmount();
+    error SameAddress(address worker, address verifier1, address verifier2);
 
     constructor(address admin, HHCWorkCredit token_) AdminHandoff(admin) EIP712("ASIN-HHC Settlement", "1") {
         if (address(token_) == address(0)) revert ZeroAddress();
@@ -83,6 +86,9 @@ contract Settlement is AdminHandoff, Pausable, EIP712 {
         if (settled[settlementId]) revert AlreadySettled(settlementId);
         if (worker == address(0) || verifier1 == address(0) || verifier2 == address(0)) {
             revert ZeroAddress();
+        }
+        if (worker == verifier1 || worker == verifier2 || verifier1 == verifier2) {
+            revert SameAddress(worker, verifier1, verifier2);
         }
         if (contributionMinor == 0) revert ZeroAmount();
         uint256 expectedWorker = (contributionMinor * WORKER_SHARE_BPS) / BPS_DENOM;

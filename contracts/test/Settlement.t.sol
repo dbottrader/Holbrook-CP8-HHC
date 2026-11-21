@@ -253,4 +253,61 @@ contract SettlementTest is Test {
         vm.expectRevert();
         token.mint(worker, 1);
     }
+
+    function _signFor(
+        bytes32 settlementId,
+        address w_,
+        address v1_,
+        address v2_,
+        uint256 total,
+        bytes32 receiptRoot
+    ) internal view returns (uint256 w, uint256 a1, uint256 a2, bytes memory sig) {
+        (w, a1, a2) = _split(total);
+        bytes32 structHash = keccak256(
+            abi.encode(SETTLEMENT_TYPEHASH, settlementId, w_, w, v1_, a1, v2_, a2, total, receiptRoot)
+        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", settlement.domainSeparator(), structHash));
+        (uint8 vv, bytes32 r, bytes32 s) = vm.sign(settlerKey, digest);
+        sig = abi.encodePacked(r, s, vv);
+    }
+
+    function _expectSameAddress(address w_, address v1_, address v2_) internal {
+        bytes32 sid = keccak256(abi.encode("same", w_, v1_, v2_));
+        bytes32 root = keccak256("receipts");
+        (uint256 w, uint256 a1, uint256 a2, bytes memory sig) = _signFor(sid, w_, v1_, v2_, 1000, root);
+        vm.expectRevert(abi.encodeWithSelector(Settlement.SameAddress.selector, w_, v1_, v2_));
+        settlement.settle(sid, w_, w, v1_, a1, v2_, a2, 1000, root, sig);
+        assertFalse(settlement.settled(sid));
+    }
+
+    function test_worker_as_verifier1_reverts() public {
+        _expectSameAddress(worker, worker, v2);
+    }
+
+    function test_worker_as_verifier2_reverts() public {
+        _expectSameAddress(worker, v1, worker);
+    }
+
+    function test_same_verifier_twice_reverts() public {
+        _expectSameAddress(worker, v1, v1);
+    }
+
+    function test_one_address_all_roles_reverts() public {
+        _expectSameAddress(worker, worker, worker);
+    }
+
+    /// Each address gets exactly its single-role share (Lean: single_role_share).
+    function testFuzz_single_role_share(address w_, address v1_, address v2_, uint64 units) public {
+        vm.assume(w_ != address(0) && v1_ != address(0) && v2_ != address(0));
+        vm.assume(w_ != v1_ && w_ != v2_ && v1_ != v2_);
+        uint256 total = (uint256(units) % 1e15 + 1) * 20;
+        bytes32 sid = keccak256(abi.encode(w_, v1_, v2_, total));
+        bytes32 root = keccak256("receipts");
+        (uint256 w, uint256 a1, uint256 a2, bytes memory sig) = _signFor(sid, w_, v1_, v2_, total, root);
+        settlement.settle(sid, w_, w, v1_, a1, v2_, a2, total, root, sig);
+        assertEq(token.balanceOf(w_), total * 9000 / 10000);
+        assertEq(token.balanceOf(v1_), total * 500 / 10000);
+        assertEq(token.balanceOf(v2_), total * 500 / 10000);
+        assertEq(token.totalSupply(), total);
+    }
 }
