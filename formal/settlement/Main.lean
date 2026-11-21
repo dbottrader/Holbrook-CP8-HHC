@@ -31,7 +31,7 @@ def splitRow (t : Nat) : String :=
 
 def evidenceInputs : List (Nat × Nat × Nat × Nat) := Id.run do
   let mut out := []
-  for c in [0, 20, 40, 1000, 1010, 4000, 20000] do
+  for c in [0, 20, 40, 1000, 1010, 4000, 20000, 1000000000000020, 9007199254740980] do
     for w in [workerShare c, workerShare c + 1, c] do
       for v1 in [verifierShare c, verifierShare c + 1, 0] do
         for v2 in [verifierShare c, 0] do
@@ -41,17 +41,27 @@ def evidenceInputs : List (Nat × Nat × Nat × Nat) := Id.run do
 def verdicts : List Verdict := [.parentEmpty, .childEmpty, .agree, .disagreeDeterministic]
 def ids : List String := ["", "a", "b", "c"]
 
-def flowScenarios : List (String × List Ev) :=
-  [("agree_agree", [.first "b" .agree, .second "c" .agree]),
-   ("disagree_tiebreak_disagree", [.first "b" .disagreeDeterministic, .tiebreak "c" .disagreeDeterministic]),
-   ("disagree_tiebreak_agree_second_agree",
+def addrA : String := "0x1111111111111111111111111111111111111111"
+def addrB : String := "0x2222222222222222222222222222222222222222"
+def addrC : String := "0x3333333333333333333333333333333333333333"
+def addrD : String := "0x4444444444444444444444444444444444444444"
+def distinctBook : List (String × String) := [("a", addrA), ("b", addrB), ("c", addrC), ("d", addrD)]
+/-- worker a and second checker c share one payout address -/
+def sharedBook : List (String × String) := [("a", addrA), ("b", addrB), ("c", addrA), ("d", addrD)]
+
+def flowScenarios : List (String × List (String × String) × List Ev) :=
+  [("agree_agree", distinctBook, [.first "b" .agree, .second "c" .agree]),
+   ("agree_agree_no_payouts", [], [.first "b" .agree, .second "c" .agree]),
+   ("agree_agree_shared_payout", sharedBook, [.first "b" .agree, .second "c" .agree]),
+   ("disagree_tiebreak_disagree", distinctBook, [.first "b" .disagreeDeterministic, .tiebreak "c" .disagreeDeterministic]),
+   ("disagree_tiebreak_agree_second_agree", distinctBook,
      [.first "b" .disagreeDeterministic, .tiebreak "c" .agree, .second "d" .agree]),
-   ("agree_second_disagree", [.first "b" .agree, .second "c" .disagreeDeterministic]),
-   ("agree_second_disagree_tiebreak_agree",
+   ("agree_second_disagree", distinctBook, [.first "b" .agree, .second "c" .disagreeDeterministic]),
+   ("agree_second_disagree_tiebreak_agree", distinctBook,
      [.first "b" .agree, .second "c" .disagreeDeterministic, .tiebreak "d" .agree]),
-   ("agree_second_disagree_tiebreak_disagree",
+   ("agree_second_disagree_tiebreak_disagree", distinctBook,
      [.first "b" .agree, .second "c" .disagreeDeterministic, .tiebreak "d" .disagreeDeterministic]),
-   ("disagree_tiebreak_agree_second_disagree",
+   ("disagree_tiebreak_agree_second_disagree", distinctBook,
      [.first "b" .disagreeDeterministic, .tiebreak "c" .agree, .second "d" .disagreeDeterministic])]
 
 def evJson : Ev → String
@@ -62,10 +72,13 @@ def evJson : Ev → String
 def paidTo (s : St) (n : String) : Nat :=
   (s.checkerPays.filter (·.1 == n)).foldl (fun acc p => acc + p.2) 0
 
-def flowRow (name : String) (evs : List Ev) : String :=
-  let j : Job := { worker := "a", award := 4, digestsOk := true }
+def flowRow (name : String) (book : List (String × String)) (evs : List Ev) : String :=
+  let j : Job := { worker := "a", award := 4, digestsOk := true, payouts := book }
   let s := run j evs
+  let idle := [Ev.first "x" .agree, .second "x" .agree, .tiebreak "x" .agree].all (enabled s · == false)
   jobj [("name", q name), ("events", jarr (evs.map evJson)),
+        ("payouts", jobj (book.map fun (k, v) => (k, q v))),
+        ("terminal", jbool idle),
         ("status", q s.status.tag), ("amount", toString s.amount),
         ("mesh_credits", toString s.meshCredits),
         ("worker_balance", toString s.workerBal), ("credits_awarded", toString s.credited),
@@ -87,8 +100,18 @@ def main : IO Unit := do
           out := out ++ [jobj [("worker", q w), ("a", q a), ("b", q b),
                                ("independent", jbool (independent w a b))]]
     return out
-  let flow := flowScenarios.map fun (n, e) => flowRow n e
+  let flow := flowScenarios.map fun (n, b, e) => flowRow n b e
+  let addrs := ["", addrA, addrB]
+  let dp := Id.run do
+    let mut out := []
+    for x in addrs do
+      for y in addrs do
+        for z in addrs do
+          out := out ++ [jobj [("addresses", jarr [q x, q y, q z]),
+                               ("distinct", jbool (distinctPayouts [x, y, z]))]]
+    return out
   IO.println (jobj [("units_per_credit", toString UNITS_PER_CREDIT),
                     ("verifier_pay", toString VERIFIER_PAY),
                     ("split", jarr split), ("evidence_split_ok", jarr ev),
-                    ("checker_pay", jarr pay), ("independent", jarr ind), ("flow", jarr flow)])
+                    ("checker_pay", jarr pay), ("independent", jarr ind),
+                    ("distinct_payouts", jarr dp), ("flow", jarr flow)])
