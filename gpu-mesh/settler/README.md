@@ -12,6 +12,8 @@ The deployer key stays in a file on that box. The hub never receives it. Supabas
 
 The contract has no escrow. A worker or verifier with no payout address is not paid to a stand-in address. The settler posts `skipped_missing_payout`. When that node registers an address, the hub puts the settlement back on the pending list.
 
+The worker and the two verifiers must also have three different payout addresses. If two roles share an address, the hub marks the row `skipped_shared_payout`, and the settler refuses it the same way before signing. The contract reverts with `SameAddress` in that case too.
+
 A settlement is pending only after two distinct verifiers, neither of them the worker, have agreed with the hub's duplicate check. One node cannot verify its own job. There is no bypass flag.
 
 ## Command

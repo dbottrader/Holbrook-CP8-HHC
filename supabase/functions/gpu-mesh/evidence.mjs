@@ -81,10 +81,12 @@ export function decodeSettledLog(log) {
   if (workerAmount == null || verifier1Amount == null || verifier2Amount == null || contributionMinor == null) {
     return null;
   }
-  const splitOk = workerAmount + verifier1Amount + verifier2Amount === contributionMinor
-    && workerAmount * 10000 === contributionMinor * 9000
-    && verifier1Amount * 10000 === contributionMinor * 500
-    && verifier2Amount * 10000 === contributionMinor * 500;
+  // Exact integer math: amount * 10000 overflows float precision past 2^53.
+  const [w, v1, v2, c] = [workerAmount, verifier1Amount, verifier2Amount, contributionMinor].map(BigInt);
+  const splitOk = w + v1 + v2 === c
+    && w * 10000n === c * 9000n
+    && v1 * 10000n === c * 500n
+    && v2 * 10000n === c * 500n;
   return {
     event: "Settled",
     address: hexBody(log?.address) ? `0x${hexBody(log.address)}` : "",

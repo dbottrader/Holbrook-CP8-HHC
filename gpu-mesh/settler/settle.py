@@ -182,6 +182,9 @@ def refusal_status(item: dict) -> str:
     )
     if not all(addresses):
         return "skipped_missing_payout"
+    if len({item.lower() for item in addresses}) != 3:
+        # Settlement.sol reverts with SameAddress; one payout address per role.
+        return "skipped_shared_payout"
     return ""
 
 

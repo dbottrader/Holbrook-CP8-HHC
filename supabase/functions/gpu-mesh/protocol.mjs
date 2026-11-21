@@ -7,8 +7,11 @@
  * Credits stay in hold until the worker is 7 days old and has 3 verified jobs.
  * A verified job enters the Base Sepolia settlement queue only after a second
  * distinct verifier, who is not the worker, also agrees. A checker is paid the
- * same credit for agree and disagree. A disagreement holds the worker payout
- * and escalates to one tiebreaker instead of minting. A verifier must commit
+ * same credit for agree and disagree. Any disagreement holds the worker payout:
+ * the off-chain award is clawed back while the mint is held, and one tiebreaker
+ * is queued. A job is decided by at most three checks, by majority: two agrees
+ * settle, two disagrees close the job as held_disagreement. The worker, both
+ * verifiers, and their payout addresses must all differ. A verifier must commit
  * the sha256 of its output before this hub reveals the worker output hash.
  * This function never holds the deployer key. GPU_MESH_SETTLER_TOKEN
  * authenticates the box settler.
@@ -62,6 +65,7 @@ const RESULT_STATUSES = new Set([
   "skipped_indivisible",
   "skipped_needs_two_verifiers",
   "skipped_verifier_independence",
+  "skipped_shared_payout",
 ]);
 
 const MAX_TOKENS = 256;
@@ -271,10 +275,18 @@ export function independentVerifiers(workerId, verifierIds) {
 }
 
 export function splitsClean(total) {
-  if (!Number.isInteger(total) || total <= 0) return false;
-  const worker = Math.floor((total * 9000) / 10000);
-  const each = Math.floor((total * 500) / 10000);
-  return worker + each + each === total;
+  // Exact integer math. Float math drifts once total * 9000 passes 2^53.
+  if (!Number.isSafeInteger(total) || total <= 0) return false;
+  const t = BigInt(total);
+  const worker = (t * 9000n) / 10000n;
+  const each = (t * 500n) / 10000n;
+  return worker + each + each === t;
+}
+
+/** Worker and verifier payout addresses must be pairwise distinct (case-insensitive). Empty means not set yet. */
+export function distinctPayouts(addresses) {
+  const set = (addresses || []).map((item) => String(item || "").trim().toLowerCase()).filter(Boolean);
+  return new Set(set).size === set.length;
 }
 
 export async function timingSafeEqualText(left, right) {
@@ -1161,10 +1173,10 @@ function awardPayload(parent, origin, award, verifierId) {
   };
 }
 
-async function payWorker(store, ctx, parent, origin, verifierId) {
+async function payWorker(store, ctx, parent, origin, verifierId, keySuffix = "worker_award") {
   const award = Math.max(1, parent.completion_tokens || 1) * weight(origin);
   const awardReceipt = await settle(store, ctx, {
-    key: `${parent.id}:worker_award`,
+    key: `${parent.id}:${keySuffix}`,
     job: parent,
     node: origin,
     kind: "inference_receipt",
@@ -1254,7 +1266,16 @@ async function queueTiebreak(store, parent, excluded) {
   return enqueueVerification(store, parent, { clientKey: "verify_tiebreak", extraExcluded: excluded });
 }
 
+/**
+ * Release a job with two agreeing checks. Anything short of `pending` refuses
+ * the mint, so the worker's off-chain award is clawed back as well (F1).
+ */
 async function releasePending(store, ctx, parent, row, verifierId) {
+  await releaseChecks(store, ctx, parent, row, verifierId);
+  if (row.status !== "pending") await clawbackWorker(store, ctx, parent, row.status);
+}
+
+async function releaseChecks(store, ctx, parent, row, verifierId) {
   const workerId = parent.assigned_node_id;
   const ids = [row.verifier1_id, verifierId];
   row.verifier2_id = verifierId;
@@ -1273,6 +1294,12 @@ async function releasePending(store, ctx, parent, row, verifierId) {
   if (!independentVerifiers(workerId, ids)) {
     row.status = "skipped_verifier_independence";
     row.detail = "settlement needs two distinct verifiers other than the worker";
+    return;
+  }
+  const nodes = await store.listNodes();
+  if (!distinctPayouts([workerId, ...ids].map((id) => nodeAddress(nodes, id)))) {
+    row.status = "skipped_shared_payout";
+    row.detail = "the worker and both verifiers need distinct payout addresses";
     return;
   }
   const credits = parent.credits_awarded || row.mesh_credits || 0;
@@ -1326,38 +1353,39 @@ async function finishTiebreak(store, ctx, node, job, spec = {}) {
   row.tiebreak_node_id = node.id;
   row.tiebreak_decision = judged.verdict;
   row.updated_at = Date.now() / 1000;
-  if (judged.verdict === "agree") {
+  const origin = (await store.listNodes()).find((item) => item.id === parent.assigned_node_id);
+  if (judged.verdict === "agree" && origin && origin.id !== node.id) {
     if (row.verifier1_decision !== "agree") {
+      // One agree, one disagree: the worker is paid as after a first agree,
+      // and a second check (the third verdict) decides by majority.
       const disagreed = row.verifier1_id;
-      const origin = (await store.listNodes()).find((item) => item.id === parent.assigned_node_id);
-      if (origin && origin.id !== node.id) {
-        const award = await payWorker(store, ctx, parent, origin, node.id);
-        row.verifier1_id = node.id;
-        row.verifier1_decision = "agree";
-        row.verifier2_id = "";
-        row.verifier2_decision = "";
-        row.mesh_credits = award;
-        row.status = "awaiting_second_verifier";
-        row.detail = "";
-        parent.settlement_status = row.status;
-        await enqueueVerification(store, parent, { clientKey: "verify2", extraExcluded: [node.id, disagreed] });
-      } else {
-        row.status = "held_disagreement";
-        row.detail = "tiebreaker is not independent of the worker";
-        parent.settlement_status = row.status;
-      }
+      const award = await payWorker(store, ctx, parent, origin, node.id);
+      row.verifier1_id = node.id;
+      row.verifier1_decision = "agree";
+      row.verifier2_id = "";
+      row.verifier2_decision = "";
+      row.mesh_credits = award;
+      row.status = "awaiting_second_verifier";
+      row.detail = "";
+      parent.settlement_status = row.status;
+      await enqueueVerification(store, parent, { clientKey: "verify2", extraExcluded: [node.id, disagreed] });
     } else {
+      // Two agrees out of three: restore the award held at the second check,
+      // then release with the tiebreaker as the second verifier.
+      await payWorker(store, ctx, parent, origin, node.id, "worker_award_tiebreak");
       await releasePending(store, ctx, parent, row, node.id);
       parent.settlement_status = row.status;
       if (row.status === "pending") {
         parent.status = "verified";
         parent.verdict = "agree";
+      } else {
+        parent.status = "disputed";
       }
     }
   } else {
     await clawbackWorker(store, ctx, parent, judged.verdict);
     row.status = "held_disagreement";
-    row.detail = judged.verdict;
+    row.detail = judged.verdict === "agree" ? "tiebreaker is not independent of the worker" : judged.verdict;
     parent.status = "disputed";
     parent.verdict = judged.verdict;
     parent.settlement_status = row.status;
@@ -1381,17 +1409,23 @@ async function finishSecondVerification(store, ctx, node, job, spec = {}) {
   await payChecker(store, ctx, node, job, parent, judged, spec, { check: "duplicate" });
   if (verdict === "agree") {
     await releasePending(store, ctx, parent, row, node.id);
-  } else if (verdict === "disagree_deterministic") {
+    if (row.status !== "pending") parent.status = "disputed";
+  } else {
+    // Any disagreement holds the worker payout off chain too (F1).
+    await clawbackWorker(store, ctx, parent, verdict);
     row.verifier2_id = node.id;
     row.verifier2_decision = verdict;
-    row.status = "held_for_tiebreaker";
     row.detail = verdict;
-    row.updated_at = Date.now() / 1000;
-    await queueTiebreak(store, parent, [row.verifier1_id, node.id]);
-  } else {
-    row.status = "verifier_disagreement";
-    row.detail = verdict;
-    row.updated_at = Date.now() / 1000;
+    parent.status = "disputed";
+    parent.verdict = verdict;
+    if (row.tiebreak_node_id) {
+      // The tiebreak already ran, so this is the third verdict and the
+      // second disagree: the majority disagrees and the job is closed (F2).
+      row.status = "held_disagreement";
+    } else {
+      row.status = "held_for_tiebreaker";
+      await queueTiebreak(store, parent, [row.verifier1_id, node.id]);
+    }
   }
   row.updated_at = Date.now() / 1000;
   parent.settlement_status = row.status;
@@ -1930,6 +1964,14 @@ async function pendingSettlements(store) {
     if (!independentVerifiers(row.worker_id, [row.verifier1_id, row.verifier2_id])) continue;
     if (!row.receipt) continue;
     const view = publicSettlement(row, nodes);
+    if (!distinctPayouts([view.worker_address, view.verifier1_address, view.verifier2_address])) {
+      // A payout address changed after release. Refuse; the contract would revert too.
+      row.status = "skipped_shared_payout";
+      row.detail = "the worker and both verifiers need distinct payout addresses";
+      row.updated_at = Date.now() / 1000;
+      await store.saveChainSettlement(row);
+      continue;
+    }
     const funded = view.worker_address && view.verifier1_address && view.verifier2_address;
     if (row.status === "skipped_missing_payout") {
       if (!funded) continue;
