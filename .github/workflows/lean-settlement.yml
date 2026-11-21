@@ -1,0 +1,27 @@
+name: lean-settlement
+
+on:
+  push:
+    paths:
+      - "formal/settlement/**"
+      - ".github/workflows/lean-settlement.yml"
+  pull_request:
+    paths:
+      - "formal/settlement/**"
+      - ".github/workflows/lean-settlement.yml"
+
+jobs:
+  proofs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan (toolchain comes from formal/settlement/lean-toolchain)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Build proofs, audit axioms, check model table
+        run: bash formal/settlement/check.sh
