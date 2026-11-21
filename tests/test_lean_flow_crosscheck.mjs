@@ -32,11 +32,12 @@ async function call(ctx, path, opts = {}) {
   return { status: response.status, data: await response.json() };
 }
 
-async function register(ctx, name) {
+async function register(ctx, name, payout) {
   const { status, data } = await call(ctx, "/api/nodes/register", {
     method: "POST",
     body: {
       name,
+      ...(payout ? { payout_address: payout } : {}),
       backend: "llamacpp",
       models: [{ id: "SmolLM2-360M-Instruct", resident: true, digest: "pin" }],
       gpu: { model: "cpu", vram_mb: 0 },
@@ -92,7 +93,7 @@ for (const scenario of table.flow) {
     const env = { INFERENCE_RECEIPT_SIGNING_KEY: seed(), GPU_MESH_SETTLER_TOKEN: "settler-test-token" };
     const ctx = { store, env, clock: () => Date.now() / 1000 };
     const nodes = {};
-    for (const name of ["a", "b", "c", "d"]) nodes[name] = await register(ctx, `node-${name}`);
+    for (const name of ["a", "b", "c", "d"]) nodes[name] = await register(ctx, `node-${name}`, scenario.payouts[name]);
     const letter = Object.fromEntries(Object.entries(nodes).map(([k, v]) => [v.node_id, k]));
 
     const chat = handle(req("/v1/chat/completions", {
@@ -112,7 +113,7 @@ for (const scenario of table.flow) {
     const row = await store.getChainSettlement(`mesh:${parent.job_id}`);
     const all = await store.listNodes();
     const byLetter = Object.fromEntries(all.map((node) => [letter[node.id], node]));
-    const queued = await store.listJobs(["queued"]);
+    const queued = (await store.listJobs(["queued"])).filter((job) => job.parent_job_id === parent.job_id);
     const got = {
       status: row ? row.status : "none",
       amount: row ? row.amount || 0 : 0,
@@ -121,6 +122,7 @@ for (const scenario of table.flow) {
       verifier1: row ? letter[row.verifier1_id] || "" : "",
       verifier2: row ? letter[row.verifier2_id] || "" : "",
       tiebreak_queued: queued.some((job) => job.client_key === "verify_tiebreak"),
+      terminal: queued.length === 0,
       checker_balance: { b: balance(byLetter.b), c: balance(byLetter.c), d: balance(byLetter.d) },
     };
     const want = {
@@ -131,6 +133,7 @@ for (const scenario of table.flow) {
       verifier1: scenario.verifier1,
       verifier2: scenario.verifier2,
       tiebreak_queued: scenario.tiebreak_queued,
+      terminal: scenario.terminal,
       checker_balance: Object.fromEntries(Object.entries(scenario.checker_balance).map(([k, v]) => [k, Number(v)])),
     };
     assert.deepEqual(got, want);

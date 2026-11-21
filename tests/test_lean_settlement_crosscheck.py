@@ -68,21 +68,18 @@ def test_python_split_matches_model():
         assert got == row["split"], t
 
 
-@pytest.mark.parametrize("row", [r for r in TABLE["split"] if r["t"] * 9000 <= MAX_SAFE_INTEGER], ids=lambda r: str(r["t"]))
-def test_js_split_matches_model_in_safe_range(row):
+@pytest.mark.parametrize("row", TABLE["split"], ids=lambda r: str(r["t"]))
+def test_js_split_matches_model(row):
+    # F4 fixed: splitsClean uses exact integer math, so it matches the model
+    # on every safe integer, including amounts where t * 9000 passes 2**53.
     got = next(item for item in js()["split"] if item["t"] == row["t"])
-    assert (got["clean"], got["worker"], got["verifier"]) == (row["clean"], row["worker"], row["verifier"])
+    want_clean = row["clean"] if row["t"] <= MAX_SAFE_INTEGER else False
+    assert got["clean"] == want_clean
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="F4: protocol.mjs splitsClean uses float64; above t*9000 > 2**53 it diverges from exact integer math",
-)
-@pytest.mark.parametrize("t", [9007199254740980, 9007199254740992])
-def test_js_split_matches_model_above_safe_range(t):
-    row = next(item for item in TABLE["split"] if item["t"] == t)
-    got = next(item for item in js()["split"] if item["t"] == t)
-    assert (got["clean"], got["worker"]) == (row["clean"], row["worker"])
+def test_table_covers_float_edge():
+    assert any(r["t"] * 9000 > MAX_SAFE_INTEGER and r["clean"] for r in TABLE["split"])
+    assert any(r["c"] * 10000 > MAX_SAFE_INTEGER and r["ok"] for r in TABLE["evidence_split_ok"])
 
 
 def test_mesh_awards_stay_in_safe_range():
@@ -106,17 +103,40 @@ def test_js_independence_matches_model():
     assert js()["independent"] == TABLE["independent"]
 
 
+def test_js_distinct_payouts_matches_model():
+    assert js()["distinct_payouts"] == TABLE["distinct_payouts"]
+
+
+def test_settler_shared_payout_matches_model():
+    worker, v1, v2 = "w", "v1", "v2"
+    for row in TABLE["distinct_payouts"]:
+        a, b, c = row["addresses"]
+        item = {
+            "worker_id": worker,
+            "verifier1_id": v1,
+            "verifier2_id": v2,
+            "receipt": {"hash": "x"},
+            "worker_address": a,
+            "verifier1_address": b,
+            "verifier2_address": c,
+        }
+        status = settle.refusal_status(item)
+        if not (a and b and c):
+            assert status == "skipped_missing_payout", row
+        else:
+            assert (status == "skipped_shared_payout") == (not row["distinct"]), row
+
+
 def test_settler_independence_matches_model():
-    addr = "0x" + "1" * 40
     for row in TABLE["independent"]:
         item = {
             "worker_id": row["worker"],
             "verifier1_id": row["a"],
             "verifier2_id": row["b"],
             "receipt": {"hash": "x"},
-            "worker_address": addr,
-            "verifier1_address": addr,
-            "verifier2_address": addr,
+            "worker_address": "0x" + "1" * 40,
+            "verifier1_address": "0x" + "2" * 40,
+            "verifier2_address": "0x" + "3" * 40,
         }
         refused = settle.refusal_status(item) == "skipped_verifier_independence"
         assert refused == (not row["independent"]), row

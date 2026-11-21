@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 
 import { SETTLED_TOPIC, checkerPay, decodeSettledLog } from "../../../supabase/functions/gpu-mesh/evidence.mjs";
-import { independentVerifiers, splitsClean } from "../../../supabase/functions/gpu-mesh/protocol.mjs";
+import { distinctPayouts, independentVerifiers, splitsClean } from "../../../supabase/functions/gpu-mesh/protocol.mjs";
 
 const table = JSON.parse(readFileSync(new URL("../model_table.json", import.meta.url), "utf8"));
 const word = (n) => BigInt(n).toString(16).padStart(64, "0");
@@ -29,8 +29,6 @@ console.log(JSON.stringify({
   split: table.split.map((row) => ({
     t: row.t,
     clean: splitsClean(row.t),
-    worker: Math.floor((row.t * 9000) / 10000),
-    verifier: Math.floor((row.t * 500) / 10000),
   })),
   evidence_split_ok: table.evidence_split_ok.map((row) => {
     const decoded = decodeSettledLog(settledLog(row.w, row.v1, row.v2, row.c));
@@ -41,4 +39,5 @@ console.log(JSON.stringify({
     ...row,
     independent: independentVerifiers(row.worker, [row.a, row.b]),
   })),
+  distinct_payouts: table.distinct_payouts.map((row) => ({ ...row, distinct: distinctPayouts(row.addresses) })),
 }));
