@@ -1,0 +1,13 @@
+name = "settlement"
+version = "0.1.0"
+defaultTargets = ["Settlement", "settlement-table"]
+
+[leanOptions]
+autoImplicit = false
+
+[[lean_lib]]
+name = "Settlement"
+
+[[lean_exe]]
+name = "settlement-table"
+root = "Main"
