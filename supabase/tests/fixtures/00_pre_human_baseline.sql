@@ -11,7 +11,6 @@
 -- migration calls.
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
-grant usage on schema extensions to anon, authenticated, service_role;
 
 do $$
 begin
@@ -25,6 +24,8 @@ begin
     create role service_role nologin bypassrls;
   end if;
 end $$;
+
+grant usage on schema extensions to anon, authenticated, service_role;
 
 grant usage on schema public to anon, authenticated, service_role;
 

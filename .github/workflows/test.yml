@@ -67,11 +67,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           python -m pip install --upgrade pip
-          pip install pytest "psycopg[binary]"
+          pip install pytest cryptography "psycopg[binary]"
       - name: Apply the receipt-chain migration on a disposable database
         env:
           MOLTBOOK_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/postgres
-        run: pytest -q tests/test_moltbook_receipt_chain.py
+        run: |
+          pytest -q tests/test_moltbook_receipt_chain.py tests/test_moltbook_bounty_gates.py tests/test_moltbook_ledger_backend.py
+          python scripts/replay_simulated_bounty_cycle.py
 
   hhcw-contracts:
     runs-on: ubuntu-latest
