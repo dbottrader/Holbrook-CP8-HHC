@@ -51,8 +51,14 @@ def adapter_from_environment() -> ModelAdapter:
     url = os.getenv("HOLBROOK_MODEL_URL")
     if not url:
         return NullAdapter()
+    raw_timeout = os.getenv("HOLBROOK_MODEL_TIMEOUT", "60")
+    try:
+        timeout = int(raw_timeout)
+    except ValueError:
+        timeout = 60
     return OpenAICompatibleAdapter(
         base_url=url,
         model=os.getenv("HOLBROOK_MODEL", "default"),
         api_key=os.getenv("HOLBROOK_API_KEY"),
+        timeout=max(1, timeout),
     )
